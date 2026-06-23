@@ -34,20 +34,11 @@ async def get_standard(reg_number: str):
         raise HTTPException(status_code=404, detail="Standard not found")
     return std.dict()
 
+# Единственный эндпоинт для массовой загрузки
 @app.post("/fetch-registry-bulk")
-async def fetch_registry_bulk():
+async def fetch_registry_bulk(enrich: bool = True):
     try:
-        results = fetch_all_standards_bulk()
-        return {"status": "ok", "loaded": results}
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
-    
-@app.post("/fetch-registry-bulk")
-async def fetch_registry_bulk():
-    try:
-        results = fetch_all_standards_bulk(enrich=True)
+        results = fetch_all_standards_bulk(enrich=enrich)
         return {"status": "ok", "loaded": results}
     except Exception as e:
         import traceback

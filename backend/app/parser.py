@@ -390,12 +390,13 @@ def enrich_standard_with_tf_data(standard: ProfessionalStandard, element_id: str
         
         for tf_link in tf_links:
             tf_name = tf_link['name']
-            tf_id = tf_link['tf_id']
+            tf_id = tf_link['tf_id']  # не используется, но можно залогировать
             
             found = False
             for g_func in standard.generalized_functions:
                 for p_func in g_func.particular_functions:
-                    if p_func.name == tf_name or p_func.code == tf_id:
+                    # Ищем по имени (раньше было ещё сравнение с tf_id, что неверно)
+                    if p_func.name == tf_name:
                         tf_data = parse_tf_page(tf_link['url'])
                         if tf_data['skills']:
                             p_func.required_skills = tf_data['skills']
@@ -409,9 +410,9 @@ def enrich_standard_with_tf_data(standard: ProfessionalStandard, element_id: str
                     break
             
             if not found:
-                print(f"    ТФ '{tf_name}' не найдена в стандарте")
+                print(f"    ТФ '{tf_name}' (ID: {tf_id}) не найдена в стандарте")
         
-        save_standard(standard)
+        # УБИРАЕМ save_standard(standard) — сохранение происходит снаружи
         
     except Exception as e:
         print(f"  Ошибка при обогащении стандарта {standard.registration_number}: {e}")
