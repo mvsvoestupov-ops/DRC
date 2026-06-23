@@ -7,7 +7,8 @@ from bs4 import BeautifulSoup
 from urllib.parse import urlparse, parse_qs, urljoin
 from typing import List, Dict, Optional
 from .models import *
-from .storage import save_standard
+from .db_operations import save_raw_standard
+from .db import SessionLocal
 
 # Базовый URL реестра
 REGISTRY_BASE_URL = "https://profstandart.rosmintrud.ru/obshchiy-informatsionnyy-blok/natsionalnyy-reestr-professionalnykh-standartov/reestr-professionalnykh-standartov/index.php"
@@ -271,7 +272,8 @@ def clean_and_split(text: str) -> List[str]:
 def parse_tf_page(tf_url: str) -> dict:
     """
     Парсит страницу трудовой функции и возвращает ТД, У, З.
-    Использует умное разделение по заглавным буквам для слипшихся текстов.
+    Для умений использует разделение по заглавным буквам (слипшийся текст).
+    Для знаний использует разделение по переводу строки (т.к. на сайте они разделены <br />).
     """
     if tf_url in tf_cache:
         return tf_cache[tf_url]
@@ -307,25 +309,30 @@ def parse_tf_page(tf_url: str) -> dict:
             if len(cells) >= 2:
                 label = cells[0].get_text(strip=True)
                 content_cell = cells[1]
-                
-                # Получаем весь текст из ячейки
-                raw_text = content_cell.get_text(separator=' ').strip()
-                
-                # Определяем тип данных по названию раздела
                 label_lower = label.lower()
                 
                 if 'трудовые действия' in label_lower:
+                    # Трудовые действия тоже могут быть слипшимися, используем clean_and_split
+                    raw_text = content_cell.get_text(separator=' ').strip()
                     items = clean_and_split(raw_text)
                     result['labor_actions'] = items
                     print(f"      Найдено {len(items)} трудовых действий")
+                    
                 elif 'необходимые умения' in label_lower or 'умения' in label_lower:
+                    # Умения — слипшийся текст, используем clean_and_split
+                    raw_text = content_cell.get_text(separator=' ').strip()
                     items = clean_and_split(raw_text)
                     result['skills'] = items
                     print(f"      Найдено {len(items)} умений")
-                    for i, item in enumerate(items[:3]):
-                        print(f"        Умение {i+1}: {item[:50]}...")
+                    
                 elif 'необходимые знания' in label_lower or 'знания' in label_lower:
-                    items = clean_and_split(raw_text)
+                    # Знания разделены <br />, поэтому используем разделение по переводу строки
+                    raw_text = content_cell.get_text(separator='\n').strip()
+                    # Разбиваем по строкам, убираем пустые и короткие
+                    items = [line.strip() for line in raw_text.splitlines() if line.strip() and len(line.strip()) > 3]
+                    # Если не получилось (например, знания в одной строке через запятую), применяем clean_and_split
+                    if not items:
+                        items = clean_and_split(raw_text)
                     result['knowledges'] = items
                     print(f"      Найдено {len(items)} знаний")
                     for i, item in enumerate(items[:3]):
@@ -376,11 +383,12 @@ def get_tf_links_from_standard_page(element_id: str) -> List[dict]:
 
 
 # ============================================================
-# 7. Обновление стандарта данными из трудовых функций
+# 7. Обновление стандарта данными из трудовых функций (устарело, оставлено для совместимости)
 # ============================================================
 def enrich_standard_with_tf_data(standard: ProfessionalStandard, element_id: str) -> ProfessionalStandard:
     """
     Для каждого стандарта находит ссылки на трудовые функции и добавляет ТД, У, З.
+    Эта функция больше не используется в автоматическом процессе, но оставлена для возможного ручного вызова.
     """
     print(f"  Обогащение стандарта {standard.registration_number} (ID: {element_id})...")
     
@@ -390,13 +398,12 @@ def enrich_standard_with_tf_data(standard: ProfessionalStandard, element_id: str
         
         for tf_link in tf_links:
             tf_name = tf_link['name']
-            tf_id = tf_link['tf_id']  # не используется, но можно залогировать
+            tf_id = tf_link['tf_id']
             
             found = False
             for g_func in standard.generalized_functions:
                 for p_func in g_func.particular_functions:
-                    # Ищем по имени (раньше было ещё сравнение с tf_id, что неверно)
-                    if p_func.name == tf_name:
+                    if p_func.name == tf_name:  # убрали сравнение с tf_id
                         tf_data = parse_tf_page(tf_link['url'])
                         if tf_data['skills']:
                             p_func.required_skills = tf_data['skills']
@@ -464,11 +471,12 @@ def parse_bulk_xml(file_path: str) -> List[ProfessionalStandard]:
 
 
 # ============================================================
-# 9. Основная функция для массовой загрузки с обогащением
+# 9. Основная функция для массовой загрузки с сохранением в raw БД
 # ============================================================
-def fetch_all_standards_bulk(download_dir: str = "downloads", enrich: bool = True) -> List[Dict]:
+def fetch_all_standards_bulk(download_dir: str = "downloads", enrich: bool = False) -> List[Dict]:
     """
-    Собирает все ID, скачивает XML по частям, парсит и обогащает данными из трудовых функций.
+    Собирает все ID, скачивает XML по частям, парсит и сохраняет в raw-базу данных.
+    Параметр enrich игнорируется — обогащение выполняется отдельно через эндпоинт /run-enrichment.
     Ограничение: обрабатывает только 3 стандарта для теста.
     """
     os.makedirs(download_dir, exist_ok=True)
@@ -492,48 +500,61 @@ def fetch_all_standards_bulk(download_dir: str = "downloads", enrich: bool = Tru
     loaded = []
     total_standards = 0
 
-    for idx, chunk in enumerate(chunks):
-        print(f"\n--- Часть {idx + 1}/{len(chunks)} ({len(chunk)} ID) ---")
-        try:
-            xml_path = os.path.join(download_dir, f"standards_chunk_{idx + 1}.xml")
-            download_bulk_xml_chunk(chunk, xml_path)
-            
-            print(f"Парсинг части {idx + 1}...")
-            standards = parse_bulk_xml(xml_path)
-            
-            # Сохраняем соответствие reg_number -> element_id
-            for i, std in enumerate(standards):
-                if i < len(chunk):
-                    reg_to_element_cache[std.registration_number] = chunk[i]
-            
-            for std in standards:
-                try:
-                    element_id = reg_to_element_cache.get(std.registration_number)
-                    
-                    if enrich and element_id:
-                        std = enrich_standard_with_tf_data(std, element_id)
-                    
-                    save_standard(std)
-                    total_standards += 1
-                except Exception as e:
-                    print(f"Ошибка при сохранении: {e}")
-            
-            loaded.append({
-                'chunk': idx + 1,
-                'count': len(standards),
-                'status': 'ok'
-            })
-            print(f"✓ Часть {idx + 1} завершена. Загружено {len(standards)} стандартов.")
-            
-        except Exception as e:
-            print(f"✗ Ошибка в части {idx + 1}: {e}")
-            loaded.append({
-                'chunk': idx + 1,
-                'status': 'error',
-                'error': str(e)
-            })
-        
-        time.sleep(1)
+    # Создаём сессию БД для сохранения
+    session = SessionLocal()
 
-    print(f"\n✅ Всего загружено стандартов: {total_standards}")
+    try:
+        for idx, chunk in enumerate(chunks):
+            print(f"\n--- Часть {idx + 1}/{len(chunks)} ({len(chunk)} ID) ---")
+            try:
+                xml_path = os.path.join(download_dir, f"standards_chunk_{idx + 1}.xml")
+                download_bulk_xml_chunk(chunk, xml_path)
+                
+                print(f"Парсинг части {idx + 1}...")
+                standards = parse_bulk_xml(xml_path)
+                
+                # Сохраняем соответствие reg_number -> element_id
+                for i, std in enumerate(standards):
+                    if i < len(chunk):
+                        reg_to_element_cache[std.registration_number] = chunk[i]
+                
+                # Сохраняем каждый стандарт в raw БД (без обогащения)
+                for std in standards:
+                    try:
+                        element_id = reg_to_element_cache.get(std.registration_number)
+                        if not element_id:
+                            print(f"  Предупреждение: для {std.registration_number} не найден element_id")
+                        # Сохраняем в raw БД
+                        save_raw_standard(session, std, element_id)
+                        total_standards += 1
+                    except Exception as e:
+                        print(f"Ошибка при сохранении {std.registration_number}: {e}")
+                
+                loaded.append({
+                    'chunk': idx + 1,
+                    'count': len(standards),
+                    'status': 'ok'
+                })
+                print(f"✓ Часть {idx + 1} завершена. Загружено {len(standards)} стандартов.")
+                
+            except Exception as e:
+                print(f"✗ Ошибка в части {idx + 1}: {e}")
+                loaded.append({
+                    'chunk': idx + 1,
+                    'status': 'error',
+                    'error': str(e)
+                })
+            
+            time.sleep(1)
+        
+        session.commit()
+        print(f"\n✅ Всего загружено стандартов в raw БД: {total_standards}")
+        
+    except Exception as e:
+        session.rollback()
+        print(f"Ошибка при работе с БД: {e}")
+        raise
+    finally:
+        session.close()
+
     return loaded
