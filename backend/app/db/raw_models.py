@@ -12,6 +12,9 @@ class StandardRaw(Base):
     kind_activity = Column(Text)
     purpose = Column(Text)
     element_id = Column(String, nullable=True)
+    # Новые поля
+    professional_area_code = Column(String, nullable=True)
+    okved_codes = Column(JSON, nullable=True)
 
     generalized_functions = relationship("GeneralizedFunctionRaw", back_populates="standard", cascade="all, delete-orphan")
 
@@ -22,7 +25,11 @@ class GeneralizedFunctionRaw(Base):
     code = Column(String)
     name = Column(Text)
     level = Column(String)
-    possible_job_titles = Column(JSON)  # список строк
+    possible_job_titles = Column(JSON)
+    # Новые поля для классификаторов
+    okz_codes = Column(JSON, nullable=True)
+    okpdtr_codes = Column(JSON, nullable=True)
+    okso_codes = Column(JSON, nullable=True)
 
     standard = relationship("StandardRaw", back_populates="generalized_functions")
     particular_functions = relationship("ParticularFunctionRaw", back_populates="generalized", cascade="all, delete-orphan")
@@ -45,7 +52,6 @@ class LaborActionRaw(Base):
     id = Column(Integer, primary_key=True)
     particular_id = Column(Integer, ForeignKey('raw_particular_functions.id'))
     text = Column(Text)
-
     particular = relationship("ParticularFunctionRaw", back_populates="labor_actions")
 
 class SkillRaw(Base):
@@ -53,7 +59,6 @@ class SkillRaw(Base):
     id = Column(Integer, primary_key=True)
     particular_id = Column(Integer, ForeignKey('raw_particular_functions.id'))
     text = Column(Text)
-
     particular = relationship("ParticularFunctionRaw", back_populates="skills")
 
 class KnowledgeRaw(Base):
@@ -61,5 +66,4 @@ class KnowledgeRaw(Base):
     id = Column(Integer, primary_key=True)
     particular_id = Column(Integer, ForeignKey('raw_particular_functions.id'))
     text = Column(Text)
-
     particular = relationship("ParticularFunctionRaw", back_populates="knowledges")

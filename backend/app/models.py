@@ -18,6 +18,10 @@ class GeneralizedWorkFunction(BaseModel):
     level: str
     possible_job_titles: List[str]
     particular_functions: List[ParticularWorkFunction]
+    # Новые поля для классификаторов
+    okz_codes: Optional[List[str]] = []
+    okpdtr_codes: Optional[List[str]] = []
+    okso_codes: Optional[List[str]] = []
 
 class ProfessionalStandard(BaseModel):
     name: str
@@ -27,3 +31,6 @@ class ProfessionalStandard(BaseModel):
     kind_activity: str
     purpose: str
     generalized_functions: List[GeneralizedWorkFunction]
+    # Новые поля для ПС
+    professional_area_code: Optional[str] = None
+    okved_codes: Optional[List[str]] = []

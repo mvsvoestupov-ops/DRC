@@ -10,100 +10,66 @@ from .models import *
 from .db_operations import save_raw_standard
 from .db import SessionLocal
 
-# Базовый URL реестра
 REGISTRY_BASE_URL = "https://profstandart.rosmintrud.ru/obshchiy-informatsionnyy-blok/natsionalnyy-reestr-professionalnykh-standartov/reestr-professionalnykh-standartov/index.php"
 
-# Кэш для трудовых функций (чтобы не парсить одно и то же дважды)
 tf_cache = {}
-# Кэш для соответствия reg_number -> element_id
 reg_to_element_cache = {}
 
+def normalize_okso_code(code: str) -> str:
+    if not code:
+        return ''
+    parts = code.strip().split('.')
+    parts = [p for p in parts if p]
+    if len(parts) > 3:
+        parts = parts[-3:]
+    parts = [p.zfill(2) for p in parts]
+    return '.'.join(parts)
 
-# ============================================================
-# 1. Функция для парсинга ОДНОГО XML (для загрузки через интерфейс)
-# ============================================================
-def parse_xml(content: bytes) -> ProfessionalStandard:
-    """Парсит XML-файл одного профессионального стандарта."""
+def parse_xml(content: bytes, element_id: str = None) -> ProfessionalStandard:
     root = etree.fromstring(content)
     ps = root.find('.//ProfessionalStandart')
     if ps is None:
         raise ValueError("ProfessionalStandart not found")
+    return parse_ps_node(ps, element_id=element_id)
 
-    name = ps.findtext('NameProfessionalStandart', '').strip()
-    reg_num = ps.findtext('RegistrationNumber', '').strip()
-    order_num = ps.findtext('OrderNumber', '').strip()
-    date = ps.findtext('DateOfApproval', '').strip()
-
-    first_section = ps.find('FirstSection')
-    kind = first_section.findtext('KindProfessionalActivity', '').strip() if first_section is not None else ''
-    purpose = first_section.findtext('PurposeKindProfessionalActivity', '').strip() if first_section is not None else ''
-
-    third_section = ps.find('ThirdSection')
-    generalized_functions = []
-    if third_section is not None:
-        work_functions = third_section.find('.//WorkFunctions')
-        if work_functions is not None:
-            generalized = work_functions.find('.//GeneralizedWorkFunctions')
-            if generalized is not None:
-                for g_node in generalized.findall('GeneralizedWorkFunction'):
-                    code = g_node.findtext('CodeOTF', '').strip()
-                    name_g = g_node.findtext('NameOTF', '').strip()
-                    level = g_node.findtext('LevelOfQualification', '').strip()
-                    titles = [t.text.strip() for t in g_node.findall('.//PossibleJobTitle')]
-                    p_funcs = []
-                    for p_node in g_node.findall('.//ParticularWorkFunction'):
-                        p_code = p_node.findtext('CodeTF', '').strip()
-                        p_name = p_node.findtext('NameTF', '').strip()
-                        p_sub = p_node.findtext('SubQualification', '').strip()
-                        
-                        labor_actions = []
-                        for la in p_node.findall('.//LaborAction'):
-                            labor_actions.append(LaborAction(text=la.text.strip() if la.text else ''))
-                        
-                        p_funcs.append(
-                            ParticularWorkFunction(
-                                code=p_code,
-                                name=p_name,
-                                sub_qualification=p_sub,
-                                labor_actions=labor_actions,
-                                required_skills=[],
-                                necessary_knowledges=[]
-                            )
-                        )
-                    generalized_functions.append(
-                        GeneralizedWorkFunction(
-                            code=code,
-                            name=name_g,
-                            level=level,
-                            possible_job_titles=titles,
-                            particular_functions=p_funcs
-                        )
-                    )
-
-    return ProfessionalStandard(
-        name=name,
-        registration_number=reg_num,
-        order_number=order_num,
-        approval_date=date,
-        kind_activity=kind,
-        purpose=purpose,
-        generalized_functions=generalized_functions
-    )
-
-
-# ============================================================
-# 2. Функция для парсинга XML-узла (для массовой загрузки)
-# ============================================================
-def parse_ps_node(ps_node) -> ProfessionalStandard:
-    """Парсит XML-узел ProfessionalStandart напрямую (без переконвертации)."""
+def parse_ps_node(ps_node, element_id: str = None) -> ProfessionalStandard:
     name = ps_node.findtext('NameProfessionalStandart', '').strip()
-    reg_num = ps_node.findtext('RegistrationNumber', '').strip()
+    reg_elem = ps_node.find('RegistrationNumber')
+    reg_num = reg_elem.text.strip() if reg_elem is not None and reg_elem.text else ''
+    if not reg_num and element_id:
+        reg_num = element_id
+        print(f"  ⚠️ RegistrationNumber отсутствует для '{name}', используем element_id={element_id}")
+    elif not reg_num:
+        reg_num = f"TEMP_{name[:10]}_{int(time.time())}"
+        print(f"  ❌ RegistrationNumber отсутствует для '{name}', создан временный номер {reg_num}")
+
     order_num = ps_node.findtext('OrderNumber', '').strip()
     date = ps_node.findtext('DateOfApproval', '').strip()
 
     first_section = ps_node.find('FirstSection')
     kind = first_section.findtext('KindProfessionalActivity', '').strip() if first_section is not None else ''
     purpose = first_section.findtext('PurposeKindProfessionalActivity', '').strip() if first_section is not None else ''
+
+    professional_area_code = ''
+    if first_section is not None:
+        code_kind = first_section.findtext('CodeKindProfessionalActivity', '').strip()
+        if code_kind:
+            professional_area_code = code_kind[:2] if len(code_kind) >= 2 else ''
+    if not professional_area_code and reg_num:
+        if '.' in reg_num:
+            professional_area_code = reg_num.split('.')[0].strip()
+        else:
+            professional_area_code = reg_num[:2]
+
+    okved_codes = []
+    employment_group = ps_node.find('.//EmploymentGroup')
+    if employment_group is not None:
+        list_okved = employment_group.find('.//ListOKVED')
+        if list_okved is not None:
+            for unit in list_okved.findall('UnitOKVED'):
+                code = unit.findtext('CodeOKVED', '').strip()
+                if code:
+                    okved_codes.append(code)
 
     third_section = ps_node.find('ThirdSection')
     generalized_functions = []
@@ -117,16 +83,41 @@ def parse_ps_node(ps_node) -> ProfessionalStandard:
                     name_g = g_node.findtext('NameOTF', '').strip()
                     level = g_node.findtext('LevelOfQualification', '').strip()
                     titles = [t.text.strip() for t in g_node.findall('.//PossibleJobTitle')]
+
+                    okz_codes = []
+                    list_okz = g_node.find('.//ListOKZ')
+                    if list_okz is not None:
+                        for unit in list_okz.findall('UnitOKZ'):
+                            c = unit.findtext('CodeOKZ', '').strip()
+                            if c:
+                                okz_codes.append(c)
+
+                    okpdtr_codes = []
+                    list_okpdtr = g_node.find('.//ListOKPDTR')
+                    if list_okpdtr is not None:
+                        for unit in list_okpdtr.findall('UnitOKPDTR'):
+                            c = unit.findtext('CodeOKPDTR', '').strip()
+                            if c:
+                                okpdtr_codes.append(c)
+
+                    okso_codes = []
+                    list_okso = g_node.find('.//ListOKSO')
+                    if list_okso is not None:
+                        for unit in list_okso.findall('UnitOKSO'):
+                            c = unit.findtext('CodeOKSO', '').strip()
+                            if c:
+                                norm = normalize_okso_code(c)
+                                if norm:
+                                    okso_codes.append(norm)
+
                     p_funcs = []
                     for p_node in g_node.findall('.//ParticularWorkFunction'):
                         p_code = p_node.findtext('CodeTF', '').strip()
                         p_name = p_node.findtext('NameTF', '').strip()
                         p_sub = p_node.findtext('SubQualification', '').strip()
-                        
                         labor_actions = []
                         for la in p_node.findall('.//LaborAction'):
                             labor_actions.append(LaborAction(text=la.text.strip() if la.text else ''))
-                        
                         p_funcs.append(
                             ParticularWorkFunction(
                                 code=p_code,
@@ -137,13 +128,17 @@ def parse_ps_node(ps_node) -> ProfessionalStandard:
                                 necessary_knowledges=[]
                             )
                         )
+
                     generalized_functions.append(
                         GeneralizedWorkFunction(
                             code=code,
                             name=name_g,
                             level=level,
                             possible_job_titles=titles,
-                            particular_functions=p_funcs
+                            particular_functions=p_funcs,
+                            okz_codes=okz_codes,
+                            okpdtr_codes=okpdtr_codes,
+                            okso_codes=okso_codes
                         )
                     )
 
@@ -154,15 +149,12 @@ def parse_ps_node(ps_node) -> ProfessionalStandard:
         approval_date=date,
         kind_activity=kind,
         purpose=purpose,
-        generalized_functions=generalized_functions
+        generalized_functions=generalized_functions,
+        professional_area_code=professional_area_code,
+        okved_codes=okved_codes
     )
 
-
-# ============================================================
-# 3. Функции для сбора ID
-# ============================================================
 def get_element_ids_from_page(page_url: str) -> List[str]:
-    """Парсит одну страницу реестра и возвращает список ELEMENT_ID."""
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     }
@@ -179,129 +171,92 @@ def get_element_ids_from_page(page_url: str) -> List[str]:
                 ids.add(params['ELEMENT_ID'][0])
     return list(ids)
 
-
 def get_all_element_ids(base_url: str) -> List[str]:
-    """Обходит все страницы реестра и собирает все ELEMENT_ID."""
+    """Обходит все страницы реестра, останавливается при таймауте или пустом ответе."""
     all_ids = set()
     page = 1
-    max_pages = 1  # 👈 Ограничение на 1 страницу для тестирования
-    while page <= max_pages:
+    while True:
         url = f"{base_url}?PAGEN_1={page}&SIZEN_1=100"
         print(f"Парсинг страницы {page}...")
-        ids = get_element_ids_from_page(url)
-        if not ids:
+        try:
+            ids = get_element_ids_from_page(url)
+            if not ids:
+                print(f"Страница {page} пуста, завершаем сбор.")
+                break
+            all_ids.update(ids)
+            print(f"На странице {page} найдено {len(ids)} ID, всего собрано {len(all_ids)}")
+            page += 1
+            time.sleep(0.5)
+        except Exception as e:
+            # Если страница не загружается (таймаут, ошибка соединения), вероятно, это конец списка
+            print(f"Ошибка при загрузке страницы {page}: {e}")
+            print("Предполагаем, что это конец списка, завершаем сбор.")
             break
-        all_ids.update(ids)
-        page += 1
-        time.sleep(0.5)
     print(f"Всего собрано ID: {len(all_ids)}")
     return list(all_ids)
 
-
-# ============================================================
-# 4. Функция для скачивания XML через форму
-# ============================================================
 def download_bulk_xml_chunk(element_ids: List[str], save_path: str) -> str:
-    """Отправляет POST-запрос на wservGenXMLSave.php с частью ID."""
     url = urljoin(REGISTRY_BASE_URL, "wservGenXMLSave.php")
-    
     data = {}
     for i, elem_id in enumerate(element_ids):
         data[f'fn[{i}]'] = elem_id
     data['save'] = 'Скачать в XML'
-    
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         'Referer': REGISTRY_BASE_URL,
         'Content-Type': 'application/x-www-form-urlencoded'
     }
-    
     print(f"  Отправка {len(element_ids)} ID в wservGenXMLSave.php...")
     response = requests.post(url, data=data, headers=headers, verify=False, timeout=60)
     response.raise_for_status()
-    
     with open(save_path, 'wb') as f:
         f.write(response.content)
     print(f"  Файл сохранён: {save_path} (размер: {len(response.content)} байт)")
     return save_path
 
-
-# ============================================================
-# 5. Универсальный парсер страницы трудовой функции (HTML)
-# ============================================================
 def split_by_capital(text: str) -> List[str]:
-    """
-    Разделяет текст по заглавным буквам (CamelCase).
-    Пример: "Вести журналПользоваться программами" -> ["Вести журнал", "Пользоваться программами"]
-    """
     if not text:
         return []
-    
     result = []
     start = 0
     for i in range(1, len(text)):
-        # Если текущая буква заглавная, а предыдущая строчная или точка/вопросительный знак
         if (text[i].isupper() and text[i-1].islower()) or \
            (text[i].isupper() and text[i-1] in '.!?;'):
             result.append(text[start:i].strip())
             start = i
-    
-    # Добавляем последнюю часть
     if start < len(text):
         result.append(text[start:].strip())
-    
-    # Если не удалось разделить, возвращаем исходный текст как один элемент
     if len(result) <= 1:
         return [text.strip()]
-    
     return [p for p in result if p.strip() and len(p.strip()) > 3]
 
-
 def clean_and_split(text: str) -> List[str]:
-    """Очищает текст и разделяет по заглавным буквам."""
     if not text:
         return []
-    # Убираем множественные пробелы
     text = re.sub(r'\s+', ' ', text).strip()
-    # Разделяем по заглавным
     parts = split_by_capital(text)
-    # Убираем пустые строки
     return [p.strip() for p in parts if p.strip() and len(p.strip()) > 3]
 
-
 def parse_tf_page(tf_url: str) -> dict:
-    """
-    Парсит страницу трудовой функции и возвращает ТД, У, З.
-    Для умений использует разделение по заглавным буквам (слипшийся текст).
-    Для знаний использует разделение по переводу строки (т.к. на сайте они разделены <br />).
-    """
     if tf_url in tf_cache:
         return tf_cache[tf_url]
-    
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-    }
+
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
     full_url = f"https://profstandart.rosmintrud.ru{tf_url}" if tf_url.startswith('/') else tf_url
-    print(f"    Парсинг ТФ: {full_url}")
-    
+
+    print(f"    Парсинг страницы: {full_url}")
+
     try:
         response = requests.get(full_url, headers=headers, verify=False, timeout=30)
         response.raise_for_status()
     except Exception as e:
-        print(f"    Ошибка при загрузке ТФ: {e}")
-        return {'labor_actions': [], 'skills': [], 'knowledges': []}
-    
+        print(f"    Ошибка при загрузке страницы: {e}")
+        return {'labor_actions': [], 'skills': [], 'knowledges': [], 'okso_codes': []}
+
     soup = BeautifulSoup(response.text, 'html.parser')
-    
-    result = {
-        'labor_actions': [],
-        'skills': [],
-        'knowledges': []
-    }
-    
-    # Ищем все таблицы на странице
+    result = {'labor_actions': [], 'skills': [], 'knowledges': [], 'okso_codes': []}
     tables = soup.find_all('table')
-    
+
     for table in tables:
         rows = table.find_all('tr')
         for row in rows:
@@ -309,61 +264,59 @@ def parse_tf_page(tf_url: str) -> dict:
             if len(cells) >= 2:
                 label = cells[0].get_text(strip=True)
                 content_cell = cells[1]
+                raw_text = content_cell.get_text(separator=' ').strip()
                 label_lower = label.lower()
-                
                 if 'трудовые действия' in label_lower:
-                    # Трудовые действия тоже могут быть слипшимися, используем clean_and_split
-                    raw_text = content_cell.get_text(separator=' ').strip()
                     items = clean_and_split(raw_text)
                     result['labor_actions'] = items
                     print(f"      Найдено {len(items)} трудовых действий")
-                    
                 elif 'необходимые умения' in label_lower or 'умения' in label_lower:
-                    # Умения — слипшийся текст, используем clean_and_split
-                    raw_text = content_cell.get_text(separator=' ').strip()
                     items = clean_and_split(raw_text)
                     result['skills'] = items
                     print(f"      Найдено {len(items)} умений")
-                    
                 elif 'необходимые знания' in label_lower or 'знания' in label_lower:
-                    # Знания разделены <br />, поэтому используем разделение по переводу строки
-                    raw_text = content_cell.get_text(separator='\n').strip()
-                    # Разбиваем по строкам, убираем пустые и короткие
-                    items = [line.strip() for line in raw_text.splitlines() if line.strip() and len(line.strip()) > 3]
-                    # Если не получилось (например, знания в одной строке через запятую), применяем clean_and_split
+                    raw_text_lines = content_cell.get_text(separator='\n').strip()
+                    items = [line.strip() for line in raw_text_lines.splitlines() if line.strip() and len(line.strip()) > 3]
                     if not items:
                         items = clean_and_split(raw_text)
                     result['knowledges'] = items
                     print(f"      Найдено {len(items)} знаний")
-                    for i, item in enumerate(items[:3]):
-                        print(f"        Знание {i+1}: {item[:50]}...")
-    
-    # Сохраняем в кэш
+
+    for table in tables:
+        rows = table.find_all('tr')
+        for row in rows:
+            cells = row.find_all('td')
+            if len(cells) >= 1 and 'Перечни СПО и ВО' in cells[0].get_text(strip=True):
+                for next_row in row.find_all_next('tr'):
+                    next_cells = next_row.find_all('td')
+                    if len(next_cells) >= 2:
+                        center_tag = next_cells[0].find('center')
+                        if center_tag:
+                            code_text = center_tag.get_text(strip=True)
+                            if re.match(r'^\d{2}\.\d{2}\.\d{2}$', code_text):
+                                norm = normalize_okso_code(code_text)
+                                if norm and norm not in result['okso_codes']:
+                                    result['okso_codes'].append(norm)
+                                    print(f"      Найден ОКСО: {norm}")
+                break
+        else:
+            continue
+        break
+
     tf_cache[tf_url] = result
     return result
 
-
-# ============================================================
-# 6. Получение ссылок на трудовые функции со страницы стандарта
-# ============================================================
 def get_tf_links_from_standard_page(element_id: str) -> List[dict]:
-    """
-    Парсит HTML-страницу стандарта и возвращает список ссылок на трудовые функции.
-    """
     url = f"https://profstandart.rosmintrud.ru/obshchiy-informatsionnyy-blok/natsionalnyy-reestr-professionalnykh-standartov/reestr-professionalnykh-standartov/index.php?ELEMENT_ID={element_id}"
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
-    
     try:
         response = requests.get(url, headers=headers, verify=False, timeout=30)
         response.raise_for_status()
     except Exception as e:
         print(f"  Ошибка при загрузке страницы стандарта: {e}")
         return []
-    
     soup = BeautifulSoup(response.text, 'html.parser')
     tf_links = []
-    
-    # Ищем ссылки на реестр трудовых функций
     for link in soup.find_all('a', href=True):
         href = link['href']
         if 'reestr-trudovyh-funkcij/index.php' in href and 'ELEMENT_ID=' in href:
@@ -371,71 +324,13 @@ def get_tf_links_from_standard_page(element_id: str) -> List[dict]:
             parsed = urlparse(href)
             params = parse_qs(parsed.query)
             tf_id = params.get('ELEMENT_ID', [''])[0]
-            
             if tf_id and tf_id != element_id:
-                tf_links.append({
-                    'url': href,
-                    'name': name,
-                    'tf_id': tf_id
-                })
-    
+                tf_links.append({'url': href, 'name': name, 'tf_id': tf_id})
     return tf_links
 
-
-# ============================================================
-# 7. Обновление стандарта данными из трудовых функций (устарело, оставлено для совместимости)
-# ============================================================
-def enrich_standard_with_tf_data(standard: ProfessionalStandard, element_id: str) -> ProfessionalStandard:
-    """
-    Для каждого стандарта находит ссылки на трудовые функции и добавляет ТД, У, З.
-    Эта функция больше не используется в автоматическом процессе, но оставлена для возможного ручного вызова.
-    """
-    print(f"  Обогащение стандарта {standard.registration_number} (ID: {element_id})...")
-    
-    try:
-        tf_links = get_tf_links_from_standard_page(element_id)
-        print(f"    Найдено {len(tf_links)} трудовых функций")
-        
-        for tf_link in tf_links:
-            tf_name = tf_link['name']
-            tf_id = tf_link['tf_id']
-            
-            found = False
-            for g_func in standard.generalized_functions:
-                for p_func in g_func.particular_functions:
-                    if p_func.name == tf_name:  # убрали сравнение с tf_id
-                        tf_data = parse_tf_page(tf_link['url'])
-                        if tf_data['skills']:
-                            p_func.required_skills = tf_data['skills']
-                            print(f"      Добавлено {len(tf_data['skills'])} умений для {p_func.name[:30]}...")
-                        if tf_data['knowledges']:
-                            p_func.necessary_knowledges = tf_data['knowledges']
-                            print(f"      Добавлено {len(tf_data['knowledges'])} знаний для {p_func.name[:30]}...")
-                        found = True
-                        break
-                if found:
-                    break
-            
-            if not found:
-                print(f"    ТФ '{tf_name}' (ID: {tf_id}) не найдена в стандарте")
-        
-        # УБИРАЕМ save_standard(standard) — сохранение происходит снаружи
-        
-    except Exception as e:
-        print(f"  Ошибка при обогащении стандарта {standard.registration_number}: {e}")
-    
-    return standard
-
-
-# ============================================================
-# 8. Парсинг bulk XML
-# ============================================================
-def parse_bulk_xml(file_path: str) -> List[ProfessionalStandard]:
-    """Парсит XML-файл с несколькими стандартами."""
+def parse_bulk_xml(file_path: str, element_ids: List[str] = None) -> List[ProfessionalStandard]:
     with open(file_path, 'rb') as f:
         content = f.read()
-    
-    # Пробуем разные кодировки
     for encoding in ['utf-8', 'windows-1251', 'cp1251']:
         try:
             text_content = content.decode(encoding)
@@ -444,40 +339,31 @@ def parse_bulk_xml(file_path: str) -> List[ProfessionalStandard]:
             continue
     else:
         text_content = content.decode('utf-8', errors='ignore')
-    
     import html
     text_content = html.unescape(text_content)
     content = text_content.encode('utf-8')
-    
     try:
         root = etree.fromstring(content)
     except Exception as e:
         print(f"  Ошибка парсинга XML: {e}")
         return []
-    
     ps_nodes = root.findall('.//ProfessionalStandart')
     print(f"  Найдено ProfessionalStandart: {len(ps_nodes)}")
-    
     standards = []
-    for ps_node in ps_nodes:
+    for idx, ps_node in enumerate(ps_nodes):
         try:
-            standard = parse_ps_node(ps_node)
+            elem_id = element_ids[idx] if element_ids and idx < len(element_ids) else None
+            standard = parse_ps_node(ps_node, element_id=elem_id)
             standards.append(standard)
         except Exception as e:
             print(f"  Ошибка при парсинге стандарта: {e}")
             continue
-    
     return standards
 
-
-# ============================================================
-# 9. Основная функция для массовой загрузки с сохранением в raw БД
-# ============================================================
-def fetch_all_standards_bulk(download_dir: str = "downloads", enrich: bool = False) -> List[Dict]:
+def fetch_all_standards_bulk(download_dir: str = "downloads", auto_enrich: bool = False) -> List[Dict]:
     """
-    Собирает все ID, скачивает XML по частям, парсит и сохраняет в raw-базу данных.
-    Параметр enrich игнорируется — обогащение выполняется отдельно через эндпоинт /run-enrichment.
-    Ограничение: обрабатывает только 3 стандарта для теста.
+    Загружает все профессиональные стандарты (все страницы) и сохраняет их в raw БД.
+    Параметр auto_enrich: если True, после загрузки всех ПС запускает обогащение.
     """
     os.makedirs(download_dir, exist_ok=True)
 
@@ -488,19 +374,12 @@ def fetch_all_standards_bulk(download_dir: str = "downloads", enrich: bool = Fal
     if not all_ids:
         return []
 
-    # Ограничиваемся первыми 3 ID для теста
-    test_ids = all_ids[:3]
-    print(f"Для теста взято {len(test_ids)} стандартов (ID: {test_ids})")
-
-    # Разбиваем на чанки (по 3 — это один чанк)
-    chunk_size = 3
-    chunks = [test_ids[i:i + chunk_size] for i in range(0, len(test_ids), chunk_size)]
+    chunk_size = 20
+    chunks = [all_ids[i:i + chunk_size] for i in range(0, len(all_ids), chunk_size)]
     print(f"Разбито на {len(chunks)} частей по {chunk_size} ID")
 
     loaded = []
     total_standards = 0
-
-    # Создаём сессию БД для сохранения
     session = SessionLocal()
 
     try:
@@ -509,47 +388,50 @@ def fetch_all_standards_bulk(download_dir: str = "downloads", enrich: bool = Fal
             try:
                 xml_path = os.path.join(download_dir, f"standards_chunk_{idx + 1}.xml")
                 download_bulk_xml_chunk(chunk, xml_path)
-                
+
                 print(f"Парсинг части {idx + 1}...")
-                standards = parse_bulk_xml(xml_path)
-                
-                # Сохраняем соответствие reg_number -> element_id
+                standards = parse_bulk_xml(xml_path, element_ids=chunk)
+
                 for i, std in enumerate(standards):
                     if i < len(chunk):
                         reg_to_element_cache[std.registration_number] = chunk[i]
-                
-                # Сохраняем каждый стандарт в raw БД (без обогащения)
+
                 for std in standards:
                     try:
                         element_id = reg_to_element_cache.get(std.registration_number)
                         if not element_id:
                             print(f"  Предупреждение: для {std.registration_number} не найден element_id")
-                        # Сохраняем в raw БД
                         save_raw_standard(session, std, element_id)
                         total_standards += 1
                     except Exception as e:
                         print(f"Ошибка при сохранении {std.registration_number}: {e}")
-                
-                loaded.append({
-                    'chunk': idx + 1,
-                    'count': len(standards),
-                    'status': 'ok'
-                })
+
+                loaded.append({'chunk': idx + 1, 'count': len(standards), 'status': 'ok'})
                 print(f"✓ Часть {idx + 1} завершена. Загружено {len(standards)} стандартов.")
-                
+
             except Exception as e:
                 print(f"✗ Ошибка в части {idx + 1}: {e}")
-                loaded.append({
-                    'chunk': idx + 1,
-                    'status': 'error',
-                    'error': str(e)
-                })
-            
+                loaded.append({'chunk': idx + 1, 'status': 'error', 'error': str(e)})
+
             time.sleep(1)
-        
+
         session.commit()
         print(f"\n✅ Всего загружено стандартов в raw БД: {total_standards}")
-        
+
+        if auto_enrich:
+            print("\n🚀 Запуск автоматического обогащения всех загруженных ПС...")
+            from .enrichment import enrich_standard
+            stds = session.query(StandardRaw).all()
+            for i, std in enumerate(stds):
+                print(f"Обогащение {i+1}/{len(stds)}: {std.registration_number} - {std.name[:50]}...")
+                try:
+                    enrich_standard(std.reg_number, session)
+                except Exception as e:
+                    print(f"  ⚠️ Ошибка обогащения {std.reg_number}: {e}")
+                if i % 10 == 0:
+                    time.sleep(1)
+            print("✅ Обогащение завершено.")
+
     except Exception as e:
         session.rollback()
         print(f"Ошибка при работе с БД: {e}")
@@ -558,3 +440,29 @@ def fetch_all_standards_bulk(download_dir: str = "downloads", enrich: bool = Fal
         session.close()
 
     return loaded
+
+def find_element_id_by_reg_number(reg_number: str) -> str:
+    """
+    Ищет ELEMENT_ID профессионального стандарта по его регистрационному номеру.
+    Возвращает строку ID или None.
+    """
+    search_url = urljoin(REGISTRY_BASE_URL, f"index.php?search={reg_number}")
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+    try:
+        response = requests.get(search_url, headers=headers, verify=False, timeout=30)
+        response.raise_for_status()
+    except Exception as e:
+        print(f"  Ошибка поиска ELEMENT_ID для {reg_number}: {e}")
+        return None
+
+    soup = BeautifulSoup(response.text, 'html.parser')
+    for link in soup.find_all('a', href=True):
+        href = link['href']
+        if 'reestr-professionalnykh-standartov/index.php' in href and 'ELEMENT_ID=' in href:
+            text = link.get_text(strip=True)
+            if reg_number in text:
+                import re
+                match = re.search(r'ELEMENT_ID=(\d+)', href)
+                if match:
+                    return match.group(1)
+    return None

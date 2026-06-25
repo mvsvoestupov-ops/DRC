@@ -1,5 +1,8 @@
 from sqlalchemy.orm import Session
-from .db import StandardRaw, GeneralizedFunctionRaw, ParticularFunctionRaw, LaborActionRaw, SkillRaw, KnowledgeRaw
+from .db.raw_models import (
+    StandardRaw, GeneralizedFunctionRaw, ParticularFunctionRaw,
+    LaborActionRaw, SkillRaw, KnowledgeRaw
+)
 from .models import ProfessionalStandard, LaborAction
 
 def save_raw_standard(session: Session, standard: ProfessionalStandard, element_id: str = None):
@@ -9,7 +12,7 @@ def save_raw_standard(session: Session, standard: ProfessionalStandard, element_
         session.delete(existing)
         session.commit()
 
-    # Создаём новый
+    # Создаём стандарт с новыми полями
     std_raw = StandardRaw(
         reg_number=standard.registration_number,
         name=standard.name,
@@ -17,10 +20,12 @@ def save_raw_standard(session: Session, standard: ProfessionalStandard, element_
         approval_date=standard.approval_date,
         kind_activity=standard.kind_activity,
         purpose=standard.purpose,
-        element_id=element_id
+        element_id=element_id,
+        professional_area_code=standard.professional_area_code,
+        okved_codes=standard.okved_codes
     )
     session.add(std_raw)
-    session.flush()  # чтобы получить id
+    session.flush()
 
     for gf in standard.generalized_functions:
         gf_raw = GeneralizedFunctionRaw(
@@ -28,7 +33,10 @@ def save_raw_standard(session: Session, standard: ProfessionalStandard, element_
             code=gf.code,
             name=gf.name,
             level=gf.level,
-            possible_job_titles=gf.possible_job_titles
+            possible_job_titles=gf.possible_job_titles,
+            okz_codes=gf.okz_codes,
+            okpdtr_codes=gf.okpdtr_codes,
+            okso_codes=gf.okso_codes
         )
         session.add(gf_raw)
         session.flush()
@@ -41,13 +49,10 @@ def save_raw_standard(session: Session, standard: ProfessionalStandard, element_
             )
             session.add(pf_raw)
             session.flush()
-            # Трудовые действия
             for la in pf.labor_actions:
                 la_raw = LaborActionRaw(
                     particular_id=pf_raw.id,
                     text=la.text if isinstance(la, LaborAction) else la
                 )
                 session.add(la_raw)
-            # Умения (пока пустые, т.к. в raw они не заполняются)
-            # Знания (пока пустые)
     session.commit()

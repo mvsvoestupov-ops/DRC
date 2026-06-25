@@ -7,9 +7,10 @@ from .db.enriched_models import (
     EnrichedStandard, EnrichedGeneralizedFunction, EnrichedParticularFunction,
     EnrichedLaborAction, EnrichedSkill, EnrichedKnowledge
 )
-from .parser import parse_tf_page, get_tf_links_from_standard_page
+from .parser import parse_tf_page, get_tf_links_from_standard_page, normalize_okso_code, find_element_id_by_reg_number
+import requests
+from bs4 import BeautifulSoup
 
-# Глобальная переменная для модели (ленивая инициализация)
 _model = None
 
 def get_model():
@@ -27,10 +28,6 @@ def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
 def distribute_items(actions_texts, items_texts, action_embeddings, item_embeddings):
-    """
-    Распределяет элементы (умения/знания) между действиями.
-    Возвращает список списков: для каждого действия — список элементов.
-    """
     n_actions = len(actions_texts)
     n_items = len(items_texts)
     if n_items == 0:
@@ -46,7 +43,7 @@ def distribute_items(actions_texts, items_texts, action_embeddings, item_embeddi
     pairs = [(i, j, similarities[i][j]) for i in range(n_actions) for j in range(n_items)]
     pairs.sort(key=lambda x: x[2], reverse=True)
 
-    max_per_action = (n_items + n_actions - 1) // n_actions  # ceil
+    max_per_action = (n_items + n_actions - 1) // n_actions
     assigned_counts = [0] * n_actions
     assigned_item_to_action = [None] * n_items
 
@@ -55,7 +52,6 @@ def distribute_items(actions_texts, items_texts, action_embeddings, item_embeddi
             assigned_item_to_action[j] = i
             assigned_counts[i] += 1
 
-    # Если остались не назначенные элементы (на всякий случай)
     for j in range(n_items):
         if assigned_item_to_action[j] is None:
             min_count = min(assigned_counts)
@@ -70,34 +66,48 @@ def distribute_items(actions_texts, items_texts, action_embeddings, item_embeddi
     return result
 
 def enrich_standard(reg_number: str, session: Session):
-    """
-    Обогащает один стандарт: читает из raw, парсит HTML трудовых функций,
-    распределяет умения и знания по трудовым действиям с помощью эмбеддингов,
-    и сохраняет в enriched-таблицы.
-    """
     # 1. Получаем raw-данные
     raw_std = session.query(StandardRaw).filter(StandardRaw.reg_number == reg_number).first()
     if not raw_std:
         raise ValueError(f"Стандарт с рег. номером {reg_number} не найден в raw-БД")
+    print(f"\n=== Обогащение стандарта {reg_number} ===")
 
-    # 2. Получаем element_id
+    # 2. Получение element_id
     element_id = raw_std.element_id
     if not element_id:
         from .parser import reg_to_element_cache
         element_id = reg_to_element_cache.get(reg_number)
         if not element_id:
-            raise ValueError(f"Не удалось определить element_id для {reg_number}")
+            print(f"  element_id не найден в кэше, выполняем поиск по рег. номеру {reg_number}...")
+            element_id = find_element_id_by_reg_number(reg_number)
+            if element_id:
+                raw_std.element_id = element_id
+                session.commit()
+                print(f"  Найден и сохранён element_id: {element_id}")
+            else:
+                raise ValueError(f"Не удалось определить element_id для {reg_number}")
+    else:
+        print(f"  Используем element_id из БД: {element_id}")
 
-    # 3. Получаем ссылки на ТФ со страницы стандарта
+    # 3. Получаем ссылки на трудовые функции
+    print(f"  Получение ссылок на ТФ со страницы стандарта...")
     tf_links = get_tf_links_from_standard_page(element_id)
-    # 4. Для каждой ТФ парсим страницу, получаем списки умений и знаний
+    print(f"  Найдено {len(tf_links)} ссылок на ТФ")
+
+    if not tf_links:
+        print("  ⚠️ Нет ссылок на ТФ – обогащение невозможно")
+        return
+
+    # 4. Парсим каждую ТФ
     tf_data_map = {}
     for link in tf_links:
         tf_name = link['name']
+        print(f"  Парсинг ТФ: {tf_name}")
         tf_data = parse_tf_page(link['url'])
         tf_data_map[tf_name] = tf_data
+        print(f"    Получено: {len(tf_data.get('skills', []))} умений, {len(tf_data.get('knowledges', []))} знаний")
 
-    # 5. Обновляем raw-таблицы: добавляем умения и знания на уровне ТФ
+    # 5. Обновляем raw: добавляем умения и знания (без изменений)
     for gf_raw in raw_std.generalized_functions:
         for pf_raw in gf_raw.particular_functions:
             tf_name = pf_raw.name
@@ -106,7 +116,6 @@ def enrich_standard(reg_number: str, session: Session):
             
             session.query(SkillRaw).filter(SkillRaw.particular_id == pf_raw.id).delete()
             session.query(KnowledgeRaw).filter(KnowledgeRaw.particular_id == pf_raw.id).delete()
-            
             for skill_text in skills:
                 skill = SkillRaw(particular_id=pf_raw.id, text=skill_text)
                 session.add(skill)
@@ -114,32 +123,44 @@ def enrich_standard(reg_number: str, session: Session):
                 know = KnowledgeRaw(particular_id=pf_raw.id, text=know_text)
                 session.add(know)
     session.commit()
+    print("  Raw-данные обновлены (умения и знания добавлены на уровень ТФ)")
 
-    # 6. Строим enriched-структуру
+    # 6. Удаляем старую enriched-запись
     session.query(EnrichedStandard).filter(EnrichedStandard.reg_number == reg_number).delete()
     session.commit()
+    print("  Старая enriched-запись удалена")
 
+    # 7. Создаём enriched-стандарт
     enriched_std = EnrichedStandard(
         reg_number=raw_std.reg_number,
         name=raw_std.name,
         order_number=raw_std.order_number,
         approval_date=raw_std.approval_date,
         kind_activity=raw_std.kind_activity,
-        purpose=raw_std.purpose
+        purpose=raw_std.purpose,
+        professional_area_code=raw_std.professional_area_code,
+        okved_codes=raw_std.okved_codes
     )
     session.add(enriched_std)
     session.flush()
+    print("  Enriched-стандарт создан")
 
+    # 8. Проходим по всем ОТФ и ТФ
     for gf_raw in raw_std.generalized_functions:
         gf_enr = EnrichedGeneralizedFunction(
             standard_id=enriched_std.id,
             code=gf_raw.code,
             name=gf_raw.name,
             level=gf_raw.level,
-            possible_job_titles=gf_raw.possible_job_titles
+            possible_job_titles=gf_raw.possible_job_titles,
+            okz_codes=gf_raw.okz_codes,
+            okpdtr_codes=gf_raw.okpdtr_codes,
+            okso_codes=gf_raw.okso_codes
         )
         session.add(gf_enr)
         session.flush()
+        print(f"  ОТФ {gf_raw.code} создана")
+
         for pf_raw in gf_raw.particular_functions:
             pf_enr = EnrichedParticularFunction(
                 generalized_id=gf_enr.id,
@@ -154,13 +175,11 @@ def enrich_standard(reg_number: str, session: Session):
             tf_name = pf_raw.name
             skills = tf_data_map.get(tf_name, {}).get('skills', [])
             knowledges = tf_data_map.get(tf_name, {}).get('knowledges', [])
+            print(f"    ТФ {pf_raw.code}: labor_actions={len(labor_actions)}, skills={len(skills)}, knowledges={len(knowledges)}")
 
             if not skills and not knowledges:
                 for la_text in labor_actions:
-                    action = EnrichedLaborAction(
-                        particular_id=pf_enr.id,
-                        text=la_text
-                    )
+                    action = EnrichedLaborAction(particular_id=pf_enr.id, text=la_text)
                     session.add(action)
                 continue
 
@@ -183,10 +202,7 @@ def enrich_standard(reg_number: str, session: Session):
 
             # Создаём действия с привязками
             for i, la_text in enumerate(labor_actions):
-                action = EnrichedLaborAction(
-                    particular_id=pf_enr.id,
-                    text=la_text
-                )
+                action = EnrichedLaborAction(particular_id=pf_enr.id, text=la_text)
                 session.add(action)
                 session.flush()
 
@@ -207,3 +223,4 @@ def enrich_standard(reg_number: str, session: Session):
                     action.knowledges.append(know_obj)
 
     session.commit()
+    print(f"  Обогащение стандарта {reg_number} завершено успешно")

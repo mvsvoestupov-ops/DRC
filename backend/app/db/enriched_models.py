@@ -2,7 +2,6 @@ from sqlalchemy import Column, Integer, String, Text, ForeignKey, Table, JSON
 from sqlalchemy.orm import relationship
 from .base import Base
 
-# Промежуточные таблицы для связей многие-ко-многим
 action_skill = Table(
     'enriched_action_skill',
     Base.metadata,
@@ -26,6 +25,9 @@ class EnrichedStandard(Base):
     approval_date = Column(String)
     kind_activity = Column(Text)
     purpose = Column(Text)
+    # Новые поля
+    professional_area_code = Column(String, nullable=True)
+    okved_codes = Column(JSON, nullable=True)
 
     generalized_functions = relationship("EnrichedGeneralizedFunction", back_populates="standard", cascade="all, delete-orphan")
 
@@ -37,6 +39,10 @@ class EnrichedGeneralizedFunction(Base):
     name = Column(Text)
     level = Column(String)
     possible_job_titles = Column(JSON)
+    # Новые поля
+    okz_codes = Column(JSON, nullable=True)
+    okpdtr_codes = Column(JSON, nullable=True)
+    okso_codes = Column(JSON, nullable=True)
 
     standard = relationship("EnrichedStandard", back_populates="generalized_functions")
     particular_functions = relationship("EnrichedParticularFunction", back_populates="generalized", cascade="all, delete-orphan")
@@ -65,13 +71,11 @@ class EnrichedLaborAction(Base):
 class EnrichedSkill(Base):
     __tablename__ = 'enriched_skills'
     id = Column(Integer, primary_key=True)
-    text = Column(Text, unique=True)   # уникальность для избежания дублей
-
+    text = Column(Text, unique=True)
     actions = relationship("EnrichedLaborAction", secondary=action_skill, back_populates="skills")
 
 class EnrichedKnowledge(Base):
     __tablename__ = 'enriched_knowledges'
     id = Column(Integer, primary_key=True)
     text = Column(Text, unique=True)
-
     actions = relationship("EnrichedLaborAction", secondary=action_knowledge, back_populates="knowledges")
