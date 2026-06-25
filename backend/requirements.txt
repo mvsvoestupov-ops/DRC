@@ -7,4 +7,4 @@ sqlalchemy==2.0.23
 psycopg2-binary==2.9.9   # можно убрать, если не нужен PostgreSQL
 alembic==1.12.1
 sentence-transformers==2.2.2
-torch==2.1.0             # для CPU, если не хотите ставить GPU-версию
+beautifulsoup4==4.12.2
