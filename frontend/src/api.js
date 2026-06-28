@@ -44,3 +44,18 @@ export const getCompetenceStats = () => API.get('/competences/stats');
 export const getQualifications = () => API.get('/qualifications');
 
 export const getQualification = (id) => API.get(`/qualifications/${id}`);
+
+export const searchStandards = (query) => {
+  return API.get('/standards/search', { params: { q: query, limit: 20 } });
+};
+// ... после создания API
+API.interceptors.request.use(
+  config => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  error => Promise.reject(error)
+);

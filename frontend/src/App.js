@@ -1,53 +1,123 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
-import { Layout, Menu } from 'antd';
-import { HomeOutlined, ApartmentOutlined, PlusOutlined, BookOutlined } from '@ant-design/icons';
+import { BrowserRouter, Routes, Route, Link, Navigate, useNavigate } from 'react-router-dom';
+import { Layout, Menu, Typography } from 'antd';
+import { HomeOutlined, ApartmentOutlined, PlusOutlined, LogoutOutlined } from '@ant-design/icons';
+import { useAuth } from './context/AuthContext';
 import Dashboard from './pages/Dashboard';
 import StandardsPage from './pages/StandardsPage';
 import QualificationsList from './pages/QualificationsList';
 import QualificationDetail from './pages/QualificationDetail';
 import CreateCompetenceWizard from './pages/CreateCompetenceWizard';
 import CompetenceDetail from './pages/CompetenceDetail';
+import StrategicSession from './pages/StrategicSession';
+import RegisterPage from './pages/RegisterPage';
+import LoginPage from './pages/LoginPage';
+import MyProjects from './pages/MyProjects';
+import FeedbackButton from './components/FeedbackButton';
 
 const { Header, Content, Footer } = Layout;
+const { Text } = Typography;
+
+// Компонент меню – использует useNavigate внутри роутера
+const AppMenu = () => {
+  const { isAuthenticated, isAdmin, user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  if (!isAuthenticated) return null;
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  // Базовые пункты для всех авторизованных
+  let items = [
+    { key: 'my-projects', label: <Link to="/my-projects">Мои проекты</Link> },
+    { key: 'strategic', label: <Link to="/strategic-session">Стратегическая сессия</Link> },
+  ];
+
+  // Если админ – добавляем админские пункты
+  if (isAdmin) {
+    items = [
+      { key: 'home', icon: <HomeOutlined />, label: <Link to="/">Главная</Link> },
+      ...items,
+      { key: 'standards', icon: <ApartmentOutlined />, label: <Link to="/standards">Профстандарты</Link> },
+      { key: 'qualifications', label: <Link to="/qualifications">Квалификации</Link> },
+      { key: 'create', icon: <PlusOutlined />, label: <Link to="/create-competence">Предложить компетенцию</Link> },
+      { key: 'register', label: <Link to="/register">Регистрация</Link> },
+    ];
+  } else {
+    // Для обычного пользователя – регистрация тоже доступна (но можно и убрать, если не нужно)
+    items.push({ key: 'register', label: <Link to="/register">Регистрация</Link> });
+  }
+
+  // Добавляем выход
+  items.push({
+    key: 'logout',
+    icon: <LogoutOutlined />,
+    label: 'Выйти',
+    onClick: handleLogout,
+  });
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+      <Text type="secondary">{user?.email || ''}</Text>
+      <Menu mode="horizontal" theme="light" style={{ borderBottom: 'none' }} items={items} />
+    </div>
+  );
+};
+
+// Основной компонент с маршрутами
+function AppContent() {
+  const { isAuthenticated, isAdmin } = useAuth();
+
+  return (
+    <Layout>
+      <Header style={{ background: '#fff', borderBottom: '1px solid #f0f0f0', padding: '0 24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ fontSize: 20, fontWeight: 'bold' }}>Национальный реестр компетенций</div>
+          <AppMenu />
+        </div>
+      </Header>
+      <Content style={{ minHeight: 'calc(100vh - 134px)' }}>
+        <Routes>
+          {!isAuthenticated ? (
+            // Публичные маршруты для неавторизованных
+            <>
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="*" element={<Navigate to="/register" />} />
+            </>
+          ) : (
+            // Авторизованные маршруты
+            <>
+              <Route path="/" element={isAdmin ? <Dashboard /> : <Navigate to="/my-projects" />} />
+              <Route path="/my-projects" element={<MyProjects />} />
+              <Route path="/standards" element={isAdmin ? <StandardsPage /> : <Navigate to="/my-projects" />} />
+              <Route path="/qualifications" element={isAdmin ? <QualificationsList /> : <Navigate to="/my-projects" />} />
+              <Route path="/qualifications/:id" element={isAdmin ? <QualificationDetail /> : <Navigate to="/my-projects" />} />
+              <Route path="/create-competence" element={isAdmin ? <CreateCompetenceWizard /> : <Navigate to="/my-projects" />} />
+              <Route path="/competence/:id" element={<CompetenceDetail />} />
+              <Route path="/strategic-session" element={<StrategicSession />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/login" element={<Navigate to="/" />} />
+              <Route path="*" element={<Navigate to="/my-projects" />} />
+            </>
+          )}
+        </Routes>
+      </Content>
+      <Footer style={{ textAlign: 'center' }}>
+        © 2026 Национальный реестр компетенций
+      </Footer>
+      {isAuthenticated && <FeedbackButton />}
+    </Layout>
+  );
+}
 
 function App() {
   return (
     <BrowserRouter>
-      <Layout>
-        <Header style={{ background: '#fff', borderBottom: '1px solid #f0f0f0' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ fontSize: 20, fontWeight: 'bold' }}>Национальный реестр компетенций</div>
-            <Menu mode="horizontal" theme="light" style={{ borderBottom: 'none' }}>
-              <Menu.Item key="home" icon={<HomeOutlined />}>
-                <Link to="/">Главная</Link>
-              </Menu.Item>
-              <Menu.Item key="standards" icon={<ApartmentOutlined />}>
-                <Link to="/standards">Профстандарты</Link>
-              </Menu.Item>
-              <Menu.Item key="qualifications" icon={<BookOutlined />}>
-                <Link to="/qualifications">Квалификации</Link>
-              </Menu.Item>
-              <Menu.Item key="create" icon={<PlusOutlined />}>
-                <Link to="/create-competence">Предложить компетенцию</Link>
-              </Menu.Item>
-            </Menu>
-          </div>
-        </Header>
-        <Content style={{ minHeight: 'calc(100vh - 134px)' }}>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/standards" element={<StandardsPage />} />
-            <Route path="/qualifications" element={<QualificationsList />} />
-            <Route path="/qualifications/:id" element={<QualificationDetail />} />
-            <Route path="/create-competence" element={<CreateCompetenceWizard />} />
-            <Route path="/competence/:id" element={<CompetenceDetail />} />
-          </Routes>
-        </Content>
-        <Footer style={{ textAlign: 'center' }}>
-          © 2026 Национальный реестр компетенций
-        </Footer>
-      </Layout>
+      <AppContent />
     </BrowserRouter>
   );
 }

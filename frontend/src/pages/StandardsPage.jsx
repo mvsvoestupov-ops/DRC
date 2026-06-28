@@ -10,7 +10,7 @@ import {
   getEnrichedStandard,
   runEnrichment
 } from '../api';
-import StandardTree from '../components/StandardTree';
+import StandardStructureViewer from '../components/StandardStructureViewer';
 import StandardCardGraph from '../components/StandardCardGraph';
 
 const { TabPane } = Tabs;
@@ -32,7 +32,6 @@ const StandardsPage = () => {
   const [modalText, setModalText] = useState('');
   const [modalSpinning, setModalSpinning] = useState(false);
 
-  // Загрузка списка сырых стандартов
   const loadRawList = async () => {
     try {
       const res = await getStandards();
@@ -42,7 +41,6 @@ const StandardsPage = () => {
     }
   };
 
-  // Загрузка списка обогащённых стандартов
   const loadEnrichedList = async () => {
     try {
       const res = await getEnrichedStandards();
@@ -57,7 +55,6 @@ const StandardsPage = () => {
     loadEnrichedList();
   }, []);
 
-  // Обработчик загрузки XML-файла
   const handleUpload = async (file) => {
     setLoading(true);
     try {
@@ -72,7 +69,6 @@ const StandardsPage = () => {
     return false;
   };
 
-  // Массовая загрузка из реестра
   const handleFetchBulk = async () => {
     setBulkLoading(true);
     setModalVisible(true);
@@ -94,7 +90,6 @@ const StandardsPage = () => {
       const elapsed = Date.now() - startTime;
       const remaining = Math.max(0, MIN_MODAL_DISPLAY_TIME - elapsed);
       if (remaining > 0) await new Promise(resolve => setTimeout(resolve, remaining));
-
       message.error('Ошибка при массовой загрузке');
       setModalText('Ошибка загрузки');
     } finally {
@@ -104,7 +99,6 @@ const StandardsPage = () => {
     }
   };
 
-  // Запуск обогащения
   const handleRunEnrichment = async () => {
     setEnrichLoading(true);
     setModalVisible(true);
@@ -126,7 +120,6 @@ const StandardsPage = () => {
       const elapsed = Date.now() - startTime;
       const remaining = Math.max(0, MIN_MODAL_DISPLAY_TIME - elapsed);
       if (remaining > 0) await new Promise(resolve => setTimeout(resolve, remaining));
-
       message.error('Ошибка при обогащении');
       setModalText('Ошибка обогащения');
     } finally {
@@ -136,7 +129,6 @@ const StandardsPage = () => {
     }
   };
 
-  // Выбор сырого стандарта
   const handleSelectRaw = async (regNumber) => {
     try {
       const res = await getStandard(regNumber);
@@ -146,7 +138,6 @@ const StandardsPage = () => {
     }
   };
 
-  // Выбор обогащённого стандарта
   const handleSelectEnriched = async (regNumber) => {
     try {
       const res = await getEnrichedStandard(regNumber);
@@ -156,7 +147,6 @@ const StandardsPage = () => {
     }
   };
 
-  // Рендер списка стандартов
   const renderStandardList = (items, onSelect) => (
     <List
       dataSource={items}
@@ -176,7 +166,6 @@ const StandardsPage = () => {
 
   return (
     <div style={{ padding: '24px' }}>
-      {/* Кнопки управления */}
       <div style={{ display: 'flex', gap: 16, marginBottom: 16, flexWrap: 'wrap' }}>
         <Upload beforeUpload={handleUpload} showUploadList={false}>
           <Button icon={<UploadOutlined />} loading={loading}>Загрузить XML</Button>
@@ -196,9 +185,7 @@ const StandardsPage = () => {
         />
       </div>
 
-      {/* Основная область */}
       <div style={{ display: 'flex', gap: 24 }}>
-        {/* Левый список стандартов */}
         <div style={{ flex: '0 0 300px', background: '#f5f5f5', padding: 16, borderRadius: 8, maxHeight: '80vh', overflow: 'auto' }}>
           <Tabs activeKey={activeTab} onChange={setActiveTab}>
             <TabPane tab="Сырые" key="raw">
@@ -210,7 +197,6 @@ const StandardsPage = () => {
           </Tabs>
         </div>
 
-        {/* Правая область отображения выбранного стандарта */}
         <div style={{ flex: 1, background: '#fff', padding: 16, borderRadius: 8, maxHeight: '80vh', overflow: 'auto' }}>
           {selected ? (
             <>
@@ -219,7 +205,7 @@ const StandardsPage = () => {
                 <span style={{ fontSize: '12px', color: '#888' }}>Рег. № {selected.reg_number}</span>
               </div>
               {viewMode === 'tree' ? (
-                <StandardTree data={selected} />
+                <StandardStructureViewer standard={selected} />
               ) : (
                 <StandardCardGraph standard={selected} />
               )}
@@ -232,7 +218,6 @@ const StandardsPage = () => {
         </div>
       </div>
 
-      {/* Модальное окно прогресса */}
       <Modal
         title={modalTitle}
         visible={modalVisible}

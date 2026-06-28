@@ -50,6 +50,13 @@ class Competence(Base):
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
     is_active = Column(Integer, default=1)
     
+    # Дополнительные данные (description, industry, hours и пр.)
+    raw_data = Column(JSON, default={})
+    
     # Связи
     prof_standard = relationship("StandardRaw", backref="competences")
     qualification = relationship("Qualification", backref="competences")
+    
+    # Привязка к пользователю
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=True)
+    user = relationship("User", backref="competences")

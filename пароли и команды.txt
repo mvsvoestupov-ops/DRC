@@ -1,0 +1,33 @@
+cmd
+cd C:\DRC\backend
+venv\Scripts\activate
+python
+
+
+from app.parser import download_bulk_xml_chunk, parse_bulk_xml, save_raw_standard
+from app.db import SessionLocal
+
+element_ids = ['111728']  # замените на реальный ID старого ПС
+session = SessionLocal()
+xml_path = download_bulk_xml_chunk(element_ids, 'test_old_ps.xml')
+standards = parse_bulk_xml(xml_path, element_ids=element_ids)
+for std in standards:
+    save_raw_standard(session, std, element_ids[0])
+session.commit()
+
+
+
+wget -O DCR.rar "https://drive.usercontent.google.com/download?id=1EZmv-gVccVpD1CdhYKFNBRBQuwlFZegt&export=download&authuser=0&confirm=t&uuid=d0b85d75-90eb-477b-a90c-e0b99c0f3461&at=ABswASawH-4FJGNbk-hD1IwhRaQA%3A1782377108323"
+
+wget -O DCR.rar "https://ao-nk.ru/DCR.rar"
+
+wget -O DCR.rar ""
+
+Admin@admin.ru Aonk2019!
+stol1@mail.ru", "pass1",
+stol2@mail.ru", "pass2",
+stol3@mail.ru", "pass3",
+stol4@mail.ru", "pass4",
+stol5@mail.ru", "pass5",
+stol6@mail.ru", "pass6",
+stol7@mail.ru", "pass7"
