@@ -37,3 +37,4 @@ class Qualification(Base):
     
     # Связь с профстандартом (если найден)
     professional_standard = relationship("StandardRaw", backref="qualifications")
+    assessment_tools = relationship("AssessmentTool", back_populates="qualification")

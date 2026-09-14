@@ -1,0 +1,224 @@
+{
+  "summary": {
+    "expected_on_site": 1682,
+    "site_element_ids_fetched": 1682,
+    "parser_element_ids": 1682,
+    "local_db_count": 1666,
+    "missing_in_db_by_element_id": 22,
+    "missing_vs_xlsx_reg_number": 0,
+    "gap_expected_minus_db": 16,
+    "parser_ids_not_in_paginated_fetch": 0
+  },
+  "missing_in_local_db": [
+    {
+      "element_id": "149490",
+      "reg_number": "361",
+      "ps_code": "",
+      "link_text": "361",
+      "in_db_by_reg_number": null,
+      "in_db_name": null
+    },
+    {
+      "element_id": "149470",
+      "reg_number": "1778",
+      "ps_code": "",
+      "link_text": "1778",
+      "in_db_by_reg_number": null,
+      "in_db_name": null
+    },
+    {
+      "element_id": "149430",
+      "reg_number": "563",
+      "ps_code": "",
+      "link_text": "563",
+      "in_db_by_reg_number": "563",
+      "in_db_name": "Специалист по дизайну графических и пользовательских интерфейсов"
+    },
+    {
+      "element_id": "149341",
+      "reg_number": "256",
+      "ps_code": "",
+      "link_text": "256",
+      "in_db_by_reg_number": "256",
+      "in_db_name": "Буровой супервайзер в нефтегазовой отрасли"
+    },
+    {
+      "element_id": "149330",
+      "reg_number": "1700",
+      "ps_code": "",
+      "link_text": "1700",
+      "in_db_by_reg_number": null,
+      "in_db_name": null
+    },
+    {
+      "element_id": "149317",
+      "reg_number": "1699",
+      "ps_code": "",
+      "link_text": "1699",
+      "in_db_by_reg_number": null,
+      "in_db_name": null
+    },
+    {
+      "element_id": "149292",
+      "reg_number": "1144",
+      "ps_code": "",
+      "link_text": "1144",
+      "in_db_by_reg_number": "1144",
+      "in_db_name": "Специалист по оценке соответствия подъемных платформ для инвалидов требованиям безопасности"
+    },
+    {
+      "element_id": "149243",
+      "reg_number": "1744",
+      "ps_code": "",
+      "link_text": "1744",
+      "in_db_by_reg_number": null,
+      "in_db_name": null
+    },
+    {
+      "element_id": "149227",
+      "reg_number": "989",
+      "ps_code": "",
+      "link_text": "989",
+      "in_db_by_reg_number": "989",
+      "in_db_name": "Специалист по эксплуатации эскалаторов, пассажирских конвейеров и подъемных платформ для инвалидов"
+    },
+    {
+      "element_id": "148925",
+      "reg_number": "688",
+      "ps_code": "",
+      "link_text": "688",
+      "in_db_by_reg_number": "688",
+      "in_db_name": "Специалист диспетчерского аппарата подразделения по обслуживанию сооружений и устройств инфраструктуры железнодорожного транспорта"
+    },
+    {
+      "element_id": "148880",
+      "reg_number": "354",
+      "ps_code": "",
+      "link_text": "354",
+      "in_db_by_reg_number": "354",
+      "in_db_name": "Работник по эксплуатации средств измерений и информационно-измерительных систем электростанции"
+    },
+    {
+      "element_id": "148833",
+      "reg_number": "",
+      "ps_code": "",
+      "link_text": "96",
+      "in_db_by_reg_number": null,
+      "in_db_name": null
+    },
+    {
+      "element_id": "148745",
+      "reg_number": "936",
+      "ps_code": "",
+      "link_text": "936",
+      "in_db_by_reg_number": "936",
+      "in_db_name": "Специалист по текущему содержанию и ремонту верхнего строения пути, искусственных сооружений железнодорожного транспорта"
+    },
+    {
+      "element_id": "148205",
+      "reg_number": "1233",
+      "ps_code": "",
+      "link_text": "1233",
+      "in_db_by_reg_number": "1233",
+      "in_db_name": "Специалист по обслуживанию и ремонту устройств железнодорожной инфраструктуры на малоинтенсивных железнодорожных участках"
+    },
+    {
+      "element_id": "147682",
+      "reg_number": "776",
+      "ps_code": "",
+      "link_text": "776",
+      "in_db_by_reg_number": "776",
+      "in_db_name": "Работник цеха по сортировке твердых бытовых отходов"
+    },
+    {
+      "element_id": "144202",
+      "reg_number": "169",
+      "ps_code": "",
+      "link_text": "169",
+      "in_db_by_reg_number": "169",
+      "in_db_name": "Дизайнер детской игровой среды и продукции"
+    },
+    {
+      "element_id": "144149",
+      "reg_number": "1317",
+      "ps_code": "",
+      "link_text": "1317",
+      "in_db_by_reg_number": "1317",
+      "in_db_name": "Специалист по работе с молодежью"
+    },
+    {
+      "element_id": "125540",
+      "reg_number": "",
+      "ps_code": "",
+      "link_text": "37",
+      "in_db_by_reg_number": null,
+      "in_db_name": null
+    },
+    {
+      "element_id": "113617",
+      "reg_number": "594",
+      "ps_code": "",
+      "link_text": "594",
+      "in_db_by_reg_number": "594",
+      "in_db_name": "Специалист по организации движения поездов железнодорожного транспорта"
+    },
+    {
+      "element_id": "77849",
+      "reg_number": "1215",
+      "ps_code": "",
+      "link_text": "1215",
+      "in_db_by_reg_number": "1215",
+      "in_db_name": "Мастер производственного обучения вождению транспортных средств соответствующих категорий и подкатегорий"
+    },
+    {
+      "element_id": "72383",
+      "reg_number": "1119",
+      "ps_code": "",
+      "link_text": "1119",
+      "in_db_by_reg_number": "1119",
+      "in_db_name": "Врач скорой медицинской помощи"
+    },
+    {
+      "element_id": "48385",
+      "reg_number": "289",
+      "ps_code": "",
+      "link_text": "289",
+      "in_db_by_reg_number": "289",
+      "in_db_name": "Резчик холодного металла"
+    }
+  ],
+  "missing_vs_xlsx": [],
+  "parser_fetch_gap_ids": [],
+  "extra_in_db_not_on_site": [
+    {
+      "reg_number": "1144",
+      "name": "Специалист по оценке соответствия подъемных платформ для инвалидов требованиям безопасности",
+      "element_id": "74652"
+    },
+    {
+      "reg_number": "73",
+      "name": "Моторист судов с ядерными энергетическими установками, судов атомно-технологического обслуживания (всех категорий)",
+      "element_id": "46300"
+    },
+    {
+      "reg_number": "55",
+      "name": "Электромеханик судов с ядерной энергетической установкой, судов атомного технологического обслуживания (всех категорий)",
+      "element_id": "46284"
+    },
+    {
+      "reg_number": "563",
+      "name": "Специалист по дизайну графических и пользовательских интерфейсов",
+      "element_id": "104985"
+    },
+    {
+      "reg_number": "989",
+      "name": "Специалист по эксплуатации эскалаторов, пассажирских конвейеров и подъемных платформ для инвалидов",
+      "element_id": "74774"
+    },
+    {
+      "reg_number": "256",
+      "name": "Буровой супервайзер в нефтегазовой отрасли",
+      "element_id": "47638"
+    }
+  ]
+}

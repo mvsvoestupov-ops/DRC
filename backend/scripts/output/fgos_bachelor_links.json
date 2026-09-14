@@ -1,0 +1,1689 @@
+{
+  "category": "bachelor",
+  "count": 187,
+  "items": [
+    {
+      "url": "https://classinform.ru/fgos/01.03.01-matematika.html",
+      "code": "01.03.01",
+      "category": "bachelor",
+      "industry_code": "3.1",
+      "industry_name": "Математические и естественные науки (уровень 3)",
+      "group_code": "01.00.00",
+      "group_name": "Математика и механика (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/01.03.02-pricladnaia-matematika-i-informatika.html",
+      "code": "01.03.02",
+      "category": "bachelor",
+      "industry_code": "3.1",
+      "industry_name": "Математические и естественные науки (уровень 3)",
+      "group_code": "01.00.00",
+      "group_name": "Математика и механика (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/01.03.03-mehanika-i-matematicheskoe-modelirovanie.html",
+      "code": "01.03.03",
+      "category": "bachelor",
+      "industry_code": "3.1",
+      "industry_name": "Математические и естественные науки (уровень 3)",
+      "group_code": "01.00.00",
+      "group_name": "Математика и механика (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/01.03.04-pricladnaia-matematika.html",
+      "code": "01.03.04",
+      "category": "bachelor",
+      "industry_code": "3.1",
+      "industry_name": "Математические и естественные науки (уровень 3)",
+      "group_code": "01.00.00",
+      "group_name": "Математика и механика (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/01.03.05-statistika.html",
+      "code": "01.03.05",
+      "category": "bachelor",
+      "industry_code": "3.1",
+      "industry_name": "Математические и естественные науки (уровень 3)",
+      "group_code": "01.00.00",
+      "group_name": "Математика и механика (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/02.03.01-matematika-i-kompiuternye-nauki.html",
+      "code": "02.03.01",
+      "category": "bachelor",
+      "industry_code": "3.1",
+      "industry_name": "Математические и естественные науки (уровень 3)",
+      "group_code": "02.00.00",
+      "group_name": "Компьютерные и информационные науки (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/02.03.02-fundamentalnaia-informatika-i-informatcionnye-tekhnologii.html",
+      "code": "02.03.02",
+      "category": "bachelor",
+      "industry_code": "3.1",
+      "industry_name": "Математические и естественные науки (уровень 3)",
+      "group_code": "02.00.00",
+      "group_name": "Компьютерные и информационные науки (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/02.03.03-matematicheskoe-obespechenie-i-administrirovanie-informatcionnykh-sistem.html",
+      "code": "02.03.03",
+      "category": "bachelor",
+      "industry_code": "3.1",
+      "industry_name": "Математические и естественные науки (уровень 3)",
+      "group_code": "02.00.00",
+      "group_name": "Компьютерные и информационные науки (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/03.03.01-pricladnye-matematika-i-fizika.html",
+      "code": "03.03.01",
+      "category": "bachelor",
+      "industry_code": "3.1",
+      "industry_name": "Математические и естественные науки (уровень 3)",
+      "group_code": "03.00.00",
+      "group_name": "Физика и астрономия (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/03.03.02-fizika.html",
+      "code": "03.03.02",
+      "category": "bachelor",
+      "industry_code": "3.1",
+      "industry_name": "Математические и естественные науки (уровень 3)",
+      "group_code": "03.00.00",
+      "group_name": "Физика и астрономия (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/03.03.03-radiofizika.html",
+      "code": "03.03.03",
+      "category": "bachelor",
+      "industry_code": "3.1",
+      "industry_name": "Математические и естественные науки (уровень 3)",
+      "group_code": "03.00.00",
+      "group_name": "Физика и астрономия (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/04.03.01-himiia.html",
+      "code": "04.03.01",
+      "category": "bachelor",
+      "industry_code": "3.1",
+      "industry_name": "Математические и естественные науки (уровень 3)",
+      "group_code": "04.00.00",
+      "group_name": "Химия (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/04.03.02-himiia-fizika-i-mehanika-materialov.html",
+      "code": "04.03.02",
+      "category": "bachelor",
+      "industry_code": "3.1",
+      "industry_name": "Математические и естественные науки (уровень 3)",
+      "group_code": "04.00.00",
+      "group_name": "Химия (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/05.03.01-geologiia.html",
+      "code": "05.03.01",
+      "category": "bachelor",
+      "industry_code": "3.1",
+      "industry_name": "Математические и естественные науки (уровень 3)",
+      "group_code": "05.00.00",
+      "group_name": "Науки о Земле (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/05.03.02-geografiia.html",
+      "code": "05.03.02",
+      "category": "bachelor",
+      "industry_code": "3.1",
+      "industry_name": "Математические и естественные науки (уровень 3)",
+      "group_code": "05.00.00",
+      "group_name": "Науки о Земле (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/05.03.03-kartografiia-i-geoinformatika.html",
+      "code": "05.03.03",
+      "category": "bachelor",
+      "industry_code": "3.1",
+      "industry_name": "Математические и естественные науки (уровень 3)",
+      "group_code": "05.00.00",
+      "group_name": "Науки о Земле (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/05.03.04-gidrometeorologiia.html",
+      "code": "05.03.04",
+      "category": "bachelor",
+      "industry_code": "3.1",
+      "industry_name": "Математические и естественные науки (уровень 3)",
+      "group_code": "05.00.00",
+      "group_name": "Науки о Земле (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/05.03.05-pricladnaia-gidrometeorologiia.html",
+      "code": "05.03.05",
+      "category": "bachelor",
+      "industry_code": "3.1",
+      "industry_name": "Математические и естественные науки (уровень 3)",
+      "group_code": "05.00.00",
+      "group_name": "Науки о Земле (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/05.03.06-ekologiia-i-prirodopolzovanie.html",
+      "code": "05.03.06",
+      "category": "bachelor",
+      "industry_code": "3.1",
+      "industry_name": "Математические и естественные науки (уровень 3)",
+      "group_code": "05.00.00",
+      "group_name": "Науки о Земле (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/06.03.01-biologiia.html",
+      "code": "06.03.01",
+      "category": "bachelor",
+      "industry_code": "3.1",
+      "industry_name": "Математические и естественные науки (уровень 3)",
+      "group_code": "06.00.00",
+      "group_name": "Биологические науки (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/06.03.02-pochvovedenie.html",
+      "code": "06.03.02",
+      "category": "bachelor",
+      "industry_code": "3.1",
+      "industry_name": "Математические и естественные науки (уровень 3)",
+      "group_code": "06.00.00",
+      "group_name": "Биологические науки (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/07.03.01-arhitektura.html",
+      "code": "07.03.01",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "07.00.00",
+      "group_name": "Архитектура (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/07.03.02-rekonstruktciia-i-restavratciia-arhitekturnogo-naslediia.html",
+      "code": "07.03.02",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "07.00.00",
+      "group_name": "Архитектура (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/07.03.03-dizain-arhitekturnoi-sredy.html",
+      "code": "07.03.03",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "07.00.00",
+      "group_name": "Архитектура (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/07.03.04-gradostroitelstvo.html",
+      "code": "07.03.04",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "07.00.00",
+      "group_name": "Архитектура (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/08.03.01-stroitelstvo.html",
+      "code": "08.03.01",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "08.00.00",
+      "group_name": "Техника и технологии строительства (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/09.03.01-informatika-i-vychislitelnaia-tekhnika.html",
+      "code": "09.03.01",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "09.00.00",
+      "group_name": "Информатика и вычислительная техника (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/09.03.02-informatcionnye-sistemy-i-tekhnologii.html",
+      "code": "09.03.02",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "09.00.00",
+      "group_name": "Информатика и вычислительная техника (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/09.03.03-pricladnaia-informatika.html",
+      "code": "09.03.03",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "09.00.00",
+      "group_name": "Информатика и вычислительная техника (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/09.03.04-programmnaia-inzheneriia.html",
+      "code": "09.03.04",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "09.00.00",
+      "group_name": "Информатика и вычислительная техника (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/10.03.01-informatcionnaia-bezopasnost.html",
+      "code": "10.03.01",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "10.00.00",
+      "group_name": "Информационная безопасность (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/11.03.01-radiotekhnika.html",
+      "code": "11.03.01",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "11.00.00",
+      "group_name": "Электроника, радиотехника и системы связи (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/11.03.02-infokommunikatcionnye-tekhnologii-i-sistemy-sviazi.html",
+      "code": "11.03.02",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "11.00.00",
+      "group_name": "Электроника, радиотехника и системы связи (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/11.03.03-konstruirovanie-i-tekhnologiia-elektronnykh-sredstv.html",
+      "code": "11.03.03",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "11.00.00",
+      "group_name": "Электроника, радиотехника и системы связи (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/11.03.04-elektronika-i-nanoelektronika.html",
+      "code": "11.03.04",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "11.00.00",
+      "group_name": "Электроника, радиотехника и системы связи (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/12.03.01-priborostroenie.html",
+      "code": "12.03.01",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "12.00.00",
+      "group_name": "Фотоника, приборостроение, оптические и биотехнические системы и технологии (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/12.03.02-optotekhnika.html",
+      "code": "12.03.02",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "12.00.00",
+      "group_name": "Фотоника, приборостроение, оптические и биотехнические системы и технологии (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/12.03.03-fotonika-i-optoinformatika.html",
+      "code": "12.03.03",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "12.00.00",
+      "group_name": "Фотоника, приборостроение, оптические и биотехнические системы и технологии (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/12.03.04-biotekhnicheskie-sistemy-i-tekhnologii.html",
+      "code": "12.03.04",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "12.00.00",
+      "group_name": "Фотоника, приборостроение, оптические и биотехнические системы и технологии (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/12.03.05-lazernaia-tekhnika-i-lazernye-tekhnologii.html",
+      "code": "12.03.05",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "12.00.00",
+      "group_name": "Фотоника, приборостроение, оптические и биотехнические системы и технологии (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/13.03.01-teploenergetika-i-teplotekhnika.html",
+      "code": "13.03.01",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "13.00.00",
+      "group_name": "Электро-  и теплоэнергетика (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/13.03.02-elektroenergetika-i-elektrotekhnika.html",
+      "code": "13.03.02",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "13.00.00",
+      "group_name": "Электро-  и теплоэнергетика (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/13.03.03-energeticheskoe-mashinostroenie.html",
+      "code": "13.03.03",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "13.00.00",
+      "group_name": "Электро-  и теплоэнергетика (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/14.03.01-iadernaia-energetika-i-teplofizika.html",
+      "code": "14.03.01",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "14.00.00",
+      "group_name": "Ядерная энергетика и технологии (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/14.03.02-iadernye-fizika-i-tekhnologii.html",
+      "code": "14.03.02",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "14.00.00",
+      "group_name": "Ядерная энергетика и технологии (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/15.03.01-mashinostroenie.html",
+      "code": "15.03.01",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "15.00.00",
+      "group_name": "Машиностроение (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/15.03.02-tekhnologicheskie-mashiny-i-oborudovanie.html",
+      "code": "15.03.02",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "15.00.00",
+      "group_name": "Машиностроение (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/15.03.03-pricladnaia-mehanika.html",
+      "code": "15.03.03",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "15.00.00",
+      "group_name": "Машиностроение (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/15.03.04-avtomatizatciia-tekhnologicheskikh-protcessov-i-proizvodstv.html",
+      "code": "15.03.04",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "15.00.00",
+      "group_name": "Машиностроение (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/15.03.05-konstruktorsko-tekhnologicheskoe-obespechenie-mashinostroitelnykh-proizvodstv.html",
+      "code": "15.03.05",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "15.00.00",
+      "group_name": "Машиностроение (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/15.03.06-mehatronika-i-robototekhnika.html",
+      "code": "15.03.06",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "15.00.00",
+      "group_name": "Машиностроение (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/16.03.01-tekhnicheskaia-fizika.html",
+      "code": "16.03.01",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "16.00.00",
+      "group_name": "Физико-технические науки и технологии (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/16.03.02-vysokotekhnologicheskie-plazmennye-i-energeticheskie-ustanovki.html",
+      "code": "16.03.02",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "16.00.00",
+      "group_name": "Физико-технические науки и технологии (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/16.03.03-holodilnaia-kriogennaia-tekhnika-i-sistemy-zhizneobespecheniia.html",
+      "code": "16.03.03",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "16.00.00",
+      "group_name": "Физико-технические науки и технологии (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/17.03.01-korabelnoe-vooruzhenie.html",
+      "code": "17.03.01",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "17.00.00",
+      "group_name": "Оружие и системы вооружения (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/18.03.01-himicheskaia-tekhnologiia.html",
+      "code": "18.03.01",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "18.00.00",
+      "group_name": "Химические технологии (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/18.03.02-energo-i-resursosberegaiushchie-protcessy-v-himicheskoi-tekhnologii-neftehimii-i-biotekhnologii.html",
+      "code": "18.03.02",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "18.00.00",
+      "group_name": "Химические технологии (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/19.03.01-biotekhnologiia.html",
+      "code": "19.03.01",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "19.00.00",
+      "group_name": "Промышленная экология и биотехнологии (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/19.03.02-produkty-pitaniia-iz-rastitelnogo-syria.html",
+      "code": "19.03.02",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "19.00.00",
+      "group_name": "Промышленная экология и биотехнологии (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/19.03.03-produkty-pitaniia-zhivotnogo-proishozhdeniia.html",
+      "code": "19.03.03",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "19.00.00",
+      "group_name": "Промышленная экология и биотехнологии (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/19.03.04-tekhnologiia-produktcii-i-organizatciia-obshchestvennogo-pitaniia.html",
+      "code": "19.03.04",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "19.00.00",
+      "group_name": "Промышленная экология и биотехнологии (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/20.03.01-tekhnosfernaia-bezopasnost.html",
+      "code": "20.03.01",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "20.00.00",
+      "group_name": "Техносферная безопасность и природообустройство (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/20.03.02-prirodoobustroistvo-i-vodopolzovanie.html",
+      "code": "20.03.02",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "20.00.00",
+      "group_name": "Техносферная безопасность и природообустройство (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/21.03.01-neftegazovoe-delo.html",
+      "code": "21.03.01",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "21.00.00",
+      "group_name": "Прикладная геология, горное дело, нефтегазовое дело и геодезия (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/21.03.02-zemleustroistvo-i-kadastry.html",
+      "code": "21.03.02",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "21.00.00",
+      "group_name": "Прикладная геология, горное дело, нефтегазовое дело и геодезия (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/21.03.03-geodeziia-i-distantcionnoe-zondirovanie.html",
+      "code": "21.03.03",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "21.00.00",
+      "group_name": "Прикладная геология, горное дело, нефтегазовое дело и геодезия (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/22.03.01-materialovedenie-i-tekhnologii-materialov.html",
+      "code": "22.03.01",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "22.00.00",
+      "group_name": "Технологии материалов (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/22.03.02-metallurgiia.html",
+      "code": "22.03.02",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "22.00.00",
+      "group_name": "Технологии материалов (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/23.03.01-tekhnologiia-transportnykh-protcessov.html",
+      "code": "23.03.01",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "23.00.00",
+      "group_name": "Техника и технологии наземного транспорта (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/23.03.02-nazemnye-transportno-tekhnologicheskie-kompleksy.html",
+      "code": "23.03.02",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "23.00.00",
+      "group_name": "Техника и технологии наземного транспорта (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/23.03.03-ekspluatatciia-transportno-tekhnologicheskikh-mashin-i-kompleksov.html",
+      "code": "23.03.03",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "23.00.00",
+      "group_name": "Техника и технологии наземного транспорта (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/24.03.01-raketnye-kompleksy-i-kosmonavtika.html",
+      "code": "24.03.01",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "24.00.00",
+      "group_name": "Авиационная и ракетно-космическая техника (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/24.03.02-sistemy-upravleniia-dvizheniem-i-navigatciia.html",
+      "code": "24.03.02",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "24.00.00",
+      "group_name": "Авиационная и ракетно-космическая техника (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/24.03.03-ballistika-i-gidroaerodinamika.html",
+      "code": "24.03.03",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "24.00.00",
+      "group_name": "Авиационная и ракетно-космическая техника (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/24.03.04-aviastroenie.html",
+      "code": "24.03.04",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "24.00.00",
+      "group_name": "Авиационная и ракетно-космическая техника (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/24.03.05-dvigateli-letatelnykh-apparatov.html",
+      "code": "24.03.05",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "24.00.00",
+      "group_name": "Авиационная и ракетно-космическая техника (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/25.03.01-tekhnicheskaia-ekspluatatciia-letatelnykh-apparatov-i-dvigatelei.html",
+      "code": "25.03.01",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "25.00.00",
+      "group_name": "Аэронавигация и эксплуатация авиационной и ракетно-космической техники (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/25.03.02-tekhnicheskaia-ekspluatatciia-aviatcionnykh-elektrosistem-i-pilotazhno-navigatcionnykh-kompleksov.html",
+      "code": "25.03.02",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "25.00.00",
+      "group_name": "Аэронавигация и эксплуатация авиационной и ракетно-космической техники (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/25.03.04-ekspluatatciia-aeroportov-i-obespechenie-poletov-vozdushnykh-sudov.html",
+      "code": "25.03.04",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "25.00.00",
+      "group_name": "Аэронавигация и эксплуатация авиационной и ракетно-космической техники (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/26.03.01-upravlenie-vodnym-transportom-i-gidrograficheskoe-obespechenie-sudohodstva.html",
+      "code": "26.03.01",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "26.00.00",
+      "group_name": "Техника и технологии кораблестроения и водного транспорта (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/26.03.02-korablestroenie-okeanotekhnika-i-sistemotekhnika-obektov-morskoi-infrastruktury.html",
+      "code": "26.03.02",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "26.00.00",
+      "group_name": "Техника и технологии кораблестроения и водного транспорта (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/26.03.03.html",
+      "code": "26.03.03",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "26.00.00",
+      "group_name": "Техника и технологии кораблестроения и водного транспорта (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/26.03.04.html",
+      "code": "26.03.04",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "26.00.00",
+      "group_name": "Техника и технологии кораблестроения и водного транспорта (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/27.03.01-standartizatciia-i-metrologiia.html",
+      "code": "27.03.01",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "27.00.00",
+      "group_name": "Управление в технических системах (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/27.03.02-upravlenie-kachestvom.html",
+      "code": "27.03.02",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "27.00.00",
+      "group_name": "Управление в технических системах (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/27.03.03-sistemnyi-analiz-i-upravlenie.html",
+      "code": "27.03.03",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "27.00.00",
+      "group_name": "Управление в технических системах (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/27.03.04-upravlenie-v-tekhnicheskikh-sistemakh.html",
+      "code": "27.03.04",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "27.00.00",
+      "group_name": "Управление в технических системах (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/27.03.05-innovatika.html",
+      "code": "27.03.05",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "27.00.00",
+      "group_name": "Управление в технических системах (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/28.03.01-nanotekhnologii-i-mikrosistemnaia-tekhnika.html",
+      "code": "28.03.01",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "28.00.00",
+      "group_name": "Нанотехнологии и наноматериалы (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/28.03.02-nanoinzheneriia.html",
+      "code": "28.03.02",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "28.00.00",
+      "group_name": "Нанотехнологии и наноматериалы (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/28.03.03-nanomaterialy.html",
+      "code": "28.03.03",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "28.00.00",
+      "group_name": "Нанотехнологии и наноматериалы (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/29.03.01-tekhnologiia-izdelii-legkoi-promyshlennosti.html",
+      "code": "29.03.01",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "29.00.00",
+      "group_name": "Технологии легкой промышленности (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/29.03.02-tekhnologii-i-proektirovanie-tekstilnykh-izdelii.html",
+      "code": "29.03.02",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "29.00.00",
+      "group_name": "Технологии легкой промышленности (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/29.03.03-tekhnologiia-poligraficheskogo-i-upakovochnogo-proizvodstva.html",
+      "code": "29.03.03",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "29.00.00",
+      "group_name": "Технологии легкой промышленности (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/29.03.04-tekhnologiia-hudozhestvennoi-obrabotki-materialov.html",
+      "code": "29.03.04",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "29.00.00",
+      "group_name": "Технологии легкой промышленности (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/29.03.05-konstruirovanie-izdelii-legkoi-promyshlennosti.html",
+      "code": "29.03.05",
+      "category": "bachelor",
+      "industry_code": "3.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 3)",
+      "group_code": "29.00.00",
+      "group_name": "Технологии легкой промышленности (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/34.03.01-sestrinskoe-delo.html",
+      "code": "34.03.01",
+      "category": "bachelor",
+      "industry_code": "3.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 3)",
+      "group_code": "34.00.00",
+      "group_name": "Сестринское дело (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/35.03.01-lesnoe-delo.html",
+      "code": "35.03.01",
+      "category": "bachelor",
+      "industry_code": "3.4",
+      "industry_name": "Сельское хозяйство и сельскохозяйственные науки (уровень 3)",
+      "group_code": "35.00.00",
+      "group_name": "Сельское, лесное и рыбное хозяйство (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/35.03.02-tekhnologiia-lesozagotovitelnykh-i-derevopererabatyvaiushchikh-proizvodstv.html",
+      "code": "35.03.02",
+      "category": "bachelor",
+      "industry_code": "3.4",
+      "industry_name": "Сельское хозяйство и сельскохозяйственные науки (уровень 3)",
+      "group_code": "35.00.00",
+      "group_name": "Сельское, лесное и рыбное хозяйство (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/35.03.03-agrohimiia-i-agropochvovedenie.html",
+      "code": "35.03.03",
+      "category": "bachelor",
+      "industry_code": "3.4",
+      "industry_name": "Сельское хозяйство и сельскохозяйственные науки (уровень 3)",
+      "group_code": "35.00.00",
+      "group_name": "Сельское, лесное и рыбное хозяйство (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/35.03.04-agronomiia.html",
+      "code": "35.03.04",
+      "category": "bachelor",
+      "industry_code": "3.4",
+      "industry_name": "Сельское хозяйство и сельскохозяйственные науки (уровень 3)",
+      "group_code": "35.00.00",
+      "group_name": "Сельское, лесное и рыбное хозяйство (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/35.03.05-sadovodstvo.html",
+      "code": "35.03.05",
+      "category": "bachelor",
+      "industry_code": "3.4",
+      "industry_name": "Сельское хозяйство и сельскохозяйственные науки (уровень 3)",
+      "group_code": "35.00.00",
+      "group_name": "Сельское, лесное и рыбное хозяйство (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/35.03.06-agroinzheneriia.html",
+      "code": "35.03.06",
+      "category": "bachelor",
+      "industry_code": "3.4",
+      "industry_name": "Сельское хозяйство и сельскохозяйственные науки (уровень 3)",
+      "group_code": "35.00.00",
+      "group_name": "Сельское, лесное и рыбное хозяйство (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/35.03.07-tekhnologiia-proizvodstva-i-pererabotki-selskohoziaistvennoi-produktcii.html",
+      "code": "35.03.07",
+      "category": "bachelor",
+      "industry_code": "3.4",
+      "industry_name": "Сельское хозяйство и сельскохозяйственные науки (уровень 3)",
+      "group_code": "35.00.00",
+      "group_name": "Сельское, лесное и рыбное хозяйство (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/35.03.08-vodnye-bioresursy-i-akvakultura.html",
+      "code": "35.03.08",
+      "category": "bachelor",
+      "industry_code": "3.4",
+      "industry_name": "Сельское хозяйство и сельскохозяйственные науки (уровень 3)",
+      "group_code": "35.00.00",
+      "group_name": "Сельское, лесное и рыбное хозяйство (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/35.03.09-promyshlennoe-rybolovstvo.html",
+      "code": "35.03.09",
+      "category": "bachelor",
+      "industry_code": "3.4",
+      "industry_name": "Сельское хозяйство и сельскохозяйственные науки (уровень 3)",
+      "group_code": "35.00.00",
+      "group_name": "Сельское, лесное и рыбное хозяйство (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/35.03.10-landshaftnaia-arhitektura.html",
+      "code": "35.03.10",
+      "category": "bachelor",
+      "industry_code": "3.4",
+      "industry_name": "Сельское хозяйство и сельскохозяйственные науки (уровень 3)",
+      "group_code": "35.00.00",
+      "group_name": "Сельское, лесное и рыбное хозяйство (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/35.03.11-gidromelioratciia.html",
+      "code": "35.03.11",
+      "category": "bachelor",
+      "industry_code": "3.4",
+      "industry_name": "Сельское хозяйство и сельскохозяйственные науки (уровень 3)",
+      "group_code": "35.00.00",
+      "group_name": "Сельское, лесное и рыбное хозяйство (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/36.03.01-veterinarno-sanitarnaia-ekspertiza.html",
+      "code": "36.03.01",
+      "category": "bachelor",
+      "industry_code": "3.4",
+      "industry_name": "Сельское хозяйство и сельскохозяйственные науки (уровень 3)",
+      "group_code": "36.00.00",
+      "group_name": "Ветеринария и зоотехния (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/36.03.02-zootekhniia.html",
+      "code": "36.03.02",
+      "category": "bachelor",
+      "industry_code": "3.4",
+      "industry_name": "Сельское хозяйство и сельскохозяйственные науки (уровень 3)",
+      "group_code": "36.00.00",
+      "group_name": "Ветеринария и зоотехния (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/37.03.01-psihologiia.html",
+      "code": "37.03.01",
+      "category": "bachelor",
+      "industry_code": "3.5",
+      "industry_name": "Науки об обществе (уровень 3)",
+      "group_code": "37.00.00",
+      "group_name": "Психологические науки (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/37.03.02-konfliktologiia.html",
+      "code": "37.03.02",
+      "category": "bachelor",
+      "industry_code": "3.5",
+      "industry_name": "Науки об обществе (уровень 3)",
+      "group_code": "37.00.00",
+      "group_name": "Психологические науки (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/38.03.01-ekonomika.html",
+      "code": "38.03.01",
+      "category": "bachelor",
+      "industry_code": "3.5",
+      "industry_name": "Науки об обществе (уровень 3)",
+      "group_code": "38.00.00",
+      "group_name": "Экономика и управление (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/38.03.02-menedzhment.html",
+      "code": "38.03.02",
+      "category": "bachelor",
+      "industry_code": "3.5",
+      "industry_name": "Науки об обществе (уровень 3)",
+      "group_code": "38.00.00",
+      "group_name": "Экономика и управление (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/38.03.03-upravlenie-personalom.html",
+      "code": "38.03.03",
+      "category": "bachelor",
+      "industry_code": "3.5",
+      "industry_name": "Науки об обществе (уровень 3)",
+      "group_code": "38.00.00",
+      "group_name": "Экономика и управление (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/38.03.04-gosudarstvennoe-i-munitcipalnoe-upravlenie.html",
+      "code": "38.03.04",
+      "category": "bachelor",
+      "industry_code": "3.5",
+      "industry_name": "Науки об обществе (уровень 3)",
+      "group_code": "38.00.00",
+      "group_name": "Экономика и управление (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/38.03.05-biznes-informatika.html",
+      "code": "38.03.05",
+      "category": "bachelor",
+      "industry_code": "3.5",
+      "industry_name": "Науки об обществе (уровень 3)",
+      "group_code": "38.00.00",
+      "group_name": "Экономика и управление (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/38.03.06-torgovoe-delo.html",
+      "code": "38.03.06",
+      "category": "bachelor",
+      "industry_code": "3.5",
+      "industry_name": "Науки об обществе (уровень 3)",
+      "group_code": "38.00.00",
+      "group_name": "Экономика и управление (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/38.03.07-tovarovedenie.html",
+      "code": "38.03.07",
+      "category": "bachelor",
+      "industry_code": "3.5",
+      "industry_name": "Науки об обществе (уровень 3)",
+      "group_code": "38.00.00",
+      "group_name": "Экономика и управление (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/38.03.10-zhilishchnoe-hoziaistvo-i-kommunalnaia-infrastruktura.html",
+      "code": "38.03.10",
+      "category": "bachelor",
+      "industry_code": "3.5",
+      "industry_name": "Науки об обществе (уровень 3)",
+      "group_code": "38.00.00",
+      "group_name": "Экономика и управление (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/39.03.01-sotciologiia.html",
+      "code": "39.03.01",
+      "category": "bachelor",
+      "industry_code": "3.5",
+      "industry_name": "Науки об обществе (уровень 3)",
+      "group_code": "39.00.00",
+      "group_name": "Социология и социальная работа (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/39.03.02-sotcialnaia-rabota.html",
+      "code": "39.03.02",
+      "category": "bachelor",
+      "industry_code": "3.5",
+      "industry_name": "Науки об обществе (уровень 3)",
+      "group_code": "39.00.00",
+      "group_name": "Социология и социальная работа (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/39.03.03-organizatciia-raboty-s-molodezhiu.html",
+      "code": "39.03.03",
+      "category": "bachelor",
+      "industry_code": "3.5",
+      "industry_name": "Науки об обществе (уровень 3)",
+      "group_code": "39.00.00",
+      "group_name": "Социология и социальная работа (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/40.03.01-iurisprudentciia.html",
+      "code": "40.03.01",
+      "category": "bachelor",
+      "industry_code": "3.5",
+      "industry_name": "Науки об обществе (уровень 3)",
+      "group_code": "40.00.00",
+      "group_name": "Юриспруденция (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/40.03.02.html",
+      "code": "40.03.02",
+      "category": "bachelor",
+      "industry_code": "3.5",
+      "industry_name": "Науки об обществе (уровень 3)",
+      "group_code": "40.00.00",
+      "group_name": "Юриспруденция (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/41.03.01-zarubezhnoe-regionovedenie.html",
+      "code": "41.03.01",
+      "category": "bachelor",
+      "industry_code": "3.5",
+      "industry_name": "Науки об обществе (уровень 3)",
+      "group_code": "41.00.00",
+      "group_name": "Политические науки и регионоведение (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/41.03.02-regionovedenie-rossii.html",
+      "code": "41.03.02",
+      "category": "bachelor",
+      "industry_code": "3.5",
+      "industry_name": "Науки об обществе (уровень 3)",
+      "group_code": "41.00.00",
+      "group_name": "Политические науки и регионоведение (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/41.03.04-politologiia.html",
+      "code": "41.03.04",
+      "category": "bachelor",
+      "industry_code": "3.5",
+      "industry_name": "Науки об обществе (уровень 3)",
+      "group_code": "41.00.00",
+      "group_name": "Политические науки и регионоведение (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/41.03.05-mezhdunarodnye-otnosheniia.html",
+      "code": "41.03.05",
+      "category": "bachelor",
+      "industry_code": "3.5",
+      "industry_name": "Науки об обществе (уровень 3)",
+      "group_code": "41.00.00",
+      "group_name": "Политические науки и регионоведение (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/41.03.06-publichnaia-politika-i-sotcialnye-nauki.html",
+      "code": "41.03.06",
+      "category": "bachelor",
+      "industry_code": "3.5",
+      "industry_name": "Науки об обществе (уровень 3)",
+      "group_code": "41.00.00",
+      "group_name": "Политические науки и регионоведение (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/42.03.01-reclama-i-sviazi-s-obshchestvennostiu.html",
+      "code": "42.03.01",
+      "category": "bachelor",
+      "industry_code": "3.5",
+      "industry_name": "Науки об обществе (уровень 3)",
+      "group_code": "42.00.00",
+      "group_name": "Средства массовой информации и информационно-библиотечное дело (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/42.03.02-zhurnalistika.html",
+      "code": "42.03.02",
+      "category": "bachelor",
+      "industry_code": "3.5",
+      "industry_name": "Науки об обществе (уровень 3)",
+      "group_code": "42.00.00",
+      "group_name": "Средства массовой информации и информационно-библиотечное дело (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/42.03.03-izdatelskoe-delo.html",
+      "code": "42.03.03",
+      "category": "bachelor",
+      "industry_code": "3.5",
+      "industry_name": "Науки об обществе (уровень 3)",
+      "group_code": "42.00.00",
+      "group_name": "Средства массовой информации и информационно-библиотечное дело (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/42.03.04-televidenie.html",
+      "code": "42.03.04",
+      "category": "bachelor",
+      "industry_code": "3.5",
+      "industry_name": "Науки об обществе (уровень 3)",
+      "group_code": "42.00.00",
+      "group_name": "Средства массовой информации и информационно-библиотечное дело (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/42.03.05-mediakommunikatcii.html",
+      "code": "42.03.05",
+      "category": "bachelor",
+      "industry_code": "3.5",
+      "industry_name": "Науки об обществе (уровень 3)",
+      "group_code": "42.00.00",
+      "group_name": "Средства массовой информации и информационно-библиотечное дело (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/43.03.01-servis.html",
+      "code": "43.03.01",
+      "category": "bachelor",
+      "industry_code": "3.5",
+      "industry_name": "Науки об обществе (уровень 3)",
+      "group_code": "43.00.00",
+      "group_name": "Сервис и туризм (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/43.03.02-turizm.html",
+      "code": "43.03.02",
+      "category": "bachelor",
+      "industry_code": "3.5",
+      "industry_name": "Науки об обществе (уровень 3)",
+      "group_code": "43.00.00",
+      "group_name": "Сервис и туризм (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/43.03.03-gostinichnoe-delo.html",
+      "code": "43.03.03",
+      "category": "bachelor",
+      "industry_code": "3.5",
+      "industry_name": "Науки об обществе (уровень 3)",
+      "group_code": "43.00.00",
+      "group_name": "Сервис и туризм (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/44.03.01-pedagogicheskoe-obrazovanie.html",
+      "code": "44.03.01",
+      "category": "bachelor",
+      "industry_code": "3.6",
+      "industry_name": "Образование и педагогические науки (уровень 3)",
+      "group_code": "44.00.00",
+      "group_name": "Образование и педагогические науки (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/44.03.02-psihologo-pedagogicheskoe-obrazovanie.html",
+      "code": "44.03.02",
+      "category": "bachelor",
+      "industry_code": "3.6",
+      "industry_name": "Образование и педагогические науки (уровень 3)",
+      "group_code": "44.00.00",
+      "group_name": "Образование и педагогические науки (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/44.03.03-spetcialnoe-defektologicheskoe-obrazovanie.html",
+      "code": "44.03.03",
+      "category": "bachelor",
+      "industry_code": "3.6",
+      "industry_name": "Образование и педагогические науки (уровень 3)",
+      "group_code": "44.00.00",
+      "group_name": "Образование и педагогические науки (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/44.03.04-professionalnoe-obuchenie-po-otrasliam.html",
+      "code": "44.03.04",
+      "category": "bachelor",
+      "industry_code": "3.6",
+      "industry_name": "Образование и педагогические науки (уровень 3)",
+      "group_code": "44.00.00",
+      "group_name": "Образование и педагогические науки (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/44.03.05-pedagogicheskoe-obrazovanie-s-dvumia-profiliami-podgotovki.html",
+      "code": "44.03.05",
+      "category": "bachelor",
+      "industry_code": "3.6",
+      "industry_name": "Образование и педагогические науки (уровень 3)",
+      "group_code": "44.00.00",
+      "group_name": "Образование и педагогические науки (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/45.03.01-filologiia.html",
+      "code": "45.03.01",
+      "category": "bachelor",
+      "industry_code": "3.7",
+      "industry_name": "Гуманитарные науки (уровень 3)",
+      "group_code": "45.00.00",
+      "group_name": "Языкознание и литературоведение (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/45.03.02-lingvistika.html",
+      "code": "45.03.02",
+      "category": "bachelor",
+      "industry_code": "3.7",
+      "industry_name": "Гуманитарные науки (уровень 3)",
+      "group_code": "45.00.00",
+      "group_name": "Языкознание и литературоведение (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/45.03.03-fundamentalnaia-i-pricladnaia-lingvistika.html",
+      "code": "45.03.03",
+      "category": "bachelor",
+      "industry_code": "3.7",
+      "industry_name": "Гуманитарные науки (уровень 3)",
+      "group_code": "45.00.00",
+      "group_name": "Языкознание и литературоведение (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/45.03.04-intellektualnye-sistemy-v-gumanitarnoi-sfere.html",
+      "code": "45.03.04",
+      "category": "bachelor",
+      "industry_code": "3.7",
+      "industry_name": "Гуманитарные науки (уровень 3)",
+      "group_code": "45.00.00",
+      "group_name": "Языкознание и литературоведение (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/46.03.01-istoriia.html",
+      "code": "46.03.01",
+      "category": "bachelor",
+      "industry_code": "3.7",
+      "industry_name": "Гуманитарные науки (уровень 3)",
+      "group_code": "46.00.00",
+      "group_name": "История и археология (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/46.03.02-dokumentovedenie-i-arhivovedenie.html",
+      "code": "46.03.02",
+      "category": "bachelor",
+      "industry_code": "3.7",
+      "industry_name": "Гуманитарные науки (уровень 3)",
+      "group_code": "46.00.00",
+      "group_name": "История и археология (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/46.03.03-antropologiia-i-etnologiia.html",
+      "code": "46.03.03",
+      "category": "bachelor",
+      "industry_code": "3.7",
+      "industry_name": "Гуманитарные науки (уровень 3)",
+      "group_code": "46.00.00",
+      "group_name": "История и археология (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/46.03.04.html",
+      "code": "46.03.04",
+      "category": "bachelor",
+      "industry_code": "3.7",
+      "industry_name": "Гуманитарные науки (уровень 3)",
+      "group_code": "46.00.00",
+      "group_name": "История и археология (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/47.03.01-filosofiia.html",
+      "code": "47.03.01",
+      "category": "bachelor",
+      "industry_code": "3.7",
+      "industry_name": "Гуманитарные науки (уровень 3)",
+      "group_code": "47.00.00",
+      "group_name": "Философия, этика и религиоведение (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/47.03.02-pricladnaia-etika.html",
+      "code": "47.03.02",
+      "category": "bachelor",
+      "industry_code": "3.7",
+      "industry_name": "Гуманитарные науки (уровень 3)",
+      "group_code": "47.00.00",
+      "group_name": "Философия, этика и религиоведение (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/47.03.03-religiovedenie.html",
+      "code": "47.03.03",
+      "category": "bachelor",
+      "industry_code": "3.7",
+      "industry_name": "Гуманитарные науки (уровень 3)",
+      "group_code": "47.00.00",
+      "group_name": "Философия, этика и религиоведение (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/48.03.01-teologiia.html",
+      "code": "48.03.01",
+      "category": "bachelor",
+      "industry_code": "3.7",
+      "industry_name": "Гуманитарные науки (уровень 3)",
+      "group_code": "48.00.00",
+      "group_name": "Теология (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/49.03.01-fizicheskaia-kultura.html",
+      "code": "49.03.01",
+      "category": "bachelor",
+      "industry_code": "3.7",
+      "industry_name": "Гуманитарные науки (уровень 3)",
+      "group_code": "49.00.00",
+      "group_name": "Физическая культура и спорт (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/49.03.02-fizicheskaia-kultura-dlia-litc-s-otcloneniiami-v-sostoianii-zdorovia-adaptivnaia-fizicheskaia-kultura.html",
+      "code": "49.03.02",
+      "category": "bachelor",
+      "industry_code": "3.7",
+      "industry_name": "Гуманитарные науки (уровень 3)",
+      "group_code": "49.00.00",
+      "group_name": "Физическая культура и спорт (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/49.03.03-rekreatciia-i-sportivno-ozdorovitelnyi-turizm.html",
+      "code": "49.03.03",
+      "category": "bachelor",
+      "industry_code": "3.7",
+      "industry_name": "Гуманитарные науки (уровень 3)",
+      "group_code": "49.00.00",
+      "group_name": "Физическая культура и спорт (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/49.03.04-sport.html",
+      "code": "49.03.04",
+      "category": "bachelor",
+      "industry_code": "3.7",
+      "industry_name": "Гуманитарные науки (уровень 3)",
+      "group_code": "49.00.00",
+      "group_name": "Физическая культура и спорт (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/58.03.01-vostokovedenie-i-afrikanistika.html",
+      "code": "58.03.01",
+      "category": "bachelor",
+      "industry_code": "3.7",
+      "industry_name": "Гуманитарные науки (уровень 3)",
+      "group_code": "58.00.00",
+      "group_name": "Востоковедение и африканистика (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/50.03.01-iskusstva-i-gumanitarnye-nauki.html",
+      "code": "50.03.01",
+      "category": "bachelor",
+      "industry_code": "3.8",
+      "industry_name": "Искусство и культура (уровень 3)",
+      "group_code": "50.00.00",
+      "group_name": "Искусствознание (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/50.03.02-iziashchnye-iskusstva.html",
+      "code": "50.03.02",
+      "category": "bachelor",
+      "industry_code": "3.8",
+      "industry_name": "Искусство и культура (уровень 3)",
+      "group_code": "50.00.00",
+      "group_name": "Искусствознание (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/50.03.03-istoriia-iskusstv.html",
+      "code": "50.03.03",
+      "category": "bachelor",
+      "industry_code": "3.8",
+      "industry_name": "Искусство и культура (уровень 3)",
+      "group_code": "50.00.00",
+      "group_name": "Искусствознание (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/50.03.04-teoriia-i-istoriia-iskusstv.html",
+      "code": "50.03.04",
+      "category": "bachelor",
+      "industry_code": "3.8",
+      "industry_name": "Искусство и культура (уровень 3)",
+      "group_code": "50.00.00",
+      "group_name": "Искусствознание (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/51.03.01-kulturologiia.html",
+      "code": "51.03.01",
+      "category": "bachelor",
+      "industry_code": "3.8",
+      "industry_name": "Искусство и культура (уровень 3)",
+      "group_code": "51.00.00",
+      "group_name": "Культуроведение и социокультурные проекты (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/51.03.02-narodnaia-hudozhestvennaia-kultura.html",
+      "code": "51.03.02",
+      "category": "bachelor",
+      "industry_code": "3.8",
+      "industry_name": "Искусство и культура (уровень 3)",
+      "group_code": "51.00.00",
+      "group_name": "Культуроведение и социокультурные проекты (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/51.03.03-sotcialno-kulturnaia-deiatelnost.html",
+      "code": "51.03.03",
+      "category": "bachelor",
+      "industry_code": "3.8",
+      "industry_name": "Искусство и культура (уровень 3)",
+      "group_code": "51.00.00",
+      "group_name": "Культуроведение и социокультурные проекты (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/51.03.04-muzeologiia-i-okhrana-obektov-kulturnogo-i-prirodnogo-naslediia.html",
+      "code": "51.03.04",
+      "category": "bachelor",
+      "industry_code": "3.8",
+      "industry_name": "Искусство и культура (уровень 3)",
+      "group_code": "51.00.00",
+      "group_name": "Культуроведение и социокультурные проекты (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/51.03.05-rezhissura-teatralizovannykh-predstavlenii-i-prazdnikov.html",
+      "code": "51.03.05",
+      "category": "bachelor",
+      "industry_code": "3.8",
+      "industry_name": "Искусство и культура (уровень 3)",
+      "group_code": "51.00.00",
+      "group_name": "Культуроведение и социокультурные проекты (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/51.03.06-bibliotechno-informatcionnaia-deiatelnost.html",
+      "code": "51.03.06",
+      "category": "bachelor",
+      "industry_code": "3.8",
+      "industry_name": "Искусство и культура (уровень 3)",
+      "group_code": "51.00.00",
+      "group_name": "Культуроведение и социокультурные проекты (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/52.03.01-horeograficheskoe-iskusstvo.html",
+      "code": "52.03.01",
+      "category": "bachelor",
+      "industry_code": "3.8",
+      "industry_name": "Искусство и культура (уровень 3)",
+      "group_code": "52.00.00",
+      "group_name": "Сценические искусства и литературное творчество (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/52.03.02-horeograficheskoe-ispolnitelstvo.html",
+      "code": "52.03.02",
+      "category": "bachelor",
+      "industry_code": "3.8",
+      "industry_name": "Искусство и культура (уровень 3)",
+      "group_code": "52.00.00",
+      "group_name": "Сценические искусства и литературное творчество (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/52.03.03-tcirkovoe-iskusstvo.html",
+      "code": "52.03.03",
+      "category": "bachelor",
+      "industry_code": "3.8",
+      "industry_name": "Искусство и культура (уровень 3)",
+      "group_code": "52.00.00",
+      "group_name": "Сценические искусства и литературное творчество (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/52.03.04-tekhnologiia-hudozhestvennogo-oformleniia-spektaclia.html",
+      "code": "52.03.04",
+      "category": "bachelor",
+      "industry_code": "3.8",
+      "industry_name": "Искусство и культура (уровень 3)",
+      "group_code": "52.00.00",
+      "group_name": "Сценические искусства и литературное творчество (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/52.03.05-teatrovedenie.html",
+      "code": "52.03.05",
+      "category": "bachelor",
+      "industry_code": "3.8",
+      "industry_name": "Искусство и культура (уровень 3)",
+      "group_code": "52.00.00",
+      "group_name": "Сценические искусства и литературное творчество (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/52.03.06-dramaturgiia.html",
+      "code": "52.03.06",
+      "category": "bachelor",
+      "industry_code": "3.8",
+      "industry_name": "Искусство и культура (уровень 3)",
+      "group_code": "52.00.00",
+      "group_name": "Сценические искусства и литературное творчество (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/53.03.01-muzykalnoe-iskusstvo-estrady.html",
+      "code": "53.03.01",
+      "category": "bachelor",
+      "industry_code": "3.8",
+      "industry_name": "Искусство и культура (уровень 3)",
+      "group_code": "53.00.00",
+      "group_name": "Музыкальное искусство (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/53.03.02-muzykalno-instrumentalnoe-iskusstvo.html",
+      "code": "53.03.02",
+      "category": "bachelor",
+      "industry_code": "3.8",
+      "industry_name": "Искусство и культура (уровень 3)",
+      "group_code": "53.00.00",
+      "group_name": "Музыкальное искусство (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/53.03.03-vokalnoe-iskusstvo.html",
+      "code": "53.03.03",
+      "category": "bachelor",
+      "industry_code": "3.8",
+      "industry_name": "Искусство и культура (уровень 3)",
+      "group_code": "53.00.00",
+      "group_name": "Музыкальное искусство (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/53.03.04-iskusstvo-narodnogo-peniia.html",
+      "code": "53.03.04",
+      "category": "bachelor",
+      "industry_code": "3.8",
+      "industry_name": "Искусство и культура (уровень 3)",
+      "group_code": "53.00.00",
+      "group_name": "Музыкальное искусство (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/53.03.05-dirizhirovanie.html",
+      "code": "53.03.05",
+      "category": "bachelor",
+      "industry_code": "3.8",
+      "industry_name": "Искусство и культура (уровень 3)",
+      "group_code": "53.00.00",
+      "group_name": "Музыкальное искусство (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/53.03.06-muzykoznanie-i-muzykalno-pricladnoe-iskusstvo.html",
+      "code": "53.03.06",
+      "category": "bachelor",
+      "industry_code": "3.8",
+      "industry_name": "Искусство и культура (уровень 3)",
+      "group_code": "53.00.00",
+      "group_name": "Музыкальное искусство (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/54.03.01-dizain.html",
+      "code": "54.03.01",
+      "category": "bachelor",
+      "industry_code": "3.8",
+      "industry_name": "Искусство и культура (уровень 3)",
+      "group_code": "54.00.00",
+      "group_name": "Изобразительное и прикладные виды искусств (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/54.03.02-dekorativno-pricladnoe-iskusstvo-i-narodnye-promysly.html",
+      "code": "54.03.02",
+      "category": "bachelor",
+      "industry_code": "3.8",
+      "industry_name": "Искусство и культура (уровень 3)",
+      "group_code": "54.00.00",
+      "group_name": "Изобразительное и прикладные виды искусств (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/54.03.03-iskusstvo-kostiuma-i-tekstilia.html",
+      "code": "54.03.03",
+      "category": "bachelor",
+      "industry_code": "3.8",
+      "industry_name": "Искусство и культура (уровень 3)",
+      "group_code": "54.00.00",
+      "group_name": "Изобразительное и прикладные виды искусств (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/54.03.04-restavratciia.html",
+      "code": "54.03.04",
+      "category": "bachelor",
+      "industry_code": "3.8",
+      "industry_name": "Искусство и культура (уровень 3)",
+      "group_code": "54.00.00",
+      "group_name": "Изобразительное и прикладные виды искусств (уровень 3)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/54.03.05.html",
+      "code": "54.03.05",
+      "category": "bachelor",
+      "industry_code": "3.8",
+      "industry_name": "Искусство и культура (уровень 3)",
+      "group_code": "54.00.00",
+      "group_name": "Изобразительное и прикладные виды искусств (уровень 3)"
+    }
+  ]
+}

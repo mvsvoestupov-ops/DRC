@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <title>Compare XLSX</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+  <pre id="out">loading...</pre>
+  <script>
+    const OFFICIAL = "Реестр профессиональных стандартов 18.08.2026 (2).xlsx";
+    const MINTRUD = "reestr_mintrud_2026-08-31.xlsx";
+
+    function rowsFromSheet(wb) {
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      return XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+    }
+
+    function norm(s) {
+      return String(s ?? "").trim();
+    }
+
+    function parseOfficial(rows) {
+      let headerIdx = rows.findIndex(r => r.some(c => norm(c).toLowerCase().includes("регистрацион")));
+      if (headerIdx < 0) headerIdx = 0;
+      const header = rows[headerIdx].map(c => norm(c).toLowerCase());
+      const regIdx = header.findIndex(h => h.includes("регистрацион"));
+      const codeIdx = header.findIndex(h => h.includes("код проф"));
+      const nameIdx = header.findIndex(h => h.includes("наимен"));
+      const items = [];
+      for (const row of rows.slice(headerIdx + 1)) {
+        const reg = norm(row[regIdx]);
+        const code = norm(row[codeIdx]);
+        const name = norm(row[nameIdx]);
+        if (!/^\d+$/.test(reg) || !/^\d{2}\.\d{3}$/.test(code)) continue;
+        items.push({ reg_number: reg, ps_code: code, name });
+      }
+      return items;
+    }
+
+    function parseMintrud(rows) {
+      let start = 0;
+      if (rows[0] && norm(rows[0][0]).includes("Регистрационный")) start = 1;
+      const items = [];
+      for (const row of rows.slice(start)) {
+        const reg = norm(row[0]);
+        const code = norm(row[1]);
+        const name = norm(row[2]);
+        if (!reg && !code) continue;
+        items.push({
+          reg_number: reg,
+          ps_code: code,
+          name,
+          developer: norm(row[3]),
+          effective_date: norm(row[4]),
+          expiration_date: norm(row[5]),
+        });
+      }
+      return items;
+    }
+
+    function findDuplicates(items) {
+      const byReg = {};
+      const byCode = {};
+      for (const item of items) {
+        if (!byReg[item.reg_number]) byReg[item.reg_number] = [];
+        byReg[item.reg_number].push(item);
+        if (item.ps_code) {
+          if (!byCode[item.ps_code]) byCode[item.ps_code] = [];
+          byCode[item.ps_code].push(item);
+        }
+      }
+      const duplicate_reg_numbers = {};
+      const duplicate_ps_codes = {};
+      for (const [k, v] of Object.entries(byReg)) {
+        if (v.length > 1) duplicate_reg_numbers[k] = v.map(i => ({ ps_code: i.ps_code, name: i.name.slice(0, 80) }));
+      }
+      for (const [k, v] of Object.entries(byCode)) {
+        if (v.length > 1) duplicate_ps_codes[k] = v.map(i => ({ reg_number: i.reg_number, name: i.name.slice(0, 80) }));
+      }
+      return {
+        duplicate_reg_numbers,
+        duplicate_ps_codes,
+        counts: {
+          duplicate_reg_count: Object.keys(duplicate_reg_numbers).length,
+          duplicate_code_count: Object.keys(duplicate_ps_codes).length,
+          extra_rows_from_duplicates: Object.values(byReg).reduce((s, v) => s + Math.max(0, v.length - 1), 0),
+        },
+      };
+    }
+
+    async function loadXlsx(name) {
+      const resp = await fetch(name);
+      if (!resp.ok) throw new Error("fetch failed " + name + " " + resp.status);
+      const buf = await resp.arrayBuffer();
+      return XLSX.read(buf, { type: "array" });
+    }
+
+    window.runCompare = async function () {
+      const [officialWb, mintrudWb] = await Promise.all([loadXlsx(OFFICIAL), loadXlsx(MINTRUD)]);
+      const officialItems = parseOfficial(rowsFromSheet(officialWb));
+      const mintrudItems = parseMintrud(rowsFromSheet(mintrudWb));
+
+      const officialByCode = {};
+      const mintrudByCode = {};
+      for (const i of officialItems) if (i.ps_code) officialByCode[i.ps_code] = i;
+      for (const i of mintrudItems) if (i.ps_code) mintrudByCode[i.ps_code] = i;
+
+      const officialCodes = new Set(Object.keys(officialByCode));
+      const mintrudCodes = new Set(Object.keys(mintrudByCode));
+      const onlyOfficialCodes = [...officialCodes].filter(c => !mintrudCodes.has(c)).sort();
+      const onlyMintrudCodes = [...mintrudCodes].filter(c => !officialCodes.has(c)).sort();
+
+      const report = {
+        official_count: officialItems.length,
+        official_unique_codes: officialCodes.size,
+        mintrud_count: mintrudItems.length,
+        mintrud_unique_codes: mintrudCodes.size,
+        only_in_official_count: onlyOfficialCodes.length,
+        only_in_mintrud_count: onlyMintrudCodes.length,
+        only_in_official: onlyOfficialCodes.map(c => officialByCode[c]),
+        only_in_mintrud: onlyMintrudCodes.map(c => mintrudByCode[c]),
+        duplicates: findDuplicates(mintrudItems),
+      };
+      document.getElementById("out").textContent = JSON.stringify(report, null, 2);
+      return report;
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,1512 @@
+[
+  {
+    "code": "01.06.01",
+    "category": "aspirantura",
+    "name": "Математика и механика",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.1",
+    "industry_name": "Математические и естественные науки (уровень 6)",
+    "group_code": "01.00.00",
+    "group_name": "Математика и механика (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 866",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "866",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "в научно-производственной сфере - наукоемкие высокотехнологичные производства оборонной промышленности, аэрокосмического комплекса, авиастроения, машиностроения, проектирования и создания новых материалов, строительства, научно-исследовательские и аналитические центры разного профиля,"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/01.06.01-matematika-i-mehanika.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/01.06.01-matematika-i-mehanika.html"
+    }
+  },
+  {
+    "code": "02.06.01",
+    "category": "aspirantura",
+    "name": "Компьютерные и информационные науки",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.1",
+    "industry_name": "Математические и естественные науки (уровень 6)",
+    "group_code": "02.00.00",
+    "group_name": "Компьютерные и информационные науки (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 864",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "864",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "в научно-производственной сфере - наукоемкие высокотехнологичные производства оборонной промышленности, аэрокосмического комплекса, авиастроения, машиностроения, проектирования и создания новых материалов, строительства, научно-исследовательские и аналитические центры разного профиля, в социально-экономической сфере - фонды, страховые и управляющие компании, финансовые организации и бизнес-структуры, а также образовательные организации высшего образования."
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/02.06.01-kompiuternye-i-informatcionnye-nauki.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/02.06.01-kompiuternye-i-informatcionnye-nauki.html"
+    }
+  },
+  {
+    "code": "03.06.01",
+    "category": "aspirantura",
+    "name": "Физика и астрономия",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.1",
+    "industry_name": "Математические и естественные науки (уровень 6)",
+    "group_code": "03.00.00",
+    "group_name": "Физика и астрономия (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 867",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "867",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "физические системы различного масштаба и уровней организации, процессы их функционирования, физические, инженерно-физические, биофизические, физико-химические, физико-медицинские и природоохранительные технологии, физическая экспертиза и мониторинг."
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/03.06.01-fizika-i-astronomiia.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/03.06.01-fizika-i-astronomiia.html"
+    }
+  },
+  {
+    "code": "04.06.01",
+    "category": "aspirantura",
+    "name": "Химические науки",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.1",
+    "industry_name": "Математические и естественные науки (уровень 6)",
+    "group_code": "04.00.00",
+    "group_name": "Химия (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 869",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "869",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "научно-исследовательская деятельность в области химии и смежных наук;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/04.06.01-himicheskie-nauki.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/04.06.01-himicheskie-nauki.html"
+    }
+  },
+  {
+    "code": "05.06.01",
+    "category": "aspirantura",
+    "name": "Науки о Земле",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.1",
+    "industry_name": "Математические и естественные науки (уровень 6)",
+    "group_code": "05.00.00",
+    "group_name": "Науки о Земле (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 870",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "870",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "Земля и ее основные геосферы - литосфера, гидросфера, атмосфера, биосфера, их состав, строение, эволюция и свойства; геофизические поля, месторождения твердых и жидких полезных ископаемых; природные, природно-хозяйственные, антропогенные, производственные, рекреационные, социальные, территориальные системы и структуры на глобальном, национальном, региональном, локальном уровнях, их исследование, мониторинг состояния и прогнозы развития; поиски, изучение и эксплуатация месторождений полезных ископаемых; природопользование; геоинформационные системы; территориальное планирование, проектирование и прогнозирование; экологическая экспертиза всех форм хозяйственной деятельности; образование и просвещение населения."
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/05.06.01-nauki-o-zemle.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/05.06.01-nauki-o-zemle.html"
+    }
+  },
+  {
+    "code": "06.06.01",
+    "category": "aspirantura",
+    "name": "Биологические науки",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.1",
+    "industry_name": "Математические и естественные науки (уровень 6)",
+    "group_code": "06.00.00",
+    "group_name": "Биологические науки (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 871",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "871",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "исследование живой природы и ее закономерностей;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/06.06.01-biologicheskie-nauki.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/06.06.01-biologicheskie-nauki.html"
+    }
+  },
+  {
+    "code": "07.06.01",
+    "category": "aspirantura",
+    "name": "Архитектура",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.2",
+    "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+    "group_code": "07.00.00",
+    "group_name": "Архитектура (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 872",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "872",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "проведение теоретических исследований в области архитектуры, включая функциональные, конструктивные и композиционные аспекты проектирования, типологию зданий и сооружений, а также доступной среды для людей с ограниченными возможностями;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/07.06.01-arhitektura.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/07.06.01-arhitektura.html"
+    }
+  },
+  {
+    "code": "08.06.01",
+    "category": "aspirantura",
+    "name": "Техника и технологии строительства",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.2",
+    "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+    "group_code": "08.00.00",
+    "group_name": "Техника и технологии строительства (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 873",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "873",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "разработку научных основ инженерных изысканий, проектирования, строительства, реконструкции и эксплуатации зданий, сооружений и объектов транспортной инфраструктуры;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/08.06.01-tekhnika-i-tekhnologii-stroitelstva.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/08.06.01-tekhnika-i-tekhnologii-stroitelstva.html"
+    }
+  },
+  {
+    "code": "09.06.01",
+    "category": "aspirantura",
+    "name": "Информатика и вычислительная техника",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.2",
+    "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+    "group_code": "09.00.00",
+    "group_name": "Информатика и вычислительная техника (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 875",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "875",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "избранная область научного знания, а также научные задачи междисциплинарного характера, содержащие:"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/09.06.01-informatika-i-vychislitelnaia-tekhnika.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/09.06.01-informatika-i-vychislitelnaia-tekhnika.html"
+    }
+  },
+  {
+    "code": "10.06.01",
+    "category": "aspirantura",
+    "name": "Информационная безопасность",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.2",
+    "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+    "group_code": "10.00.00",
+    "group_name": "Информационная безопасность (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 874",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "874",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "сферы науки, техники и технологии, охватывающие совокупность проблем, связанных с исследованием, разработкой, совершенствованием и применением моделей, методов, технологий, средств и систем защиты информации, а также обеспечением информационной безопасности объектов и процессов обработки, передачи информации во всех сферах деятельности от внешних и внутренних угроз;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/10.06.01-informatcionnaia-bezopasnost.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/10.06.01-informatcionnaia-bezopasnost.html"
+    }
+  },
+  {
+    "code": "11.06.01",
+    "category": "aspirantura",
+    "name": "Электроника, радиотехника и системы связи",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.2",
+    "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+    "group_code": "11.00.00",
+    "group_name": "Электроника, радиотехника и системы связи (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 876",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "876",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "теоретическое и экспериментальное исследование, математическое и компьютерное моделирование, проектирование, конструирование, использование и эксплуатацию материалов, компонентов, электронных приборов, устройств, установок вакуумной, плазменной, твердотельной, микроволновой, оптической, микро- и наноэлектроники различного функционального назначения;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/11.06.01-elektronika-radiotekhnika-i-sistemy-sviazi.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/11.06.01-elektronika-radiotekhnika-i-sistemy-sviazi.html"
+    }
+  },
+  {
+    "code": "12.06.01",
+    "category": "aspirantura",
+    "name": "Фотоника, приборостроение, оптические и биотехнические системы и технологии",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.2",
+    "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+    "group_code": "12.00.00",
+    "group_name": "Фотоника, приборостроение, оптические и биотехнические системы и технологии (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 877",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "877",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "исследования физических явлений и закономерностей в области фотоники, лазерной физики, волновой оптики, интегральной и волоконной оптики, нелинейной оптики, оптоэлектроники, оптическом материаловедении, биомедицинской оптики, плазмоники;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/12.06.01-fotonika-priborostroenie-opticheskie-i-biotekhnicheskie-sistemy-i-tekhnologii.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/12.06.01-fotonika-priborostroenie-opticheskie-i-biotekhnicheskie-sistemy-i-tekhnologii.html"
+    }
+  },
+  {
+    "code": "13.06.01",
+    "category": "aspirantura",
+    "name": "Электро- и теплотехника",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.2",
+    "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+    "group_code": "13.00.00",
+    "group_name": "Электро- и теплоэнергетика (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 878",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "878",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "теоретическое и экспериментальное исследование, математическое и компьютерное моделирование, конструирование и проектирование материалов, приборов, устройств, установок, комплексов оборудования электро- и теплотехнического назначения, а также совокупность технических средств, способов и методов человеческой деятельности по производству, распределению электрической и тепловой энергии, управлению ее потоками и преобразованию иных видов энергии в теплоту;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/13.06.01-elektro-i-teplotekhnika.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/13.06.01-elektro-i-teplotekhnika.html"
+    }
+  },
+  {
+    "code": "14.06.01",
+    "category": "aspirantura",
+    "name": "Ядерная, тепловая и возобновляемая энергетика и сопутствующие технологии",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.2",
+    "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+    "group_code": "14.00.00",
+    "group_name": "Ядерная энергетика и технологии (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 879",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "879",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "совокупность средств, способов и методов человеческой деятельности, связанных с разработкой, созданием и эксплуатацией аппаратов и установок, вырабатывающих, преобразующих и использующих тепловую и ядерную энергию;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/14.06.01-iadernaia-teplovaia-i-vozobnovliaemaia-energetika-i-soputstvuiushchie-tekhnologii.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/14.06.01-iadernaia-teplovaia-i-vozobnovliaemaia-energetika-i-soputstvuiushchie-tekhnologii.html"
+    }
+  },
+  {
+    "code": "15.06.01",
+    "category": "aspirantura",
+    "name": "Машиностроение",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.2",
+    "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+    "group_code": "15.00.00",
+    "group_name": "Машиностроение (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 881",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "881",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "совокупность средств, способов и методов деятельности, направленных на теоретическую разработку и экспериментальное исследование проблем, связанных с созданием конкурентоспособной отечественной продукции, пополнение и совершенствование базы знаний, национальной технологической среды, ее безопасности, передачу знаний;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/15.06.01-mashinostroenie.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/15.06.01-mashinostroenie.html"
+    }
+  },
+  {
+    "code": "16.06.01",
+    "category": "aspirantura",
+    "name": "Физико-технические науки и технологии",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.2",
+    "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+    "group_code": "16.00.00",
+    "group_name": "Физико-технические науки и технологии (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 882",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "882",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "решение проблем, требующих применения фундаментальных знаний в области физики, связанных с выявлением, исследованием и моделированием новых физических явлений и закономерностей;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/16.06.01-fiziko-tekhnicheskie-nauki-i-tekhnologii.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/16.06.01-fiziko-tekhnicheskie-nauki-i-tekhnologii.html"
+    }
+  },
+  {
+    "code": "17.06.01",
+    "category": "aspirantura",
+    "name": "Оружие и системы вооружения",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.2",
+    "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+    "group_code": "17.00.00",
+    "group_name": "Оружие и системы вооружения (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 26 июля 2016 г. N 900",
+    "order_date": "26 июля 2016 г.",
+    "order_number": "900",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "сферы науки, техники, технологии и педагогики, охватывающие совокупность задач направления подготовки, включая исследования теоретических и практических проблем взрывчатых веществ и материалов, электромагнитных, акустических, оптических и других полей (частиц) для создания традиционного (прежде всего, высокоточного) оружия, а также оружия специального назначения и нелетального действия, предназначенных для воздействия на противника, его вооружение, технику, живую силу, фортификационные сооружения и иные объекты;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/17.06.01-oruzhie-i-sistemy-vooruzheniia.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/17.06.01-oruzhie-i-sistemy-vooruzheniia.html"
+    }
+  },
+  {
+    "code": "18.06.01",
+    "category": "aspirantura",
+    "name": "Химическая технология",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.2",
+    "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+    "group_code": "18.00.00",
+    "group_name": "Химические технологии (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 883",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "883",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "методы, способы и средства получения веществ и материалов с помощью физических, физико-химических и химических процессов, производство на их основе изделий различного назначения;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/18.06.01-himicheskaia-tekhnologiia.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/18.06.01-himicheskaia-tekhnologiia.html"
+    }
+  },
+  {
+    "code": "19.06.01",
+    "category": "aspirantura",
+    "name": "Промышленная экология и биотехнологии",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.2",
+    "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+    "group_code": "19.00.00",
+    "group_name": "Промышленная экология и биотехнологии (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 884",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "884",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "исследование, получение и применение ферментов, вирусов, микроорганизмов, клеточных культур животных и растений, продуктов их биосинтеза и биотрансформации;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/19.06.01-promyshlennaia-ekologiia-i-biotekhnologii.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/19.06.01-promyshlennaia-ekologiia-i-biotekhnologii.html"
+    }
+  },
+  {
+    "code": "20.06.01",
+    "category": "aspirantura",
+    "name": "Техносферная безопасность",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.2",
+    "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+    "group_code": "20.00.00",
+    "group_name": "Техносферная безопасность и природообустройство (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 885",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "885",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "обеспечение безопасности человека в современном мире;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/20.06.01-tekhnosfernaia-bezopasnost.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/20.06.01-tekhnosfernaia-bezopasnost.html"
+    }
+  },
+  {
+    "code": "21.06.01",
+    "category": "aspirantura",
+    "name": "Геология, разведка и разработка полезных ископаемых",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.2",
+    "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+    "group_code": "21.00.00",
+    "group_name": "Прикладная геология, горное дело, нефтегазовое дело и геодезия (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 886",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "886",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "исследование, моделирование, проектирование геотехнологий освоения ресурсного потенциала недр;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/21.06.01-geologiia-razvedka-i-razrabotka-poleznykh-iskopaemykh.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/21.06.01-geologiia-razvedka-i-razrabotka-poleznykh-iskopaemykh.html"
+    }
+  },
+  {
+    "code": "21.06.02",
+    "category": "aspirantura",
+    "name": "Геодезия",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.2",
+    "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+    "group_code": "21.00.00",
+    "group_name": "Прикладная геология, горное дело, нефтегазовое дело и геодезия (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 887",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "887",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "научно-исследовательская деятельность в указанных областях;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/21.06.02-geodeziia.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/21.06.02-geodeziia.html"
+    }
+  },
+  {
+    "code": "22.06.01",
+    "category": "aspirantura",
+    "name": "Технологии материалов",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.2",
+    "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+    "group_code": "22.00.00",
+    "group_name": "Технологии материалов (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 888",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "888",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "синтез новых материалов, проектирование и эксплуатация технологического оборудования для опытного и серийного производства материалов и изделий, разработка методов и средств контроля качества материалов и технической диагностики технологических процессов производства, определение комплекса структурных и физических характеристик материалов (механических, теплофизических, оптических, электрофизических и других), соответствующих целям их практического использования."
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/22.06.01-tekhnologii-materialov.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/22.06.01-tekhnologii-materialov.html"
+    }
+  },
+  {
+    "code": "23.06.01",
+    "category": "aspirantura",
+    "name": "Техника и технологии наземного транспорта",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.2",
+    "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+    "group_code": "23.00.00",
+    "group_name": "Техника и технологии наземного транспорта (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 889",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "889",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "разделы науки и техники, изучающие связи и закономерности в теории движения, расчетах, проектировании, испытаниях и эксплуатации наземного транспорта строительного, сельскохозяйственного и специального назначения с целью решения задач по созданию новых и совершенствованию существующих образцов техники;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/23.06.01-tekhnika-i-tekhnologii-nazemnogo-transporta.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/23.06.01-tekhnika-i-tekhnologii-nazemnogo-transporta.html"
+    }
+  },
+  {
+    "code": "24.06.01",
+    "category": "aspirantura",
+    "name": "Авиационная и ракетно-космическая техника",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.2",
+    "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+    "group_code": "24.00.00",
+    "group_name": "Авиационная и ракетно-космическая техника (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 890",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "890",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "сферы науки, техники, технологий и педагогики, охватывающие совокупность задач направления Авиационная и ракетно-космическая техника;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/24.06.01-aviatcionnaia-i-raketno-kosmicheskaia-tekhnika.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/24.06.01-aviatcionnaia-i-raketno-kosmicheskaia-tekhnika.html"
+    }
+  },
+  {
+    "code": "25.06.01",
+    "category": "aspirantura",
+    "name": "Аэронавигация и эксплуатация авиационной и ракетно-космической техники",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.2",
+    "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+    "group_code": "25.00.00",
+    "group_name": "Аэронавигация и эксплуатация авиационной и ракетно-космической техники (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 891",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "891",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "научные исследования в области организации, выполнения, обеспечения и обслуживания полетов воздушных судов, воздушных перевозок и авиационных работ, организации и обеспечения обслуживания пассажиров, багажа, грузов и почты;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/25.06.01-aeronavigatciia-i-ekspluatatciia-aviatcionnoi-i-raketno-kosmicheskoi-tekhniki.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/25.06.01-aeronavigatciia-i-ekspluatatciia-aviatcionnoi-i-raketno-kosmicheskoi-tekhniki.html"
+    }
+  },
+  {
+    "code": "26.06.01",
+    "category": "aspirantura",
+    "name": "Техника и технологии кораблестроения и водного транспорта",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.2",
+    "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+    "group_code": "26.00.00",
+    "group_name": "Техника и технологии кораблестроения и водного транспорта (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 18 августа 2014 г. N 1016",
+    "order_date": "18 августа 2014 г.",
+    "order_number": "1016",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "научно-исследовательскую, образовательную, проектно-конструкторскую, производственно-технологическую, организационно-управленческую, экспертную деятельность в сфере проектирования, строительства, ремонта, модернизации и утилизации кораблей и судов всех типов и назначения;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/26.06.01-tekhnika-i-tekhnologii-korablestroeniia-i-vodnogo-transporta.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/26.06.01-tekhnika-i-tekhnologii-korablestroeniia-i-vodnogo-transporta.html"
+    }
+  },
+  {
+    "code": "27.06.01",
+    "category": "aspirantura",
+    "name": "Управление в технических системах",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.2",
+    "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+    "group_code": "27.00.00",
+    "group_name": "Управление в технических системах (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 892",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "892",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "системы управления техническими объектами, включающие информационно-сенсорные, исполнительные и управляющие модули;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/27.06.01-upravlenie-v-tekhnicheskikh-sistemakh.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/27.06.01-upravlenie-v-tekhnicheskikh-sistemakh.html"
+    }
+  },
+  {
+    "code": "28.06.01",
+    "category": "aspirantura",
+    "name": "Нанотехнологии и наноматериалы",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.2",
+    "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+    "group_code": "28.00.00",
+    "group_name": "Нанотехнологии и наноматериалы (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 893",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "893",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "работу в научно-исследовательских центрах, институтах РАН, промышленных лабораториях, государственных органах управления, образовательных учреждениях и организациях различных форм собственности, организациях индустрии и бизнеса, осуществляющих исследования по разработке наноматериалов и технологий их получения;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/28.06.01-nanotekhnologii-i-nanomaterialy.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/28.06.01-nanotekhnologii-i-nanomaterialy.html"
+    }
+  },
+  {
+    "code": "29.06.01",
+    "category": "aspirantura",
+    "name": "Технологии легкой промышленности",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.2",
+    "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+    "group_code": "29.00.00",
+    "group_name": "Технологии легкой промышленности (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 894",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "894",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "ассортимент, процессы проектирования, конструирования и моделирования изделий текстильной и легкой промышленности;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/29.06.01-tekhnologii-legkoi-promyshlennosti.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/29.06.01-tekhnologii-legkoi-promyshlennosti.html"
+    }
+  },
+  {
+    "code": "30.06.01",
+    "category": "aspirantura",
+    "name": "Фундаментальная медицина",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.3",
+    "industry_name": "Здравоохранение и медицинские науки (уровень 6)",
+    "group_code": "30.00.00",
+    "group_name": "Фундаментальная медицина (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 3 сентября 2014 г. N 1198",
+    "order_date": "3 сентября 2014 г.",
+    "order_number": "1198",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "физические лица;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/30.06.01-fundamentalnaia-meditcina.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/30.06.01-fundamentalnaia-meditcina.html"
+    }
+  },
+  {
+    "code": "31.06.01",
+    "category": "aspirantura",
+    "name": "Клиническая медицина",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.3",
+    "industry_name": "Здравоохранение и медицинские науки (уровень 6)",
+    "group_code": "31.00.00",
+    "group_name": "Клиническая медицина (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 3 сентября 2014 г. N 1200",
+    "order_date": "3 сентября 2014 г.",
+    "order_number": "1200",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "физические лица;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/31.06.01-clinicheskaia-meditcina.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/31.06.01-clinicheskaia-meditcina.html"
+    }
+  },
+  {
+    "code": "32.06.01",
+    "category": "aspirantura",
+    "name": "Медико-профилактическое дело",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.3",
+    "industry_name": "Здравоохранение и медицинские науки (уровень 6)",
+    "group_code": "32.00.00",
+    "group_name": "Науки о здоровье и профилактическая медицина (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 3 сентября 2014 г. N 1199",
+    "order_date": "3 сентября 2014 г.",
+    "order_number": "1199",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "население;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/32.06.01-mediko-profilakticheskoe-delo.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/32.06.01-mediko-profilakticheskoe-delo.html"
+    }
+  },
+  {
+    "code": "33.06.01",
+    "category": "aspirantura",
+    "name": "Фармация",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.3",
+    "industry_name": "Здравоохранение и медицинские науки (уровень 6)",
+    "group_code": "33.00.00",
+    "group_name": "Фармация (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 3 сентября 2014 г. N 1201",
+    "order_date": "3 сентября 2014 г.",
+    "order_number": "1201",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "лекарственные средства;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/33.06.01-farmatciia.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/33.06.01-farmatciia.html"
+    }
+  },
+  {
+    "code": "35.06.01",
+    "category": "aspirantura",
+    "name": "Сельское хозяйство",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.4",
+    "industry_name": "Сельское хозяйство и сельскохозяйственные науки (уровень 6)",
+    "group_code": "35.00.00",
+    "group_name": "Сельское, лесное и рыбное хозяйство (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 18 августа 2014 г. N 1017",
+    "order_date": "18 августа 2014 г.",
+    "order_number": "1017",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "решение комплексных задач в области сельского хозяйства;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/35.06.01-selskoe-hoziaistvo.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/35.06.01-selskoe-hoziaistvo.html"
+    }
+  },
+  {
+    "code": "35.06.02",
+    "category": "aspirantura",
+    "name": "Лесное хозяйство",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.4",
+    "industry_name": "Сельское хозяйство и сельскохозяйственные науки (уровень 6)",
+    "group_code": "35.00.00",
+    "group_name": "Сельское, лесное и рыбное хозяйство (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от \"__\" __________ 2014 г. N ____ ФЕДЕРАЛЬНЫЙ ГОСУДАРСТВЕННЫЙ ОБРАЗОВАТЕЛЬНЫЙ СТАНДАРТ ВЫСШЕГО ОБРАЗОВАНИЯ УРОВЕНЬ ВЫСШЕГО ОБРАЗОВАНИЯ - ПОДГОТОВКА КАДРОВ ВЫСШЕЙ КВАЛИФИКАЦИИ НАПРАВЛЕНИЕ ПОДГОТОВКИ 35.06.02 ЛЕСНОЕ ХОЗЯЙСТВО (в ред. Приказа Минобрнауки России от 30.04.2015 N 464",
+    "order_date": "",
+    "order_number": "464",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "планирование и осуществление охраны, защиты и воспроизводства лесов, их использования, мониторинга состояния, инвентаризации и кадастрового учета в природных, техногенных и урбанизированных ландшафтах;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/35.06.02-lesnoe-hoziaistvo.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/35.06.02-lesnoe-hoziaistvo.html"
+    }
+  },
+  {
+    "code": "35.06.03",
+    "category": "aspirantura",
+    "name": "Рыбное хозяйство",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.4",
+    "industry_name": "Сельское хозяйство и сельскохозяйственные науки (уровень 6)",
+    "group_code": "35.00.00",
+    "group_name": "Сельское, лесное и рыбное хозяйство (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 895",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "895",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "решение комплексных задач в области рыбного хозяйства, направленных на обеспечение рационального использования водных биоресурсов естественных водоемов, их охрану, искусственное воспроизводство и товарное выращивание на рыбоводных предприятиях, охрана среды обитания гидробионтов;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/35.06.03-rybnoe-hoziaistvo.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/35.06.03-rybnoe-hoziaistvo.html"
+    }
+  },
+  {
+    "code": "35.06.04",
+    "category": "aspirantura",
+    "name": "Технологии, средства механизации и энергетическое оборудование в сельском, лесном и рыбном хозяйстве",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.4",
+    "industry_name": "Сельское хозяйство и сельскохозяйственные науки (уровень 6)",
+    "group_code": "35.00.00",
+    "group_name": "Сельское, лесное и рыбное хозяйство (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 18 августа 2014 г. N 1018",
+    "order_date": "18 августа 2014 г.",
+    "order_number": "1018",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "исследование и разработку требований, технологий, машин, орудий, рабочих органов и оборудования, материалов, систем качества производства, хранения, переработки, добычи, утилизации отходов и подготовки к реализации продукции в различных отраслях сельского, рыбного и лесного (лесопромышленного и лесозаготовительного) хозяйств;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/35.06.04-tekhnologii-sredstva-mehanizatcii-i-energeticheskoe-oborudovanie-v-selskom-lesnom-i-rybnom-hoziaistve.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/35.06.04-tekhnologii-sredstva-mehanizatcii-i-energeticheskoe-oborudovanie-v-selskom-lesnom-i-rybnom-hoziaistve.html"
+    }
+  },
+  {
+    "code": "36.06.01",
+    "category": "aspirantura",
+    "name": "Ветеринария и зоотехния",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.4",
+    "industry_name": "Сельское хозяйство и сельскохозяйственные науки (уровень 6)",
+    "group_code": "36.00.00",
+    "group_name": "Ветеринария и зоотехния (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 896",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "896",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "научно-исследовательская деятельность в области морфологии, физиологии, биохимии, иммунологии, био-математики, экологии, этологии, паразитологии, фармакологии и токсикологии, патологии, онкологии, микробиологии, вирусологии, микологии, эпизоотологии, диагностики и внутренних незаразных болезней животных, акушерства и гинекологии, хирургии, ветеринарной санитарии, ветеринарно-санитарной экспертизы, организации ветеринарного дела, гигиены животных, разведения, селекции и генетики животных, кормопроизводства, кормления животных и технологии кормов, звероводства и охотоведения, частной зоотехнии, технологии производства продуктов животноводства, сельскохозяйственной экономики, управления коммерческим предприятием, профессиональной юриспруденции и этики, коммуникации;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/36.06.01-veterinariia-i-zootekhniia.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/36.06.01-veterinariia-i-zootekhniia.html"
+    }
+  },
+  {
+    "code": "37.06.01",
+    "category": "aspirantura",
+    "name": "Психологические науки",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.5",
+    "industry_name": "Науки об обществе (уровень 6)",
+    "group_code": "37.00.00",
+    "group_name": "Психологические науки (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 897",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "897",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "научно-исследовательская деятельность в области психологических наук;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/37.06.01-psihologicheskie-nauki.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/37.06.01-psihologicheskie-nauki.html"
+    }
+  },
+  {
+    "code": "38.06.01",
+    "category": "aspirantura",
+    "name": "Экономика",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.5",
+    "industry_name": "Науки об обществе (уровень 6)",
+    "group_code": "38.00.00",
+    "group_name": "Экономика и управление (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 898",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "898",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "концептуальные (фундаментальные) проблемы экономической науки, включая методы экономического анализа;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/38.06.01-ekonomika.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/38.06.01-ekonomika.html"
+    }
+  },
+  {
+    "code": "39.06.01",
+    "category": "aspirantura",
+    "name": "Социологические науки",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.5",
+    "industry_name": "Науки об обществе (уровень 6)",
+    "group_code": "39.00.00",
+    "group_name": "Социология и социальная работа (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 899",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "899",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "теория, методология и история социологии;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/39.06.01-sotciologicheskie-nauki.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/39.06.01-sotciologicheskie-nauki.html"
+    }
+  },
+  {
+    "code": "40.06.01",
+    "category": "aspirantura",
+    "name": "Юриспруденция",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.5",
+    "industry_name": "Науки об обществе (уровень 6)",
+    "group_code": "40.00.00",
+    "group_name": "Юриспруденция (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 5 декабря 2014 г. N 1538",
+    "order_date": "5 декабря 2014 г.",
+    "order_number": "1538",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "научно-исследовательская деятельность в области юриспруденции;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/40.06.01-iurisprudentciia.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/40.06.01-iurisprudentciia.html"
+    }
+  },
+  {
+    "code": "41.06.01",
+    "category": "aspirantura",
+    "name": "Политические науки и регионоведение",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.5",
+    "industry_name": "Науки об обществе (уровень 6)",
+    "group_code": "41.00.00",
+    "group_name": "Политические науки и регионоведение (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 900",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "900",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "политические, экономические, социальные, демографические и лингвистические процессы на локальном, региональном, национальном и международном уровнях, международные отношения и внешняя политика, политическая экспертиза и политическое консультирование;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/41.06.01-politicheskie-nauki-i-regionovedenie.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/41.06.01-politicheskie-nauki-i-regionovedenie.html"
+    }
+  },
+  {
+    "code": "42.06.01",
+    "category": "aspirantura",
+    "name": "Средства массовой информации и информационно-библиотечное дело",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.5",
+    "industry_name": "Науки об обществе (уровень 6)",
+    "group_code": "42.00.00",
+    "group_name": "Средства массовой информации и информационно-библиотечное дело (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 901",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "901",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "научно-исследовательская деятельность в области средств массовой информации и информационно-библиотечного дела;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/42.06.01-sredstva-massovoi-informatcii-i-informatcionno-bibliotechnoe-delo.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/42.06.01-sredstva-massovoi-informatcii-i-informatcionno-bibliotechnoe-delo.html"
+    }
+  },
+  {
+    "code": "44.06.01",
+    "category": "aspirantura",
+    "name": "Образование и педагогические науки",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.6",
+    "industry_name": "Образование и педагогические науки (уровень 6)",
+    "group_code": "44.00.00",
+    "group_name": "Образование и педагогические науки (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 902",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "902",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "научно-исследовательская деятельность в области образования и социальной сферы;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/44.06.01-obrazovanie-i-pedagogicheskie-nauki.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/44.06.01-obrazovanie-i-pedagogicheskie-nauki.html"
+    }
+  },
+  {
+    "code": "45.06.01",
+    "category": "aspirantura",
+    "name": "Языкознание и литературоведение",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.7",
+    "industry_name": "Гуманитарные науки (уровень 6)",
+    "group_code": "45.00.00",
+    "group_name": "Языкознание и литературоведение (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 903",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "903",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "языки (родной и иностранные) в их теоретическом, практическом, функциональном, прагматическом, синхроническом, диахроническом, социокультурном, диалектологическом и сопоставительном аспектах;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/45.06.01-iazykoznanie-i-literaturovedenie.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/45.06.01-iazykoznanie-i-literaturovedenie.html"
+    }
+  },
+  {
+    "code": "46.06.01",
+    "category": "aspirantura",
+    "name": "Исторические науки и археология",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.7",
+    "industry_name": "Гуманитарные науки (уровень 6)",
+    "group_code": "46.00.00",
+    "group_name": "История и археология (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 904",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "904",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "решение профессиональных задач в образовательных организациях высшего образования, профильных академических институтах и других НИИ;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/46.06.01-istoricheskie-nauki-i-arkheologiia.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/46.06.01-istoricheskie-nauki-i-arkheologiia.html"
+    }
+  },
+  {
+    "code": "47.06.01",
+    "category": "aspirantura",
+    "name": "Философия, этика и религиоведение",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.7",
+    "industry_name": "Гуманитарные науки (уровень 6)",
+    "group_code": "47.00.00",
+    "group_name": "Философия, этика и религиоведение (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 905",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "905",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "образовательные организации системы общего и профессионального образования;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/47.06.01-filosofiia-etika-i-religiovedenie.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/47.06.01-filosofiia-etika-i-religiovedenie.html"
+    }
+  },
+  {
+    "code": "48.06.01",
+    "category": "aspirantura",
+    "name": "Теология",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.7",
+    "industry_name": "Гуманитарные науки (уровень 6)",
+    "group_code": "48.00.00",
+    "group_name": "теология (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 15 апреля 2014 г. N 317",
+    "order_date": "15 апреля 2014 г.",
+    "order_number": "317",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "систему теологического знания, традиционные духовные ценности общества и человека, теологическое образование, науку и просвещение, религиозную культуру и философию, сферу государственно-конфессиональных, межконфессиональных и общественных отношений, практические аспекты жизни конфессий и соответствующую им социальную активность."
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/48.06.01-teologiia.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/48.06.01-teologiia.html"
+    }
+  },
+  {
+    "code": "49.06.01",
+    "category": "aspirantura",
+    "name": "Физическая культура и спорт",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.7",
+    "industry_name": "Гуманитарные науки (уровень 6)",
+    "group_code": "49.00.00",
+    "group_name": "Физическая культура и спорт (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 906",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "906",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "процессы формирования физических, психических, социальных, духовных, мировоззренческих, мотивационно-ценностных ориентаций и установок на сохранение и укрепление здоровья, ведения здорового образа жизни, оптимизации психофизического состояния человека, освоения им разнообразных двигательных умений и навыков, и связанных с ними знаний, развития двигательных способностей и высокой работоспособности, формирования разносторонней подготовленности, навыков соревновательной деятельности и совершенствования спортивного мастерства с установкой на достижение максимальных соревновательных результатов в видах спорта;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/49.06.01-fizicheskaia-kultura-i-sport.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/49.06.01-fizicheskaia-kultura-i-sport.html"
+    }
+  },
+  {
+    "code": "50.06.01",
+    "category": "aspirantura",
+    "name": "Искусствоведение",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.8",
+    "industry_name": "Искусство и культура (уровень 6)",
+    "group_code": "50.00.00",
+    "group_name": "Искусствознание (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 30 июля 2014 г. N 909",
+    "order_date": "30 июля 2014 г.",
+    "order_number": "909",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "историко-художественные процессы и явления в их художественных, культурных, социокультурных, формально-стилевых, семиотических измерениях и их отражение в произведениях искусства, теории и методологии искусства, эстетических концепциях;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/50.06.01-iskusstvovedenie.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/50.06.01-iskusstvovedenie.html"
+    }
+  },
+  {
+    "code": "51.06.01",
+    "category": "aspirantura",
+    "name": "Культурология",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.8",
+    "industry_name": "Искусство и культура (уровень 6)",
+    "group_code": "51.00.00",
+    "group_name": "Культуроведение и социокультурные проекты (уровень 6)",
+    "order": "приказом Министерства образования и науки Российской Федерации от 22 августа 2014 г. N 1038",
+    "order_date": "22 августа 2014 г.",
+    "order_number": "1038",
+    "qualification": "Исследователь. Преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [
+      "культурологические и социально-гуманитарные исследования;"
+    ],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/51.06.01-kulturologiia.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/51.06.01-kulturologiia.html"
+    }
+  },
+  {
+    "code": "56.06.01",
+    "category": "aspirantura",
+    "name": "Военные науки",
+    "kind": "specialty",
+    "level": "Аспирантура",
+    "industry_code": "6.9",
+    "industry_name": "Оборона и безопасность государства. Военные науки (уровень 6)",
+    "group_code": "56.00.00",
+    "group_name": "Военное управление (уровень 6)",
+    "order": "",
+    "order_date": "",
+    "order_number": "",
+    "qualification": "исследователь, преподаватель-исследователь",
+    "qualification_tracks": [],
+    "study_duration": {},
+    "activity_areas": [],
+    "ok_competencies": [],
+    "pk_competencies": [],
+    "pdf_url": null,
+    "source_url": "https://classinform.ru/fgos/56.06.01-voennye-nauki.html",
+    "raw_data": {
+      "source": "classinform.ru",
+      "url": "https://classinform.ru/fgos/56.06.01-voennye-nauki.html"
+    }
+  }
+]

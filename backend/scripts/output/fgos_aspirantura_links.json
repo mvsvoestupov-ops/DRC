@@ -1,0 +1,492 @@
+{
+  "category": "aspirantura",
+  "count": 54,
+  "items": [
+    {
+      "url": "https://classinform.ru/fgos/01.06.01-matematika-i-mehanika.html",
+      "code": "01.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.1",
+      "industry_name": "Математические и естественные науки (уровень 6)",
+      "group_code": "01.00.00",
+      "group_name": "Математика и механика (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/02.06.01-kompiuternye-i-informatcionnye-nauki.html",
+      "code": "02.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.1",
+      "industry_name": "Математические и естественные науки (уровень 6)",
+      "group_code": "02.00.00",
+      "group_name": "Компьютерные и информационные науки (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/03.06.01-fizika-i-astronomiia.html",
+      "code": "03.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.1",
+      "industry_name": "Математические и естественные науки (уровень 6)",
+      "group_code": "03.00.00",
+      "group_name": "Физика и астрономия (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/04.06.01-himicheskie-nauki.html",
+      "code": "04.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.1",
+      "industry_name": "Математические и естественные науки (уровень 6)",
+      "group_code": "04.00.00",
+      "group_name": "Химия (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/05.06.01-nauki-o-zemle.html",
+      "code": "05.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.1",
+      "industry_name": "Математические и естественные науки (уровень 6)",
+      "group_code": "05.00.00",
+      "group_name": "Науки о Земле (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/06.06.01-biologicheskie-nauki.html",
+      "code": "06.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.1",
+      "industry_name": "Математические и естественные науки (уровень 6)",
+      "group_code": "06.00.00",
+      "group_name": "Биологические науки (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/07.06.01-arhitektura.html",
+      "code": "07.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+      "group_code": "07.00.00",
+      "group_name": "Архитектура (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/08.06.01-tekhnika-i-tekhnologii-stroitelstva.html",
+      "code": "08.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+      "group_code": "08.00.00",
+      "group_name": "Техника и технологии строительства (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/09.06.01-informatika-i-vychislitelnaia-tekhnika.html",
+      "code": "09.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+      "group_code": "09.00.00",
+      "group_name": "Информатика и вычислительная техника (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/10.06.01-informatcionnaia-bezopasnost.html",
+      "code": "10.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+      "group_code": "10.00.00",
+      "group_name": "Информационная безопасность (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/11.06.01-elektronika-radiotekhnika-i-sistemy-sviazi.html",
+      "code": "11.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+      "group_code": "11.00.00",
+      "group_name": "Электроника, радиотехника и системы связи (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/12.06.01-fotonika-priborostroenie-opticheskie-i-biotekhnicheskie-sistemy-i-tekhnologii.html",
+      "code": "12.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+      "group_code": "12.00.00",
+      "group_name": "Фотоника, приборостроение, оптические и биотехнические системы и технологии (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/13.06.01-elektro-i-teplotekhnika.html",
+      "code": "13.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+      "group_code": "13.00.00",
+      "group_name": "Электро- и теплоэнергетика (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/14.06.01-iadernaia-teplovaia-i-vozobnovliaemaia-energetika-i-soputstvuiushchie-tekhnologii.html",
+      "code": "14.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+      "group_code": "14.00.00",
+      "group_name": "Ядерная энергетика и технологии (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/15.06.01-mashinostroenie.html",
+      "code": "15.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+      "group_code": "15.00.00",
+      "group_name": "Машиностроение (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/16.06.01-fiziko-tekhnicheskie-nauki-i-tekhnologii.html",
+      "code": "16.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+      "group_code": "16.00.00",
+      "group_name": "Физико-технические науки и технологии (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/17.06.01-oruzhie-i-sistemy-vooruzheniia.html",
+      "code": "17.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+      "group_code": "17.00.00",
+      "group_name": "Оружие и системы вооружения (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/18.06.01-himicheskaia-tekhnologiia.html",
+      "code": "18.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+      "group_code": "18.00.00",
+      "group_name": "Химические технологии (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/19.06.01-promyshlennaia-ekologiia-i-biotekhnologii.html",
+      "code": "19.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+      "group_code": "19.00.00",
+      "group_name": "Промышленная экология и биотехнологии (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/20.06.01-tekhnosfernaia-bezopasnost.html",
+      "code": "20.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+      "group_code": "20.00.00",
+      "group_name": "Техносферная безопасность и природообустройство (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/21.06.01-geologiia-razvedka-i-razrabotka-poleznykh-iskopaemykh.html",
+      "code": "21.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+      "group_code": "21.00.00",
+      "group_name": "Прикладная геология, горное дело, нефтегазовое дело и геодезия (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/21.06.02-geodeziia.html",
+      "code": "21.06.02",
+      "category": "aspirantura",
+      "industry_code": "6.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+      "group_code": "21.00.00",
+      "group_name": "Прикладная геология, горное дело, нефтегазовое дело и геодезия (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/22.06.01-tekhnologii-materialov.html",
+      "code": "22.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+      "group_code": "22.00.00",
+      "group_name": "Технологии материалов (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/23.06.01-tekhnika-i-tekhnologii-nazemnogo-transporta.html",
+      "code": "23.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+      "group_code": "23.00.00",
+      "group_name": "Техника и технологии наземного транспорта (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/24.06.01-aviatcionnaia-i-raketno-kosmicheskaia-tekhnika.html",
+      "code": "24.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+      "group_code": "24.00.00",
+      "group_name": "Авиационная и ракетно-космическая техника (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/25.06.01-aeronavigatciia-i-ekspluatatciia-aviatcionnoi-i-raketno-kosmicheskoi-tekhniki.html",
+      "code": "25.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+      "group_code": "25.00.00",
+      "group_name": "Аэронавигация и эксплуатация авиационной и ракетно-космической техники (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/26.06.01-tekhnika-i-tekhnologii-korablestroeniia-i-vodnogo-transporta.html",
+      "code": "26.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+      "group_code": "26.00.00",
+      "group_name": "Техника и технологии кораблестроения и водного транспорта (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/27.06.01-upravlenie-v-tekhnicheskikh-sistemakh.html",
+      "code": "27.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+      "group_code": "27.00.00",
+      "group_name": "Управление в технических системах (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/28.06.01-nanotekhnologii-i-nanomaterialy.html",
+      "code": "28.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+      "group_code": "28.00.00",
+      "group_name": "Нанотехнологии и наноматериалы (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/29.06.01-tekhnologii-legkoi-promyshlennosti.html",
+      "code": "29.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 6)",
+      "group_code": "29.00.00",
+      "group_name": "Технологии легкой промышленности (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/30.06.01-fundamentalnaia-meditcina.html",
+      "code": "30.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 6)",
+      "group_code": "30.00.00",
+      "group_name": "Фундаментальная медицина (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.06.01-clinicheskaia-meditcina.html",
+      "code": "31.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 6)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/32.06.01-mediko-profilakticheskoe-delo.html",
+      "code": "32.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 6)",
+      "group_code": "32.00.00",
+      "group_name": "Науки о здоровье и профилактическая медицина (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/33.06.01-farmatciia.html",
+      "code": "33.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 6)",
+      "group_code": "33.00.00",
+      "group_name": "Фармация (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/35.06.01-selskoe-hoziaistvo.html",
+      "code": "35.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.4",
+      "industry_name": "Сельское хозяйство и сельскохозяйственные науки (уровень 6)",
+      "group_code": "35.00.00",
+      "group_name": "Сельское, лесное и рыбное хозяйство (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/35.06.02-lesnoe-hoziaistvo.html",
+      "code": "35.06.02",
+      "category": "aspirantura",
+      "industry_code": "6.4",
+      "industry_name": "Сельское хозяйство и сельскохозяйственные науки (уровень 6)",
+      "group_code": "35.00.00",
+      "group_name": "Сельское, лесное и рыбное хозяйство (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/35.06.03-rybnoe-hoziaistvo.html",
+      "code": "35.06.03",
+      "category": "aspirantura",
+      "industry_code": "6.4",
+      "industry_name": "Сельское хозяйство и сельскохозяйственные науки (уровень 6)",
+      "group_code": "35.00.00",
+      "group_name": "Сельское, лесное и рыбное хозяйство (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/35.06.04-tekhnologii-sredstva-mehanizatcii-i-energeticheskoe-oborudovanie-v-selskom-lesnom-i-rybnom-hoziaistve.html",
+      "code": "35.06.04",
+      "category": "aspirantura",
+      "industry_code": "6.4",
+      "industry_name": "Сельское хозяйство и сельскохозяйственные науки (уровень 6)",
+      "group_code": "35.00.00",
+      "group_name": "Сельское, лесное и рыбное хозяйство (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/36.06.01-veterinariia-i-zootekhniia.html",
+      "code": "36.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.4",
+      "industry_name": "Сельское хозяйство и сельскохозяйственные науки (уровень 6)",
+      "group_code": "36.00.00",
+      "group_name": "Ветеринария и зоотехния (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/37.06.01-psihologicheskie-nauki.html",
+      "code": "37.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.5",
+      "industry_name": "Науки об обществе (уровень 6)",
+      "group_code": "37.00.00",
+      "group_name": "Психологические науки (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/38.06.01-ekonomika.html",
+      "code": "38.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.5",
+      "industry_name": "Науки об обществе (уровень 6)",
+      "group_code": "38.00.00",
+      "group_name": "Экономика и управление (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/39.06.01-sotciologicheskie-nauki.html",
+      "code": "39.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.5",
+      "industry_name": "Науки об обществе (уровень 6)",
+      "group_code": "39.00.00",
+      "group_name": "Социология и социальная работа (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/40.06.01-iurisprudentciia.html",
+      "code": "40.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.5",
+      "industry_name": "Науки об обществе (уровень 6)",
+      "group_code": "40.00.00",
+      "group_name": "Юриспруденция (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/41.06.01-politicheskie-nauki-i-regionovedenie.html",
+      "code": "41.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.5",
+      "industry_name": "Науки об обществе (уровень 6)",
+      "group_code": "41.00.00",
+      "group_name": "Политические науки и регионоведение (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/42.06.01-sredstva-massovoi-informatcii-i-informatcionno-bibliotechnoe-delo.html",
+      "code": "42.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.5",
+      "industry_name": "Науки об обществе (уровень 6)",
+      "group_code": "42.00.00",
+      "group_name": "Средства массовой информации и информационно-библиотечное дело (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/44.06.01-obrazovanie-i-pedagogicheskie-nauki.html",
+      "code": "44.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.6",
+      "industry_name": "Образование и педагогические науки (уровень 6)",
+      "group_code": "44.00.00",
+      "group_name": "Образование и педагогические науки (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/45.06.01-iazykoznanie-i-literaturovedenie.html",
+      "code": "45.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.7",
+      "industry_name": "Гуманитарные науки (уровень 6)",
+      "group_code": "45.00.00",
+      "group_name": "Языкознание и литературоведение (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/46.06.01-istoricheskie-nauki-i-arkheologiia.html",
+      "code": "46.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.7",
+      "industry_name": "Гуманитарные науки (уровень 6)",
+      "group_code": "46.00.00",
+      "group_name": "История и археология (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/47.06.01-filosofiia-etika-i-religiovedenie.html",
+      "code": "47.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.7",
+      "industry_name": "Гуманитарные науки (уровень 6)",
+      "group_code": "47.00.00",
+      "group_name": "Философия, этика и религиоведение (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/48.06.01-teologiia.html",
+      "code": "48.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.7",
+      "industry_name": "Гуманитарные науки (уровень 6)",
+      "group_code": "48.00.00",
+      "group_name": "теология (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/49.06.01-fizicheskaia-kultura-i-sport.html",
+      "code": "49.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.7",
+      "industry_name": "Гуманитарные науки (уровень 6)",
+      "group_code": "49.00.00",
+      "group_name": "Физическая культура и спорт (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/50.06.01-iskusstvovedenie.html",
+      "code": "50.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.8",
+      "industry_name": "Искусство и культура (уровень 6)",
+      "group_code": "50.00.00",
+      "group_name": "Искусствознание (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/51.06.01-kulturologiia.html",
+      "code": "51.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.8",
+      "industry_name": "Искусство и культура (уровень 6)",
+      "group_code": "51.00.00",
+      "group_name": "Культуроведение и социокультурные проекты (уровень 6)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/56.06.01-voennye-nauki.html",
+      "code": "56.06.01",
+      "category": "aspirantura",
+      "industry_code": "6.9",
+      "industry_name": "Оборона и безопасность государства. Военные науки (уровень 6)",
+      "group_code": "56.00.00",
+      "group_name": "Военное управление (уровень 6)"
+    }
+  ]
+}

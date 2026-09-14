@@ -1,0 +1,1671 @@
+{
+  "category": "master",
+  "count": 185,
+  "items": [
+    {
+      "url": "https://classinform.ru/fgos/01.04.01-matematika.html",
+      "code": "01.04.01",
+      "category": "master",
+      "industry_code": "4.1",
+      "industry_name": "Математические и естественные науки (уровень 4)",
+      "group_code": "01.00.00",
+      "group_name": "Математика и механика (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/01.04.02-pricladnaia-matematika-i-informatika.html",
+      "code": "01.04.02",
+      "category": "master",
+      "industry_code": "4.1",
+      "industry_name": "Математические и естественные науки (уровень 4)",
+      "group_code": "01.00.00",
+      "group_name": "Математика и механика (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/01.04.03-mehanika-i-matematicheskoe-modelirovanie.html",
+      "code": "01.04.03",
+      "category": "master",
+      "industry_code": "4.1",
+      "industry_name": "Математические и естественные науки (уровень 4)",
+      "group_code": "01.00.00",
+      "group_name": "Математика и механика (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/01.04.04-pricladnaia-matematika.html",
+      "code": "01.04.04",
+      "category": "master",
+      "industry_code": "4.1",
+      "industry_name": "Математические и естественные науки (уровень 4)",
+      "group_code": "01.00.00",
+      "group_name": "Математика и механика (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/01.04.05-statistika.html",
+      "code": "01.04.05",
+      "category": "master",
+      "industry_code": "4.1",
+      "industry_name": "Математические и естественные науки (уровень 4)",
+      "group_code": "01.00.00",
+      "group_name": "Математика и механика (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/02.04.01-matematika-i-kompiuternye-nauki.html",
+      "code": "02.04.01",
+      "category": "master",
+      "industry_code": "4.1",
+      "industry_name": "Математические и естественные науки (уровень 4)",
+      "group_code": "02.00.00",
+      "group_name": "Компьютерные и информационные науки (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/02.04.02-fundamentalnaia-informatika-i-informatcionnye-tekhnologii.html",
+      "code": "02.04.02",
+      "category": "master",
+      "industry_code": "4.1",
+      "industry_name": "Математические и естественные науки (уровень 4)",
+      "group_code": "02.00.00",
+      "group_name": "Компьютерные и информационные науки (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/02.04.03-matematicheskoe-obespechenie-i-administrirovanie-informatcionnykh-sistem.html",
+      "code": "02.04.03",
+      "category": "master",
+      "industry_code": "4.1",
+      "industry_name": "Математические и естественные науки (уровень 4)",
+      "group_code": "02.00.00",
+      "group_name": "Компьютерные и информационные науки (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/03.04.01-pricladnye-matematika-i-fizika.html",
+      "code": "03.04.01",
+      "category": "master",
+      "industry_code": "4.1",
+      "industry_name": "Математические и естественные науки (уровень 4)",
+      "group_code": "03.00.00",
+      "group_name": "Физика и астрономия (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/03.04.02-fizika.html",
+      "code": "03.04.02",
+      "category": "master",
+      "industry_code": "4.1",
+      "industry_name": "Математические и естественные науки (уровень 4)",
+      "group_code": "03.00.00",
+      "group_name": "Физика и астрономия (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/03.04.03-radiofizika.html",
+      "code": "03.04.03",
+      "category": "master",
+      "industry_code": "4.1",
+      "industry_name": "Математические и естественные науки (уровень 4)",
+      "group_code": "03.00.00",
+      "group_name": "Физика и астрономия (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/04.04.01-himiia.html",
+      "code": "04.04.01",
+      "category": "master",
+      "industry_code": "4.1",
+      "industry_name": "Математические и естественные науки (уровень 4)",
+      "group_code": "04.00.00",
+      "group_name": "Химия (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/04.04.02-himiia-fizika-i-mehanika-materialov.html",
+      "code": "04.04.02",
+      "category": "master",
+      "industry_code": "4.1",
+      "industry_name": "Математические и естественные науки (уровень 4)",
+      "group_code": "04.00.00",
+      "group_name": "Химия (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/05.04.01-geologiia.html",
+      "code": "05.04.01",
+      "category": "master",
+      "industry_code": "4.1",
+      "industry_name": "Математические и естественные науки (уровень 4)",
+      "group_code": "05.00.00",
+      "group_name": "Науки о Земле (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/05.04.02-geografiia.html",
+      "code": "05.04.02",
+      "category": "master",
+      "industry_code": "4.1",
+      "industry_name": "Математические и естественные науки (уровень 4)",
+      "group_code": "05.00.00",
+      "group_name": "Науки о Земле (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/05.04.03-kartografiia-i-geoinformatika.html",
+      "code": "05.04.03",
+      "category": "master",
+      "industry_code": "4.1",
+      "industry_name": "Математические и естественные науки (уровень 4)",
+      "group_code": "05.00.00",
+      "group_name": "Науки о Земле (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/05.04.04-gidrometeorologiia.html",
+      "code": "05.04.04",
+      "category": "master",
+      "industry_code": "4.1",
+      "industry_name": "Математические и естественные науки (уровень 4)",
+      "group_code": "05.00.00",
+      "group_name": "Науки о Земле (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/05.04.05-pricladnaia-gidrometeorologiia.html",
+      "code": "05.04.05",
+      "category": "master",
+      "industry_code": "4.1",
+      "industry_name": "Математические и естественные науки (уровень 4)",
+      "group_code": "05.00.00",
+      "group_name": "Науки о Земле (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/05.04.06-ekologiia-i-prirodopolzovanie.html",
+      "code": "05.04.06",
+      "category": "master",
+      "industry_code": "4.1",
+      "industry_name": "Математические и естественные науки (уровень 4)",
+      "group_code": "05.00.00",
+      "group_name": "Науки о Земле (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/06.04.01-biologiia.html",
+      "code": "06.04.01",
+      "category": "master",
+      "industry_code": "4.1",
+      "industry_name": "Математические и естественные науки (уровень 4)",
+      "group_code": "06.00.00",
+      "group_name": "Биологические науки (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/06.04.02-pochvovedenie.html",
+      "code": "06.04.02",
+      "category": "master",
+      "industry_code": "4.1",
+      "industry_name": "Математические и естественные науки (уровень 4)",
+      "group_code": "06.00.00",
+      "group_name": "Биологические науки (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/07.04.01-arhitektura.html",
+      "code": "07.04.01",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "07.00.00",
+      "group_name": "Архитектура (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/07.04.02-rekonstruktciia-i-restavratciia-arhitekturnogo-naslediia.html",
+      "code": "07.04.02",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "07.00.00",
+      "group_name": "Архитектура (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/07.04.03-dizain-arhitekturnoi-sredy.html",
+      "code": "07.04.03",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "07.00.00",
+      "group_name": "Архитектура (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/07.04.04-gradostroitelstvo.html",
+      "code": "07.04.04",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "07.00.00",
+      "group_name": "Архитектура (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/08.04.01-stroitelstvo.html",
+      "code": "08.04.01",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "08.00.00",
+      "group_name": "Техника и технологии строительства (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/09.04.01-informatika-i-vychislitelnaia-tekhnika.html",
+      "code": "09.04.01",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "09.00.00",
+      "group_name": "Информатика и вычислительная техника (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/09.04.02-informatcionnye-sistemy-i-tekhnologii.html",
+      "code": "09.04.02",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "09.00.00",
+      "group_name": "Информатика и вычислительная техника (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/09.04.03-pricladnaia-informatika.html",
+      "code": "09.04.03",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "09.00.00",
+      "group_name": "Информатика и вычислительная техника (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/09.04.04-programmnaia-inzheneriia.html",
+      "code": "09.04.04",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "09.00.00",
+      "group_name": "Информатика и вычислительная техника (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/10.04.01-informatcionnaia-bezopasnost.html",
+      "code": "10.04.01",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "10.00.00",
+      "group_name": "Информационная безопасность (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/11.04.01-radiotekhnika.html",
+      "code": "11.04.01",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "11.00.00",
+      "group_name": "Электроника, радиотехника и системы связи (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/11.04.02-infokommunikatcionnye-tekhnologii-i-sistemy-sviazi.html",
+      "code": "11.04.02",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "11.00.00",
+      "group_name": "Электроника, радиотехника и системы связи (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/11.04.03-konstruirovanie-i-tekhnologiia-elektronnykh-sredstv.html",
+      "code": "11.04.03",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "11.00.00",
+      "group_name": "Электроника, радиотехника и системы связи (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/11.04.04-elektronika-i-nanoelektronika.html",
+      "code": "11.04.04",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "11.00.00",
+      "group_name": "Электроника, радиотехника и системы связи (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/12.04.01-priborostroenie.html",
+      "code": "12.04.01",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "12.00.00",
+      "group_name": "Фотоника, приборостроение, оптические и биотехнические системы и технологии (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/12.04.02-optotekhnika.html",
+      "code": "12.04.02",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "12.00.00",
+      "group_name": "Фотоника, приборостроение, оптические и биотехнические системы и технологии (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/12.04.03-fotonika-i-optoinformatika.html",
+      "code": "12.04.03",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "12.00.00",
+      "group_name": "Фотоника, приборостроение, оптические и биотехнические системы и технологии (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/12.04.04-biotekhnicheskie-sistemy-i-tekhnologii.html",
+      "code": "12.04.04",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "12.00.00",
+      "group_name": "Фотоника, приборостроение, оптические и биотехнические системы и технологии (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/12.04.05-lazernaia-tekhnika-i-lazernye-tekhnologii.html",
+      "code": "12.04.05",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "12.00.00",
+      "group_name": "Фотоника, приборостроение, оптические и биотехнические системы и технологии (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/13.04.01-teploenergetika-i-teplotekhnika.html",
+      "code": "13.04.01",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "13.00.00",
+      "group_name": "Электро- и теплоэнергетика (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/13.04.02-elektroenergetika-i-elektrotekhnika.html",
+      "code": "13.04.02",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "13.00.00",
+      "group_name": "Электро- и теплоэнергетика (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/13.04.03-energeticheskoe-mashinostroenie.html",
+      "code": "13.04.03",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "13.00.00",
+      "group_name": "Электро- и теплоэнергетика (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/14.04.01-iadernaia-energetika-i-teplofizika.html",
+      "code": "14.04.01",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "14.00.00",
+      "group_name": "Ядерная энергетика и технологии (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/14.04.02-iadernye-fizika-i-tekhnologii.html",
+      "code": "14.04.02",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "14.00.00",
+      "group_name": "Ядерная энергетика и технологии (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/15.04.01-mashinostroenie.html",
+      "code": "15.04.01",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "15.00.00",
+      "group_name": "Машиностроение (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/15.04.02-tekhnologicheskie-mashiny-i-oborudovanie.html",
+      "code": "15.04.02",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "15.00.00",
+      "group_name": "Машиностроение (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/15.04.03-pricladnaia-mehanika.html",
+      "code": "15.04.03",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "15.00.00",
+      "group_name": "Машиностроение (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/15.04.04-avtomatizatciia-tekhnologicheskikh-protcessov-i-proizvodstv.html",
+      "code": "15.04.04",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "15.00.00",
+      "group_name": "Машиностроение (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/15.04.05-konstruktorsko-tekhnologicheskoe-obespechenie-mashinostroitelnykh-proizvodstv.html",
+      "code": "15.04.05",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "15.00.00",
+      "group_name": "Машиностроение (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/15.04.06-mehatronika-i-robototekhnika.html",
+      "code": "15.04.06",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "15.00.00",
+      "group_name": "Машиностроение (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/16.04.01-tekhnicheskaia-fizika.html",
+      "code": "16.04.01",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "16.00.00",
+      "group_name": "Физико-технические науки и технологии (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/16.04.02-vysokotekhnologicheskie-plazmennye-i-energeticheskie-ustanovki.html",
+      "code": "16.04.02",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "16.00.00",
+      "group_name": "Физико-технические науки и технологии (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/16.04.03-holodilnaia-kriogennaia-tekhnika-i-sistemy-zhizneobespecheniia.html",
+      "code": "16.04.03",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "16.00.00",
+      "group_name": "Физико-технические науки и технологии (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/17.04.01-korabelnoe-vooruzhenie.html",
+      "code": "17.04.01",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "17.00.00",
+      "group_name": "Оружие и системы вооружения (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/18.04.01-himicheskaia-tekhnologiia.html",
+      "code": "18.04.01",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "18.00.00",
+      "group_name": "Химические технологии (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/18.04.02-energo-i-resursosberegaiushchie-protcessy-v-himicheskoi-tekhnologii-neftehimii-i-biotekhnologii.html",
+      "code": "18.04.02",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "18.00.00",
+      "group_name": "Химические технологии (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/19.04.01-biotekhnologiia.html",
+      "code": "19.04.01",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "19.00.00",
+      "group_name": "Промышленная экология и биотехнологии (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/19.04.02-produkty-pitaniia-iz-rastitelnogo-syria.html",
+      "code": "19.04.02",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "19.00.00",
+      "group_name": "Промышленная экология и биотехнологии (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/19.04.03-produkty-pitaniia-zhivotnogo-proishozhdeniia.html",
+      "code": "19.04.03",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "19.00.00",
+      "group_name": "Промышленная экология и биотехнологии (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/19.04.04-tekhnologiia-produktcii-i-organizatciia-obshchestvennogo-pitaniia.html",
+      "code": "19.04.04",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "19.00.00",
+      "group_name": "Промышленная экология и биотехнологии (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/19.04.05-vysokotekhnologichnye-proizvodstva-pishchevykh-produktov-funktcionalnogo-i-spetcializirovannogo-naznacheniia.html",
+      "code": "19.04.05",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "19.00.00",
+      "group_name": "Промышленная экология и биотехнологии (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/20.04.01-tekhnosfernaia-bezopasnost.html",
+      "code": "20.04.01",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "20.00.00",
+      "group_name": "Техносферная безопасность и природообустройство (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/20.04.02-prirodoobustroistvo-i-vodopolzovanie.html",
+      "code": "20.04.02",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "20.00.00",
+      "group_name": "Техносферная безопасность и природообустройство (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/21.04.01-neftegazovoe-delo.html",
+      "code": "21.04.01",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "21.00.00",
+      "group_name": "Прикладная геология, горное дело, нефтегазовое дело и геодезия (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/21.04.02-zemleustroistvo-i-kadastry.html",
+      "code": "21.04.02",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "21.00.00",
+      "group_name": "Прикладная геология, горное дело, нефтегазовое дело и геодезия (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/21.04.03-geodeziia-i-distantcionnoe-zondirovanie.html",
+      "code": "21.04.03",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "21.00.00",
+      "group_name": "Прикладная геология, горное дело, нефтегазовое дело и геодезия (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/22.04.01-materialovedenie-i-tekhnologii-materialov.html",
+      "code": "22.04.01",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "22.00.00",
+      "group_name": "Технологии материалов (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/22.04.02-metallurgiia.html",
+      "code": "22.04.02",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "22.00.00",
+      "group_name": "Технологии материалов (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/23.04.01-tekhnologiia-transportnykh-protcessov.html",
+      "code": "23.04.01",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "23.00.00",
+      "group_name": "Техника и технологии наземного транспорта (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/23.04.02-nazemnye-transportno-tekhnologicheskie-kompleksy.html",
+      "code": "23.04.02",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "23.00.00",
+      "group_name": "Техника и технологии наземного транспорта (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/23.04.03-ekspluatatciia-transportno-tekhnologicheskikh-mashin-i-kompleksov.html",
+      "code": "23.04.03",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "23.00.00",
+      "group_name": "Техника и технологии наземного транспорта (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/24.04.01-raketnye-kompleksy-i-kosmonavtika.html",
+      "code": "24.04.01",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "24.00.00",
+      "group_name": "Авиационная и ракетно-космическая техника (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/24.04.02-sistemy-upravleniia-dvizheniem-i-navigatciia.html",
+      "code": "24.04.02",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "24.00.00",
+      "group_name": "Авиационная и ракетно-космическая техника (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/24.04.03-ballistika-i-gidroaerodinamika.html",
+      "code": "24.04.03",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "24.00.00",
+      "group_name": "Авиационная и ракетно-космическая техника (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/24.04.04-aviastroenie.html",
+      "code": "24.04.04",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "24.00.00",
+      "group_name": "Авиационная и ракетно-космическая техника (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/24.04.05-dvigateli-letatelnykh-apparatov.html",
+      "code": "24.04.05",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "24.00.00",
+      "group_name": "Авиационная и ракетно-космическая техника (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/25.03.03-aeronavigatciia.html",
+      "code": "25.03.03",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "25.00.00",
+      "group_name": "Аэронавигация и эксплуатация авиационной и ракетно-космической техники (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/25.04.01-tekhnicheskaia-ekspluatatciia-letatelnykh-apparatov-i-dvigatelei.html",
+      "code": "25.04.01",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "25.00.00",
+      "group_name": "Аэронавигация и эксплуатация авиационной и ракетно-космической техники (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/25.04.02-tekhnicheskaia-ekspluatatciia-aviatcionnykh-elektrosistem-i-pilotazhno-navigatcionnykh-kompleksov.html",
+      "code": "25.04.02",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "25.00.00",
+      "group_name": "Аэронавигация и эксплуатация авиационной и ракетно-космической техники (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/26.04.01-upravlenie-vodnym-transportom-i-gidrograficheskoe-obespechenie-sudohodstva.html",
+      "code": "26.04.01",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "26.00.00",
+      "group_name": "Техника и технологии кораблестроения и водного транспорта (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/26.04.02-korablestroenie-okeanotekhnika-i-sistemotekhnika-obektov-morskoi-infrastruktury.html",
+      "code": "26.04.02",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "26.00.00",
+      "group_name": "Техника и технологии кораблестроения и водного транспорта (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/27.04.01-standartizatciia-i-metrologiia.html",
+      "code": "27.04.01",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "27.00.00",
+      "group_name": "Управление в технических системах (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/27.04.02-upravlenie-kachestvom.html",
+      "code": "27.04.02",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "27.00.00",
+      "group_name": "Управление в технических системах (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/27.04.03-sistemnyi-analiz-i-upravlenie.html",
+      "code": "27.04.03",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "27.00.00",
+      "group_name": "Управление в технических системах (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/27.04.04-upravlenie-v-tekhnicheskikh-sistemakh.html",
+      "code": "27.04.04",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "27.00.00",
+      "group_name": "Управление в технических системах (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/27.04.05-innovatika.html",
+      "code": "27.04.05",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "27.00.00",
+      "group_name": "Управление в технических системах (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/27.04.06-organizatciia-i-upravlenie-naukoemkimi-proizvodstvami.html",
+      "code": "27.04.06",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "27.00.00",
+      "group_name": "Управление в технических системах (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/27.04.07-naukoemkie-tekhnologii-i-ekonomika-innovatcii.html",
+      "code": "27.04.07",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "27.00.00",
+      "group_name": "Управление в технических системах (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/27.04.08-upravlenie-intellektualnoi-sobstvennostiu.html",
+      "code": "27.04.08",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "27.00.00",
+      "group_name": "Управление в технических системах (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/28.04.01-nanotekhnologii-i-mikrosistemnaia-tekhnika.html",
+      "code": "28.04.01",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "28.00.00",
+      "group_name": "Нанотехнологии и наноматериалы (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/28.04.02-nanoinzheneriia.html",
+      "code": "28.04.02",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "28.00.00",
+      "group_name": "Нанотехнологии и наноматериалы (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/28.04.03-nanomaterialy.html",
+      "code": "28.04.03",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "28.00.00",
+      "group_name": "Нанотехнологии и наноматериалы (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/28.04.04-nanosistemy-i-nanomaterialy.html",
+      "code": "28.04.04",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "28.00.00",
+      "group_name": "Нанотехнологии и наноматериалы (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/29.04.01-tekhnologiia-izdelii-legkoi-promyshlennosti.html",
+      "code": "29.04.01",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "29.00.00",
+      "group_name": "Технологии легкой промышленности (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/29.04.02-tekhnologii-i-proektirovanie-tekstilnykh-izdelii.html",
+      "code": "29.04.02",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "29.00.00",
+      "group_name": "Технологии легкой промышленности (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/29.04.03-tekhnologiia-poligraficheskogo-i-upakovochnogo-proizvodstva.html",
+      "code": "29.04.03",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "29.00.00",
+      "group_name": "Технологии легкой промышленности (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/29.04.04-tekhnologiia-hudozhestvennoi-obrabotki-materialov.html",
+      "code": "29.04.04",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "29.00.00",
+      "group_name": "Технологии легкой промышленности (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/29.04.05-konstruirovanie-izdelii-legkoi-promyshlennosti.html",
+      "code": "29.04.05",
+      "category": "master",
+      "industry_code": "4.2",
+      "industry_name": "Инженерное дело, технологии и технические науки (уровень 4)",
+      "group_code": "29.00.00",
+      "group_name": "Технологии легкой промышленности (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/32.04.01-obshchestvennoe-zdravookhranenie.html",
+      "code": "32.04.01",
+      "category": "master",
+      "industry_code": "4.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 4)",
+      "group_code": "32.00.00",
+      "group_name": "Науки о здоровье и профилактическая медицина (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/34.04.01-upravlenie-sestrinskoi-deiatelnostiu.html",
+      "code": "34.04.01",
+      "category": "master",
+      "industry_code": "4.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 4)",
+      "group_code": "34.00.00",
+      "group_name": "Сестринское дело (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/35.04.01-lesnoe-delo.html",
+      "code": "35.04.01",
+      "category": "master",
+      "industry_code": "4.4",
+      "industry_name": "Сельское хозяйство и сельскохозяйственные науки (уровень 4)",
+      "group_code": "35.00.00",
+      "group_name": "Сельское, лесное и рыбное хозяйство (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/35.04.02-tekhnologiia-lesozagotovitelnykh-i-derevopererabatyvaiushchikh-proizvodstv.html",
+      "code": "35.04.02",
+      "category": "master",
+      "industry_code": "4.4",
+      "industry_name": "Сельское хозяйство и сельскохозяйственные науки (уровень 4)",
+      "group_code": "35.00.00",
+      "group_name": "Сельское, лесное и рыбное хозяйство (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/35.04.03-agrohimiia-i-agropochvovedenie.html",
+      "code": "35.04.03",
+      "category": "master",
+      "industry_code": "4.4",
+      "industry_name": "Сельское хозяйство и сельскохозяйственные науки (уровень 4)",
+      "group_code": "35.00.00",
+      "group_name": "Сельское, лесное и рыбное хозяйство (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/35.04.04-agronomiia.html",
+      "code": "35.04.04",
+      "category": "master",
+      "industry_code": "4.4",
+      "industry_name": "Сельское хозяйство и сельскохозяйственные науки (уровень 4)",
+      "group_code": "35.00.00",
+      "group_name": "Сельское, лесное и рыбное хозяйство (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/35.04.05-sadovodstvo.html",
+      "code": "35.04.05",
+      "category": "master",
+      "industry_code": "4.4",
+      "industry_name": "Сельское хозяйство и сельскохозяйственные науки (уровень 4)",
+      "group_code": "35.00.00",
+      "group_name": "Сельское, лесное и рыбное хозяйство (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/35.04.06-agroinzheneriia.html",
+      "code": "35.04.06",
+      "category": "master",
+      "industry_code": "4.4",
+      "industry_name": "Сельское хозяйство и сельскохозяйственные науки (уровень 4)",
+      "group_code": "35.00.00",
+      "group_name": "Сельское, лесное и рыбное хозяйство (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/35.04.07-vodnye-bioresursy-i-akvakultura.html",
+      "code": "35.04.07",
+      "category": "master",
+      "industry_code": "4.4",
+      "industry_name": "Сельское хозяйство и сельскохозяйственные науки (уровень 4)",
+      "group_code": "35.00.00",
+      "group_name": "Сельское, лесное и рыбное хозяйство (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/35.04.08-promyshlennoe-rybolovstvo.html",
+      "code": "35.04.08",
+      "category": "master",
+      "industry_code": "4.4",
+      "industry_name": "Сельское хозяйство и сельскохозяйственные науки (уровень 4)",
+      "group_code": "35.00.00",
+      "group_name": "Сельское, лесное и рыбное хозяйство (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/35.04.09-landshaftnaia-arhitektura.html",
+      "code": "35.04.09",
+      "category": "master",
+      "industry_code": "4.4",
+      "industry_name": "Сельское хозяйство и сельскохозяйственные науки (уровень 4)",
+      "group_code": "35.00.00",
+      "group_name": "Сельское, лесное и рыбное хозяйство (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/35.04.10-gidromelioratciia.html",
+      "code": "35.04.10",
+      "category": "master",
+      "industry_code": "4.4",
+      "industry_name": "Сельское хозяйство и сельскохозяйственные науки (уровень 4)",
+      "group_code": "35.00.00",
+      "group_name": "Сельское, лесное и рыбное хозяйство (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/36.04.01-veterinarno-sanitarnaia-ekspertiza.html",
+      "code": "36.04.01",
+      "category": "master",
+      "industry_code": "4.4",
+      "industry_name": "Сельское хозяйство и сельскохозяйственные науки (уровень 4)",
+      "group_code": "36.00.00",
+      "group_name": "Ветеринария и зоотехния (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/36.04.02-zootekhniia.html",
+      "code": "36.04.02",
+      "category": "master",
+      "industry_code": "4.4",
+      "industry_name": "Сельское хозяйство и сельскохозяйственные науки (уровень 4)",
+      "group_code": "36.00.00",
+      "group_name": "Ветеринария и зоотехния (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/37.04.01-psihologiia.html",
+      "code": "37.04.01",
+      "category": "master",
+      "industry_code": "4.5",
+      "industry_name": "Науки об обществе (уровень 4)",
+      "group_code": "37.00.00",
+      "group_name": "Психологические науки (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/37.04.02-konfliktologiia.html",
+      "code": "37.04.02",
+      "category": "master",
+      "industry_code": "4.5",
+      "industry_name": "Науки об обществе (уровень 4)",
+      "group_code": "37.00.00",
+      "group_name": "Психологические науки (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/38.04.01-ekonomika.html",
+      "code": "38.04.01",
+      "category": "master",
+      "industry_code": "4.5",
+      "industry_name": "Науки об обществе (уровень 4)",
+      "group_code": "38.00.00",
+      "group_name": "Экономика и управление (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/38.04.02-menedzhment.html",
+      "code": "38.04.02",
+      "category": "master",
+      "industry_code": "4.5",
+      "industry_name": "Науки об обществе (уровень 4)",
+      "group_code": "38.00.00",
+      "group_name": "Экономика и управление (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/38.04.03-upravlenie-personalom.html",
+      "code": "38.04.03",
+      "category": "master",
+      "industry_code": "4.5",
+      "industry_name": "Науки об обществе (уровень 4)",
+      "group_code": "38.00.00",
+      "group_name": "Экономика и управление (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/38.04.04-gosudarstvennoe-i-munitcipalnoe-upravlenie.html",
+      "code": "38.04.04",
+      "category": "master",
+      "industry_code": "4.5",
+      "industry_name": "Науки об обществе (уровень 4)",
+      "group_code": "38.00.00",
+      "group_name": "Экономика и управление (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/38.04.05-biznes-informatika.html",
+      "code": "38.04.05",
+      "category": "master",
+      "industry_code": "4.5",
+      "industry_name": "Науки об обществе (уровень 4)",
+      "group_code": "38.00.00",
+      "group_name": "Экономика и управление (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/38.04.06-torgovoe-delo.html",
+      "code": "38.04.06",
+      "category": "master",
+      "industry_code": "4.5",
+      "industry_name": "Науки об обществе (уровень 4)",
+      "group_code": "38.00.00",
+      "group_name": "Экономика и управление (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/38.04.07-tovarovedenie.html",
+      "code": "38.04.07",
+      "category": "master",
+      "industry_code": "4.5",
+      "industry_name": "Науки об обществе (уровень 4)",
+      "group_code": "38.00.00",
+      "group_name": "Экономика и управление (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/38.04.08-finansy-i-kredit.html",
+      "code": "38.04.08",
+      "category": "master",
+      "industry_code": "4.5",
+      "industry_name": "Науки об обществе (уровень 4)",
+      "group_code": "38.00.00",
+      "group_name": "Экономика и управление (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/38.04.09-gosudarstvennyi-audit.html",
+      "code": "38.04.09",
+      "category": "master",
+      "industry_code": "4.5",
+      "industry_name": "Науки об обществе (уровень 4)",
+      "group_code": "38.00.00",
+      "group_name": "Экономика и управление (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/38.04.10-zhilishchnoe-hoziaistvo-i-kommunalnaia-infrastruktura.html",
+      "code": "38.04.10",
+      "category": "master",
+      "industry_code": "4.5",
+      "industry_name": "Науки об обществе (уровень 4)",
+      "group_code": "38.00.00",
+      "group_name": "Экономика и управление (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/39.04.01-sotciologiia.html",
+      "code": "39.04.01",
+      "category": "master",
+      "industry_code": "4.5",
+      "industry_name": "Науки об обществе (уровень 4)",
+      "group_code": "39.00.00",
+      "group_name": "Социология и социальная работа (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/39.04.02-sotcialnaia-rabota.html",
+      "code": "39.04.02",
+      "category": "master",
+      "industry_code": "4.5",
+      "industry_name": "Науки об обществе (уровень 4)",
+      "group_code": "39.00.00",
+      "group_name": "Социология и социальная работа (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/39.04.03-organizatciia-raboty-s-molodezhiu.html",
+      "code": "39.04.03",
+      "category": "master",
+      "industry_code": "4.5",
+      "industry_name": "Науки об обществе (уровень 4)",
+      "group_code": "39.00.00",
+      "group_name": "Социология и социальная работа (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/40.04.01-iurisprudentciia.html",
+      "code": "40.04.01",
+      "category": "master",
+      "industry_code": "4.5",
+      "industry_name": "Науки об обществе (уровень 4)",
+      "group_code": "40.00.00",
+      "group_name": "Юриспруденция (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/41.04.01-zarubezhnoe-regionovedenie.html",
+      "code": "41.04.01",
+      "category": "master",
+      "industry_code": "4.5",
+      "industry_name": "Науки об обществе (уровень 4)",
+      "group_code": "41.00.00",
+      "group_name": "Политические науки и регионоведение (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/41.04.02-regionovedenie-rossii.html",
+      "code": "41.04.02",
+      "category": "master",
+      "industry_code": "4.5",
+      "industry_name": "Науки об обществе (уровень 4)",
+      "group_code": "41.00.00",
+      "group_name": "Политические науки и регионоведение (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/41.04.04-politologiia.html",
+      "code": "41.04.04",
+      "category": "master",
+      "industry_code": "4.5",
+      "industry_name": "Науки об обществе (уровень 4)",
+      "group_code": "41.00.00",
+      "group_name": "Политические науки и регионоведение (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/41.04.05-mezhdunarodnye-otnosheniia.html",
+      "code": "41.04.05",
+      "category": "master",
+      "industry_code": "4.5",
+      "industry_name": "Науки об обществе (уровень 4)",
+      "group_code": "41.00.00",
+      "group_name": "Политические науки и регионоведение (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/41.04.06.html",
+      "code": "41.04.06",
+      "category": "master",
+      "industry_code": "4.5",
+      "industry_name": "Науки об обществе (уровень 4)",
+      "group_code": "41.00.00",
+      "group_name": "Политические науки и регионоведение (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/42.04.01-reclama-i-sviazi-s-obshchestvennostiu.html",
+      "code": "42.04.01",
+      "category": "master",
+      "industry_code": "4.5",
+      "industry_name": "Науки об обществе (уровень 4)",
+      "group_code": "42.00.00",
+      "group_name": "Средства массовой информации и информационно-библиотечное дело (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/42.04.02-zhurnalistika.html",
+      "code": "42.04.02",
+      "category": "master",
+      "industry_code": "4.5",
+      "industry_name": "Науки об обществе (уровень 4)",
+      "group_code": "42.00.00",
+      "group_name": "Средства массовой информации и информационно-библиотечное дело (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/42.04.03-izdatelskoe-delo.html",
+      "code": "42.04.03",
+      "category": "master",
+      "industry_code": "4.5",
+      "industry_name": "Науки об обществе (уровень 4)",
+      "group_code": "42.00.00",
+      "group_name": "Средства массовой информации и информационно-библиотечное дело (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/42.04.04-televidenie.html",
+      "code": "42.04.04",
+      "category": "master",
+      "industry_code": "4.5",
+      "industry_name": "Науки об обществе (уровень 4)",
+      "group_code": "42.00.00",
+      "group_name": "Средства массовой информации и информационно-библиотечное дело (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/42.04.05-mediakommunikatcii.html",
+      "code": "42.04.05",
+      "category": "master",
+      "industry_code": "4.5",
+      "industry_name": "Науки об обществе (уровень 4)",
+      "group_code": "42.00.00",
+      "group_name": "Средства массовой информации и информационно-библиотечное дело (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/43.04.01-servis.html",
+      "code": "43.04.01",
+      "category": "master",
+      "industry_code": "4.5",
+      "industry_name": "Науки об обществе (уровень 4)",
+      "group_code": "43.00.00",
+      "group_name": "Сервис и туризм (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/43.04.02-turizm.html",
+      "code": "43.04.02",
+      "category": "master",
+      "industry_code": "4.5",
+      "industry_name": "Науки об обществе (уровень 4)",
+      "group_code": "43.00.00",
+      "group_name": "Сервис и туризм (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/43.04.03-gostinichnoe-delo.html",
+      "code": "43.04.03",
+      "category": "master",
+      "industry_code": "4.5",
+      "industry_name": "Науки об обществе (уровень 4)",
+      "group_code": "43.00.00",
+      "group_name": "Сервис и туризм (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/44.04.01-pedagogicheskoe-obrazovanie.html",
+      "code": "44.04.01",
+      "category": "master",
+      "industry_code": "4.6",
+      "industry_name": "Образование и педагогические науки (уровень 4)",
+      "group_code": "44.00.00",
+      "group_name": "Образование и педагогические науки (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/44.04.02-psihologo-pedagogicheskoe-obrazovanie.html",
+      "code": "44.04.02",
+      "category": "master",
+      "industry_code": "4.6",
+      "industry_name": "Образование и педагогические науки (уровень 4)",
+      "group_code": "44.00.00",
+      "group_name": "Образование и педагогические науки (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/44.04.03-spetcialnoe-defektologicheskoe-obrazovanie.html",
+      "code": "44.04.03",
+      "category": "master",
+      "industry_code": "4.6",
+      "industry_name": "Образование и педагогические науки (уровень 4)",
+      "group_code": "44.00.00",
+      "group_name": "Образование и педагогические науки (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/44.04.04-professionalnoe-obuchenie-po-otrasliam.html",
+      "code": "44.04.04",
+      "category": "master",
+      "industry_code": "4.6",
+      "industry_name": "Образование и педагогические науки (уровень 4)",
+      "group_code": "44.00.00",
+      "group_name": "Образование и педагогические науки (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/45.04.01-filologiia.html",
+      "code": "45.04.01",
+      "category": "master",
+      "industry_code": "4.7",
+      "industry_name": "Гуманитарные науки (уровень 4)",
+      "group_code": "45.00.00",
+      "group_name": "Языкознание и литературоведение (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/45.04.02-lingvistika.html",
+      "code": "45.04.02",
+      "category": "master",
+      "industry_code": "4.7",
+      "industry_name": "Гуманитарные науки (уровень 4)",
+      "group_code": "45.00.00",
+      "group_name": "Языкознание и литературоведение (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/45.04.03-fundamentalnaia-i-pricladnaia-lingvistika.html",
+      "code": "45.04.03",
+      "category": "master",
+      "industry_code": "4.7",
+      "industry_name": "Гуманитарные науки (уровень 4)",
+      "group_code": "45.00.00",
+      "group_name": "Языкознание и литературоведение (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/45.04.04-intellektualnye-sistemy-v-gumanitarnoi-srede.html",
+      "code": "45.04.04",
+      "category": "master",
+      "industry_code": "4.7",
+      "industry_name": "Гуманитарные науки (уровень 4)",
+      "group_code": "45.00.00",
+      "group_name": "Языкознание и литературоведение (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/46.04.01-istoriia.html",
+      "code": "46.04.01",
+      "category": "master",
+      "industry_code": "4.7",
+      "industry_name": "Гуманитарные науки (уровень 4)",
+      "group_code": "46.00.00",
+      "group_name": "История и археология (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/46.04.02-dokumentovedenie-i-arhivovedenie.html",
+      "code": "46.04.02",
+      "category": "master",
+      "industry_code": "4.7",
+      "industry_name": "Гуманитарные науки (уровень 4)",
+      "group_code": "46.00.00",
+      "group_name": "История и археология (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/46.04.03-antropologiia-i-etnologiia.html",
+      "code": "46.04.03",
+      "category": "master",
+      "industry_code": "4.7",
+      "industry_name": "Гуманитарные науки (уровень 4)",
+      "group_code": "46.00.00",
+      "group_name": "История и археология (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/46.04.04.html",
+      "code": "46.04.04",
+      "category": "master",
+      "industry_code": "4.7",
+      "industry_name": "Гуманитарные науки (уровень 4)",
+      "group_code": "46.00.00",
+      "group_name": "История и археология (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/47.04.01-filosofiia.html",
+      "code": "47.04.01",
+      "category": "master",
+      "industry_code": "4.7",
+      "industry_name": "Гуманитарные науки (уровень 4)",
+      "group_code": "47.00.00",
+      "group_name": "Философия, этика и религиоведение (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/47.04.02-pricladnaia-etika.html",
+      "code": "47.04.02",
+      "category": "master",
+      "industry_code": "4.7",
+      "industry_name": "Гуманитарные науки (уровень 4)",
+      "group_code": "47.00.00",
+      "group_name": "Философия, этика и религиоведение (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/47.04.03-religiovedenie.html",
+      "code": "47.04.03",
+      "category": "master",
+      "industry_code": "4.7",
+      "industry_name": "Гуманитарные науки (уровень 4)",
+      "group_code": "47.00.00",
+      "group_name": "Философия, этика и религиоведение (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/48.04.01-teologiia.html",
+      "code": "48.04.01",
+      "category": "master",
+      "industry_code": "4.7",
+      "industry_name": "Гуманитарные науки (уровень 4)",
+      "group_code": "48.00.00",
+      "group_name": "Теология (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/49.04.01-fizicheskaia-kultura.html",
+      "code": "49.04.01",
+      "category": "master",
+      "industry_code": "4.7",
+      "industry_name": "Гуманитарные науки (уровень 4)",
+      "group_code": "49.00.00",
+      "group_name": "Физическая культура и спорт (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/49.04.02-fizicheskaia-kultura-dlia-litc-s-otcloneniiami-v-sostoianii-zdorovia-adaptivnaia-fizicheskaia-kultura.html",
+      "code": "49.04.02",
+      "category": "master",
+      "industry_code": "4.7",
+      "industry_name": "Гуманитарные науки (уровень 4)",
+      "group_code": "49.00.00",
+      "group_name": "Физическая культура и спорт (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/49.04.03-sport.html",
+      "code": "49.04.03",
+      "category": "master",
+      "industry_code": "4.7",
+      "industry_name": "Гуманитарные науки (уровень 4)",
+      "group_code": "49.00.00",
+      "group_name": "Физическая культура и спорт (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/50.04.01-iskusstva-i-gumanitarnye-nauki.html",
+      "code": "50.04.01",
+      "category": "master",
+      "industry_code": "4.8",
+      "industry_name": "Искусство и культура (уровень 4)",
+      "group_code": "50.00.00",
+      "group_name": "Искусствознание (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/50.04.02-iziashchnye-iskusstva.html",
+      "code": "50.04.02",
+      "category": "master",
+      "industry_code": "4.8",
+      "industry_name": "Искусство и культура (уровень 4)",
+      "group_code": "50.00.00",
+      "group_name": "Искусствознание (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/50.04.03-istoriia-iskusstv.html",
+      "code": "50.04.03",
+      "category": "master",
+      "industry_code": "4.8",
+      "industry_name": "Искусство и культура (уровень 4)",
+      "group_code": "50.00.00",
+      "group_name": "Искусствознание (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/50.04.04-teoriia-i-istoriia-iskusstv.html",
+      "code": "50.04.04",
+      "category": "master",
+      "industry_code": "4.8",
+      "industry_name": "Искусство и культура (уровень 4)",
+      "group_code": "50.00.00",
+      "group_name": "Искусствознание (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/51.04.01-kulturologiia.html",
+      "code": "51.04.01",
+      "category": "master",
+      "industry_code": "4.8",
+      "industry_name": "Искусство и культура (уровень 4)",
+      "group_code": "51.00.00",
+      "group_name": "Культуроведение и социокультурные проекты (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/51.04.02-narodnaia-hudozhestvennaia-kultura.html",
+      "code": "51.04.02",
+      "category": "master",
+      "industry_code": "4.8",
+      "industry_name": "Искусство и культура (уровень 4)",
+      "group_code": "51.00.00",
+      "group_name": "Культуроведение и социокультурные проекты (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/51.04.03-sotcialno-kulturnaia-deiatelnost.html",
+      "code": "51.04.03",
+      "category": "master",
+      "industry_code": "4.8",
+      "industry_name": "Искусство и культура (уровень 4)",
+      "group_code": "51.00.00",
+      "group_name": "Культуроведение и социокультурные проекты (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/51.04.04-muzeologiia-i-okhrana-obektov-kulturnogo-i-prirodnogo-naslediia.html",
+      "code": "51.04.04",
+      "category": "master",
+      "industry_code": "4.8",
+      "industry_name": "Искусство и культура (уровень 4)",
+      "group_code": "51.00.00",
+      "group_name": "Культуроведение и социокультурные проекты (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/51.04.05-rezhissura-teatralizovannykh-predstavlenii-i-prazdnikov.html",
+      "code": "51.04.05",
+      "category": "master",
+      "industry_code": "4.8",
+      "industry_name": "Искусство и культура (уровень 4)",
+      "group_code": "51.00.00",
+      "group_name": "Культуроведение и социокультурные проекты (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/51.04.06-bibliotechno-informatcionnaia-deiatelnost.html",
+      "code": "51.04.06",
+      "category": "master",
+      "industry_code": "4.8",
+      "industry_name": "Искусство и культура (уровень 4)",
+      "group_code": "51.00.00",
+      "group_name": "Культуроведение и социокультурные проекты (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/52.04.01-horeograficheskoe-iskusstvo.html",
+      "code": "52.04.01",
+      "category": "master",
+      "industry_code": "4.8",
+      "industry_name": "Искусство и культура (уровень 4)",
+      "group_code": "52.00.00",
+      "group_name": "Сценические искусства и литературное творчество (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/52.04.02-dramaturgiia.html",
+      "code": "52.04.02",
+      "category": "master",
+      "industry_code": "4.8",
+      "industry_name": "Искусство и культура (уровень 4)",
+      "group_code": "52.00.00",
+      "group_name": "Сценические искусства и литературное творчество (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/52.04.03-teatralnoe-iskusstvo.html",
+      "code": "52.04.03",
+      "category": "master",
+      "industry_code": "4.8",
+      "industry_name": "Искусство и культура (уровень 4)",
+      "group_code": "52.00.00",
+      "group_name": "Сценические искусства и литературное творчество (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/53.04.01-muzykalno-instrumentalnoe-iskusstvo.html",
+      "code": "53.04.01",
+      "category": "master",
+      "industry_code": "4.8",
+      "industry_name": "Искусство и культура (уровень 4)",
+      "group_code": "53.00.00",
+      "group_name": "Музыкальное искусство (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/53.04.02-vokalnoe-iskusstvo.html",
+      "code": "53.04.02",
+      "category": "master",
+      "industry_code": "4.8",
+      "industry_name": "Искусство и культура (уровень 4)",
+      "group_code": "53.00.00",
+      "group_name": "Музыкальное искусство (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/53.04.03-iskusstvo-narodnogo-peniia.html",
+      "code": "53.04.03",
+      "category": "master",
+      "industry_code": "4.8",
+      "industry_name": "Искусство и культура (уровень 4)",
+      "group_code": "53.00.00",
+      "group_name": "Музыкальное искусство (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/53.04.04-dirizhirovanie.html",
+      "code": "53.04.04",
+      "category": "master",
+      "industry_code": "4.8",
+      "industry_name": "Искусство и культура (уровень 4)",
+      "group_code": "53.00.00",
+      "group_name": "Музыкальное искусство (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/53.04.05-iskusstvo.html",
+      "code": "53.04.05",
+      "category": "master",
+      "industry_code": "4.8",
+      "industry_name": "Искусство и культура (уровень 4)",
+      "group_code": "53.00.00",
+      "group_name": "Музыкальное искусство (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/53.04.06-muzykoznanie-i-muzykalno-pricladnoe-iskusstvo.html",
+      "code": "53.04.06",
+      "category": "master",
+      "industry_code": "4.8",
+      "industry_name": "Искусство и культура (уровень 4)",
+      "group_code": "53.00.00",
+      "group_name": "Музыкальное искусство (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/54.04.01-dizain.html",
+      "code": "54.04.01",
+      "category": "master",
+      "industry_code": "4.8",
+      "industry_name": "Искусство и культура (уровень 4)",
+      "group_code": "54.00.00",
+      "group_name": "Изобразительное и прикладные виды искусств (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/54.04.02-dekorativno-pricladnoe-iskusstvo-i-narodnye-promysly.html",
+      "code": "54.04.02",
+      "category": "master",
+      "industry_code": "4.8",
+      "industry_name": "Искусство и культура (уровень 4)",
+      "group_code": "54.00.00",
+      "group_name": "Изобразительное и прикладные виды искусств (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/54.04.03-iskusstvo-kostiuma-i-tekstilia.html",
+      "code": "54.04.03",
+      "category": "master",
+      "industry_code": "4.8",
+      "industry_name": "Искусство и культура (уровень 4)",
+      "group_code": "54.00.00",
+      "group_name": "Изобразительное и прикладные виды искусств (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/54.04.04-restavratciia.html",
+      "code": "54.04.04",
+      "category": "master",
+      "industry_code": "4.8",
+      "industry_name": "Искусство и культура (уровень 4)",
+      "group_code": "54.00.00",
+      "group_name": "Изобразительное и прикладные виды искусств (уровень 4)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/54.04.05.html",
+      "code": "54.04.05",
+      "category": "master",
+      "industry_code": "4.8",
+      "industry_name": "Искусство и культура (уровень 4)",
+      "group_code": "54.00.00",
+      "group_name": "Изобразительное и прикладные виды искусств (уровень 4)"
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "slide_width_in": 13.333333333333334,
+  "slide_height_in": 7.5,
+  "shape_count": 4,
+  "shapes": [
+    {
+      "index": 0,
+      "name": "Рисунок 9",
+      "shape_type": "PICTURE (13)",
+      "left_in": 0.0,
+      "top_in": -0.35,
+      "width_in": 13.33,
+      "height_in": 7.97
+    },
+    {
+      "index": 1,
+      "name": "Рисунок 11",
+      "shape_type": "PICTURE (13)",
+      "left_in": 3.48,
+      "top_in": 0.0,
+      "width_in": 9.86,
+      "height_in": 7.5
+    },
+    {
+      "index": 2,
+      "name": "Рисунок 7",
+      "shape_type": "PICTURE (13)",
+      "left_in": 5.08,
+      "top_in": 0.22,
+      "width_in": 3.18,
+      "height_in": 0.84
+    },
+    {
+      "index": 3,
+      "name": "TextBox 10",
+      "shape_type": "TEXT_BOX (17)",
+      "left_in": 0.55,
+      "top_in": 1.75,
+      "width_in": 12.24,
+      "height_in": 0.84,
+      "text": "ТЕМА ДОКЛАДА",
+      "runs": [
+        {
+          "text": "ТЕМА ДОКЛАДА",
+          "font": "+mj-lt",
+          "size_pt": 44.0,
+          "bold": true
+        }
+      ]
+    }
+  ]
+}

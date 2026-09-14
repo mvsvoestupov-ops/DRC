@@ -1,0 +1,15 @@
+{
+  "xlsx_path": "C:\\Users\\Mihail\\Downloads\\Реестр профессиональных стандартов 18.08.2026.xlsx",
+  "db_path": "C:\\IT\\DRC\\backend\\profstandart.db",
+  "xlsx_rows": 1682,
+  "xlsx_unique_reg_numbers": 1682,
+  "db_unique_reg_numbers": 1682,
+  "expected_unique_reg_numbers": 1682,
+  "all_xlsx_regs_in_db": true,
+  "missing_in_db_count": 0,
+  "extra_in_db_count": 0,
+  "duplicate_reg_in_xlsx_count": 0,
+  "duplicate_reg_in_xlsx": {},
+  "missing_in_db": [],
+  "extra_in_db": []
+}

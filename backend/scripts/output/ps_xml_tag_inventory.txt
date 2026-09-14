@@ -1,0 +1,102 @@
+ИНВЕНТАРИЗАЦИЯ XML/HTML ПС vs макет I–V
+============================================================
+Дата: 2026-08-31
+Источники:
+  - XML Минтруд: live download недоступен из среды агента (403 Forbidden на
+    profstandart.rosmintrud.ru). Карта тегов — по рабочему parse_ps_node и
+    известной схеме bulk XML (успешные загрузки в проекте ранее).
+  - HTML classinform: полный макет на примере 01.006 (рег. 1582-я редакция
+    страницы), URL classinform.ru/profstandarty/01.006-...
+
+Скрипт повторной проверки при доступном Минтруде:
+  backend/scripts/inventory_ps_xml_tags.py
+  (run-inventory-ps-xml.vbs / bat)
+
+------------------------------------------------------------
+РАЗДЕЛ I — Общие сведения
+------------------------------------------------------------
+Макет: ВПД, код XX.XXX, цель, группа занятий ОКЗ, область ОПД, ОКВЭД (код+имя)
+
+XML (есть в bulk):
+  KindProfessionalActivity
+  CodeKindProfessionalActivity          → ps_code (полный XX.XXX)
+  PurposeKindProfessionalActivity
+  EmploymentGroup / ListOKVED / UnitOKVED / CodeOKVED
+  NameOKVED                             → часто есть рядом с CodeOKVED
+
+XML (нестабильно / часто нет):
+  отдельный блок группы занятий ОКЗ на уровне I (иногда только в III)
+
+classinform HTML (есть):
+  код ВПД XX.XXX, краткое описание, таблица ОКЗ группы занятий,
+  код/наименование ОПД, ОКВЭД код+наименование
+
+------------------------------------------------------------
+РАЗДЕЛ II — Функциональная карта
+------------------------------------------------------------
+Выводится из дерева ОТФ→ТФ (код, имя, уровень, должности).
+Данные: ThirdSection/.../GeneralizedWorkFunction + ParticularWorkFunction
+  или classinform «II. Описание» / дерево III.
+
+------------------------------------------------------------
+РАЗДЕЛ III — Характеристика ОТФ / ТФ
+------------------------------------------------------------
+Макет ОТФ: образование/обучение, опыт, особые условия, другие характеристики,
+  справочная информация (ОКЗ/ЕТКС|ЕКС/ОКПДТР/ОКСО с именами)
+Макет ТФ: трудовые действия, умения, знания, другие характеристики
+
+XML (подтверждено парсером проекта):
+  CodeOTF, NameOTF, LevelOfQualification, PossibleJobTitle
+  ListOKZ/UnitOKZ/CodeOKZ (+ NameOKZ если есть)
+  ListOKPDTR/..., ListOKSO/...
+  ParticularWorkFunction: CodeTF, NameTF, SubQualification, LaborAction
+
+XML (ожидаемые теги; могут отсутствовать в части bulk-выгрузок):
+  RequirementsToEducationAndTraining
+  RequirementsToExperienceOfPracticalWork
+  ParticularConditionsForAdmissionToWork / ParticularConditionsForAdmission
+  OtherCharacteristics / AdditionalCharacteristics
+  RequiredSkill, NecessaryKnowledge
+  CodeETKS/NameETKS, CodeEKS/NameEKS
+
+classinform HTML (есть на актуальных страницах):
+  «Пути достижения квалификации» → «Образование и обучение»
+  «Опыт практической работы»
+  «Особые условия допуска к работе»
+  «Другие характеристики»
+  «Справочная информация» (ОКЗ, ЕКС, ОКПДТР, Перечень СПО/ВО)
+  ТФ: «Трудовые действия», «Необходимые умения», «Необходимые знания»
+
+Вывод: для P0 (образование/опыт/допуск) основной источник — classinform;
+  XML дополняет коды/имена классификаторов и умения/знания, если теги есть.
+
+------------------------------------------------------------
+РАЗДЕЛ IV — Разработчики
+------------------------------------------------------------
+XML: FourthSection / ResponsibleOrganization* / NameResponsibleOrganization
+     (часто ПУСТО в bulk XML)
+classinform: «4.1. Ответственная организация-разработчик» + должность/ФИО,
+             «4.2. Наименования организаций-разработчиков»
+Реестр Минтруда (таблица listofitemps): колонка developer + даты
+
+------------------------------------------------------------
+РАЗДЕЛ V — Сокращения
+------------------------------------------------------------
+XML: ListOfAbbreviations / Abbreviation — редко
+classinform: блок «V. Сокращения…» (строки «АББР - расшифровка»)
+
+------------------------------------------------------------
+SOURCE BLOB
+------------------------------------------------------------
+Хранить source_xml / source_html / source_kind для повторного разбора и
+верности печати. Печать DOCX/HTML — из raw (+ source fallback), не enriched.
+
+------------------------------------------------------------
+ПОКРЫТИЕ ГИПОТЕЗ (сводка)
+------------------------------------------------------------
+I_general:            XML+HTML OK (ps_code, OKVED±name, ОПД в HTML)
+III_otf_requirements: HTML OK; XML часто missing → fallback classinform
+III_classifiers:      XML codes OK; names — XML± / HTML OK
+III_tf_skills:        HTML OK; XML LaborAction OK, skills/knowledge ±
+IV_developers:        HTML+реестр OK; XML ±
+V_abbreviations:      HTML OK; XML редко

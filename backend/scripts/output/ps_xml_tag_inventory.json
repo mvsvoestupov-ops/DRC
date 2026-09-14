@@ -1,0 +1,40 @@
+{
+  "note": "Live Mintrud XML download returned 403 from agent environment. Inventory combines working parser tags, expected XSD tags, and classinform HTML maket (01.006).",
+  "mintrud_status": "403_forbidden",
+  "classinform_sample": "01.006",
+  "maket_coverage": {
+    "I_general": {
+      "xml_present": ["KindProfessionalActivity", "CodeKindProfessionalActivity", "PurposeKindProfessionalActivity", "CodeOKVED"],
+      "xml_optional": ["NameOKVED"],
+      "html_present": ["ps_code", "okved_code_name", "opd_code_name", "okz_group"]
+    },
+    "III_otf_requirements": {
+      "xml_optional": ["RequirementsToEducationAndTraining", "RequirementsToExperienceOfPracticalWork", "ParticularConditionsForAdmissionToWork", "OtherCharacteristics"],
+      "html_present": ["Образование и обучение", "Опыт практической работы", "Особые условия допуска к работе", "Другие характеристики"]
+    },
+    "III_classifiers": {
+      "xml_present": ["CodeOKZ", "CodeOKPDTR", "CodeOKSO"],
+      "xml_optional": ["NameOKZ", "NameOKPDTR", "NameOKSO", "CodeETKS", "NameETKS"],
+      "html_present": ["Справочная информация"]
+    },
+    "III_tf_skills": {
+      "xml_present": ["LaborAction"],
+      "xml_optional": ["RequiredSkill", "NecessaryKnowledge", "OtherCharacteristics"],
+      "html_present": ["Трудовые действия", "Необходимые умения", "Необходимые знания", "Другие характеристики"]
+    },
+    "IV_developers": {
+      "xml_optional": ["FourthSection", "ResponsibleOrganization", "NameResponsibleOrganization"],
+      "html_present": ["4.1", "4.2"],
+      "registry": ["developer", "effective_date", "expiration_date"]
+    },
+    "V_abbreviations": {
+      "xml_optional": ["ListOfAbbreviations", "Abbreviation"],
+      "html_present": ["V. Сокращения"]
+    }
+  },
+  "primary_sources": {
+    "structure_codes": "mintrud_xml",
+    "education_experience_admission_iv_v": "classinform_html",
+    "developer_dates": "registry_table"
+  }
+}

@@ -28,6 +28,8 @@ class EnrichedStandard(Base):
     # Новые поля
     professional_area_code = Column(String, nullable=True)
     okved_codes = Column(JSON, nullable=True)
+    status = Column(String, default="active", server_default="active")
+    revoked_date = Column(String, nullable=True)
 
     generalized_functions = relationship("EnrichedGeneralizedFunction", back_populates="standard", cascade="all, delete-orphan")
 

@@ -4,7 +4,7 @@ import re
 import requests
 from lxml import etree
 from bs4 import BeautifulSoup
-from urllib.parse import urlparse, parse_qs, urljoin
+from urllib.parse import urlparse, parse_qs, urljoin, quote
 from typing import List, Dict, Optional
 from .models import *
 from .db_operations import save_raw_standard
@@ -13,7 +13,8 @@ from .db import SessionLocal
 REGISTRY_BASE_URL = "https://profstandart.rosmintrud.ru/obshchiy-informatsionnyy-blok/natsionalnyy-reestr-professionalnykh-standartov/reestr-professionalnykh-standartov/index.php"
 
 tf_cache = {}
-reg_to_element_cache = {}
+reg_to_element_cache: dict[str, str] = {}
+ps_code_to_element_cache: dict[str, str] = {}
 
 def normalize_okso_code(code: str) -> str:
     if not code:
@@ -25,12 +26,190 @@ def normalize_okso_code(code: str) -> str:
     parts = [p.zfill(2) for p in parts]
     return '.'.join(parts)
 
+
+def extract_okso_values(raw) -> list[str]:
+    """Коды и названия из JSON-полей okso_codes / okso_units ОТФ."""
+    if not raw:
+        return []
+    if isinstance(raw, str):
+        text = raw.strip()
+        if not text:
+            return []
+        if text[0] in "[{":
+            try:
+                import json
+                raw = json.loads(text)
+            except Exception:
+                return [text]
+        else:
+            return [text]
+    values: list[str] = []
+
+    def _add(item) -> None:
+        if isinstance(item, str):
+            text = item.strip()
+            if text and text not in values:
+                values.append(text)
+            return
+        if isinstance(item, dict):
+            for key in ("code", "name"):
+                text = str(item.get(key) or "").strip()
+                if text and text not in values:
+                    values.append(text)
+
+    if isinstance(raw, dict):
+        _add(raw)
+        return values
+    if isinstance(raw, list):
+        for item in raw:
+            _add(item)
+    return values
+
+
+OKSO_CODE_IN_TEXT_RE = re.compile(r"(?<![\d])(\d{1,2}(?:\.\d{2}){2,3})(?![\d])")
+
+
+def extract_okso_codes_from_text(text: str) -> list[str]:
+    """Коды вида 09.02.07 / 2.09.02.07 из свободного текста раздела ОКСО."""
+    if not text:
+        return []
+    found: list[str] = []
+    for match in OKSO_CODE_IN_TEXT_RE.finditer(text):
+        norm = normalize_okso_code(match.group(1))
+        if norm and norm not in found:
+            found.append(norm)
+    return found
+
+
+def normalize_okpdtr_code(code: str) -> str:
+    text = (code or "").strip()
+    digits = re.sub(r"\D", "", text)
+    return digits or text
+
+
+OKPDTR_CODE_IN_TEXT_RE = re.compile(r"(?<![\d])(\d{5,6})(?![\d])")
+
+
+def extract_okpdtr_codes_from_text(text: str) -> list[str]:
+    """Коды ОКПДТР (обычно 5 цифр) из свободного текста раздела ОТФ."""
+    if not text:
+        return []
+    found: list[str] = []
+    for match in OKPDTR_CODE_IN_TEXT_RE.finditer(text):
+        norm = normalize_okpdtr_code(match.group(1))
+        if norm and norm not in found:
+            found.append(norm)
+    return found
+
+
+def okpdtr_matches(okpdtr_value: str, needle: str) -> bool:
+    """Раздел ОКПДТР содержит выбранный код (точное совпадение или код как отдельный токен)."""
+    want = normalize_okpdtr_code(needle)
+    raw = (okpdtr_value or "").strip()
+    if not want or not raw:
+        return False
+    have = normalize_okpdtr_code(raw)
+    if have and have == want:
+        return True
+    if re.search(rf"(?<![\d]){re.escape(want)}(?![\d])", raw):
+        return True
+    if have and have != raw and re.search(rf"(?<![\d]){re.escape(want)}(?![\d])", have):
+        return True
+    return False
+
+
+def okso_matches_fgos(okso_value: str, fgos_code: str) -> bool:
+    """Раздел ОКСО содержит код ФГОС (точное совпадение или код как отдельный токен)."""
+    fgos_raw = (fgos_code or "").strip()
+    okso_raw = (okso_value or "").strip()
+    if not fgos_raw or not okso_raw:
+        return False
+    fgos_n = normalize_okso_code(fgos_raw)
+    okso_n = normalize_okso_code(okso_raw)
+    if fgos_n and okso_n and fgos_n == okso_n:
+        return True
+    haystacks = [okso_raw]
+    if okso_n and okso_n != okso_raw:
+        haystacks.append(okso_n)
+    needles = {n for n in (fgos_raw, fgos_n) if n}
+    for haystack in haystacks:
+        for needle in needles:
+            if re.search(rf"(?<![\d]){re.escape(needle)}(?![\d])", haystack):
+                return True
+    return False
+
+def _xml_text(node, *tags: str) -> str:
+    if node is None:
+        return ""
+    for tag in tags:
+        direct = node.findtext(tag)
+        if direct and direct.strip():
+            return direct.strip()
+        found = node.find(f".//{tag}")
+        if found is not None and found.text and found.text.strip():
+            return found.text.strip()
+    return ""
+
+
+def _xml_texts(node, *tags: str) -> List[str]:
+    if node is None:
+        return []
+    values: List[str] = []
+    for tag in tags:
+        for el in node.findall(f".//{tag}"):
+            text = (el.text or "").strip()
+            if text and text not in values:
+                values.append(text)
+    return values
+
+
+def _parse_classifier_units(parent, list_tag: str, unit_tag: str, code_tag: str, name_tag: str):
+    units = []
+    codes = []
+    if parent is None:
+        return units, codes
+    list_node = parent.find(f".//{list_tag}")
+    if list_node is None:
+        return units, codes
+    for unit in list_node.findall(unit_tag):
+        code = (unit.findtext(code_tag) or "").strip()
+        name = (unit.findtext(name_tag) or "").strip()
+        if code_tag == "CodeOKSO" and code:
+            code = normalize_okso_code(code)
+        if not code and not name:
+            continue
+        units.append(ClassifierUnit(code=code, name=name))
+        if code and code not in codes:
+            codes.append(code)
+    return units, codes
+
+
 def parse_xml(content: bytes, element_id: str = None) -> ProfessionalStandard:
-    root = etree.fromstring(content)
+    text = content
+    if isinstance(content, bytes):
+        for enc in ("utf-8", "windows-1251", "cp1251"):
+            try:
+                decoded = content.decode(enc)
+                break
+            except UnicodeDecodeError:
+                continue
+        else:
+            decoded = content.decode("utf-8", errors="ignore")
+        import html as html_mod
+        decoded = html_mod.unescape(decoded)
+        text = decoded.encode("utf-8")
+    root = etree.fromstring(text)
     ps = root.find('.//ProfessionalStandart')
     if ps is None:
         raise ValueError("ProfessionalStandart not found")
-    return parse_ps_node(ps, element_id=element_id)
+    standard = parse_ps_node(ps, element_id=element_id)
+    try:
+        standard.source_xml = text.decode("utf-8") if isinstance(text, bytes) else text
+        standard.source_kind = "mintrud_xml"
+    except Exception:
+        pass
+    return standard
+
 
 def parse_ps_node(ps_node, element_id: str = None) -> ProfessionalStandard:
     name = ps_node.findtext('NameProfessionalStandart', '').strip()
@@ -45,15 +224,18 @@ def parse_ps_node(ps_node, element_id: str = None) -> ProfessionalStandard:
 
     order_num = ps_node.findtext('OrderNumber', '').strip()
     date = ps_node.findtext('DateOfApproval', '').strip()
+    effective_date = _xml_text(ps_node, 'DateOfEntry', 'DateOfIntroduction', 'EffectiveDate')
 
     first_section = ps_node.find('FirstSection')
     kind = first_section.findtext('KindProfessionalActivity', '').strip() if first_section is not None else ''
     purpose = first_section.findtext('PurposeKindProfessionalActivity', '').strip() if first_section is not None else ''
 
+    ps_code = ''
     professional_area_code = ''
     if first_section is not None:
         code_kind = first_section.findtext('CodeKindProfessionalActivity', '').strip()
         if code_kind:
+            ps_code = code_kind
             professional_area_code = code_kind[:2] if len(code_kind) >= 2 else ''
     if not professional_area_code and reg_num:
         if '.' in reg_num:
@@ -61,15 +243,23 @@ def parse_ps_node(ps_node, element_id: str = None) -> ProfessionalStandard:
         else:
             professional_area_code = reg_num[:2]
 
+    okved_units = []
     okved_codes = []
     employment_group = ps_node.find('.//EmploymentGroup')
     if employment_group is not None:
         list_okved = employment_group.find('.//ListOKVED')
         if list_okved is not None:
             for unit in list_okved.findall('UnitOKVED'):
-                code = unit.findtext('CodeOKVED', '').strip()
+                code = (unit.findtext('CodeOKVED') or '').strip()
+                uname = (unit.findtext('NameOKVED') or '').strip()
                 if code:
                     okved_codes.append(code)
+                    okved_units.append(ClassifierUnit(code=code, name=uname))
+
+    okz_group_code = _xml_text(first_section, 'CodeOKZ', 'CodeEmploymentGroup')
+    okz_group_name = _xml_text(first_section, 'NameOKZ', 'NameEmploymentGroup')
+    opd_code = _xml_text(first_section, 'CodeOPD', 'CodeProfessionalArea') or professional_area_code
+    opd_name = _xml_text(first_section, 'NameOPD', 'NameProfessionalArea')
 
     third_section = ps_node.find('ThirdSection')
     generalized_functions = []
@@ -82,50 +272,67 @@ def parse_ps_node(ps_node, element_id: str = None) -> ProfessionalStandard:
                     code = g_node.findtext('CodeOTF', '').strip()
                     name_g = g_node.findtext('NameOTF', '').strip()
                     level = g_node.findtext('LevelOfQualification', '').strip()
-                    titles = [t.text.strip() for t in g_node.findall('.//PossibleJobTitle')]
+                    titles = [t.text.strip() for t in g_node.findall('.//PossibleJobTitle') if t.text]
 
-                    okz_codes = []
-                    list_okz = g_node.find('.//ListOKZ')
-                    if list_okz is not None:
-                        for unit in list_okz.findall('UnitOKZ'):
-                            c = unit.findtext('CodeOKZ', '').strip()
-                            if c:
-                                okz_codes.append(c)
+                    okz_units, okz_codes = _parse_classifier_units(
+                        g_node, 'ListOKZ', 'UnitOKZ', 'CodeOKZ', 'NameOKZ'
+                    )
+                    okpdtr_units, okpdtr_codes = _parse_classifier_units(
+                        g_node, 'ListOKPDTR', 'UnitOKPDTR', 'CodeOKPDTR', 'NameOKPDTR'
+                    )
+                    okso_units, okso_codes = _parse_classifier_units(
+                        g_node, 'ListOKSO', 'UnitOKSO', 'CodeOKSO', 'NameOKSO'
+                    )
+                    etks_units, _ = _parse_classifier_units(
+                        g_node, 'ListETKS', 'UnitETKS', 'CodeETKS', 'NameETKS'
+                    )
+                    if not etks_units:
+                        etks_units, _ = _parse_classifier_units(
+                            g_node, 'ListEKS', 'UnitEKS', 'CodeEKS', 'NameEKS'
+                        )
 
-                    okpdtr_codes = []
-                    list_okpdtr = g_node.find('.//ListOKPDTR')
-                    if list_okpdtr is not None:
-                        for unit in list_okpdtr.findall('UnitOKPDTR'):
-                            c = unit.findtext('CodeOKPDTR', '').strip()
-                            if c:
-                                okpdtr_codes.append(c)
-
-                    okso_codes = []
-                    list_okso = g_node.find('.//ListOKSO')
-                    if list_okso is not None:
-                        for unit in list_okso.findall('UnitOKSO'):
-                            c = unit.findtext('CodeOKSO', '').strip()
-                            if c:
-                                norm = normalize_okso_code(c)
-                                if norm:
-                                    okso_codes.append(norm)
+                    education = _xml_text(
+                        g_node,
+                        'RequirementsToEducationAndTraining',
+                        'EducationalRequirements',
+                        'RequirementsEducation',
+                    )
+                    experience = _xml_text(
+                        g_node,
+                        'RequirementsToExperienceOfPracticalWork',
+                        'ExperienceRequirements',
+                        'RequirementsExperience',
+                    )
+                    admission = _xml_text(
+                        g_node,
+                        'ParticularConditionsForAdmissionToWork',
+                        'ParticularConditionsForAdmission',
+                        'SpecialConditions',
+                    )
+                    other_gf = _xml_text(g_node, 'OtherCharacteristics', 'AdditionalCharacteristics')
 
                     p_funcs = []
                     for p_node in g_node.findall('.//ParticularWorkFunction'):
                         p_code = p_node.findtext('CodeTF', '').strip()
                         p_name = p_node.findtext('NameTF', '').strip()
                         p_sub = p_node.findtext('SubQualification', '').strip()
-                        labor_actions = []
-                        for la in p_node.findall('.//LaborAction'):
-                            labor_actions.append(LaborAction(text=la.text.strip() if la.text else ''))
+                        labor_actions = [
+                            LaborAction(text=(la.text or '').strip())
+                            for la in p_node.findall('.//LaborAction')
+                            if (la.text or '').strip()
+                        ]
+                        skills = _xml_texts(p_node, 'RequiredSkill', 'NecessarySkill')
+                        knowledges = _xml_texts(p_node, 'NecessaryKnowledge', 'RequiredKnowledge')
+                        other_pf = _xml_text(p_node, 'OtherCharacteristics', 'AdditionalCharacteristics')
                         p_funcs.append(
                             ParticularWorkFunction(
                                 code=p_code,
                                 name=p_name,
                                 sub_qualification=p_sub,
                                 labor_actions=labor_actions,
-                                required_skills=[],
-                                necessary_knowledges=[]
+                                required_skills=skills,
+                                necessary_knowledges=knowledges,
+                                other_characteristics=other_pf or None,
                             )
                         )
 
@@ -138,9 +345,64 @@ def parse_ps_node(ps_node, element_id: str = None) -> ProfessionalStandard:
                             particular_functions=p_funcs,
                             okz_codes=okz_codes,
                             okpdtr_codes=okpdtr_codes,
-                            okso_codes=okso_codes
+                            okso_codes=okso_codes,
+                            okz_units=okz_units,
+                            okpdtr_units=okpdtr_units,
+                            okso_units=okso_units,
+                            etks_units=etks_units,
+                            education_training=education or None,
+                            practical_experience=experience or None,
+                            special_admission=admission or None,
+                            other_characteristics=other_gf or None,
                         )
                     )
+
+    developer_org = ""
+    developer_head = ""
+    co_developers: List[str] = []
+    fourth = ps_node.find('FourthSection')
+    if fourth is not None:
+        developer_org = _xml_text(
+            fourth,
+            'NameResponsibleOrganization',
+            'NameOfOrganization',
+            'ResponsibleOrganization',
+        )
+        developer_head = _xml_text(
+            fourth,
+            'NameOfResponsiblePerson',
+            'NameResponsiblePerson',
+            'ResponsiblePerson',
+        )
+        head_pos = _xml_text(fourth, 'PositionOfResponsiblePerson', 'PositionResponsiblePerson')
+        if head_pos and developer_head:
+            developer_head = f"{head_pos} {developer_head}".strip()
+        elif head_pos and not developer_head:
+            developer_head = head_pos
+        for org in fourth.findall('.//OrganizationDeveloper') + fourth.findall('.//DeveloperOrganization'):
+            org_name = _xml_text(org, 'NameOfOrganization', 'NameOrganization', 'Name')
+            if org_name:
+                co_developers.append(org_name)
+        if not co_developers:
+            co_developers = [
+                t for t in _xml_texts(fourth, 'NameOfOrganizationDeveloper', 'OrganizationName')
+                if t != developer_org
+            ]
+
+    abbreviations = []
+    fifth = ps_node.find('FifthSection')
+    if fifth is not None:
+        for abbr in fifth.findall('.//Abbreviation'):
+            code = _xml_text(abbr, 'Code', 'ShortName', 'AbbreviationCode')
+            meaning = _xml_text(abbr, 'Name', 'FullName', 'Meaning', 'Description')
+            raw = (abbr.text or '').strip()
+            if code or meaning:
+                abbreviations.append({"abbr": code, "meaning": meaning})
+            elif raw:
+                abbreviations.append({"text": raw})
+        if not abbreviations:
+            for line in _xml_texts(fifth, 'ListOfAbbreviations', 'AbbreviationItem'):
+                abbreviations.append({"text": line})
 
     return ProfessionalStandard(
         name=name,
@@ -151,7 +413,19 @@ def parse_ps_node(ps_node, element_id: str = None) -> ProfessionalStandard:
         purpose=purpose,
         generalized_functions=generalized_functions,
         professional_area_code=professional_area_code,
-        okved_codes=okved_codes
+        okved_codes=okved_codes,
+        ps_code=ps_code or None,
+        okved_units=okved_units,
+        opd_code=opd_code or None,
+        opd_name=opd_name or None,
+        okz_group_code=okz_group_code or None,
+        okz_group_name=okz_group_name or None,
+        developer_org=developer_org or None,
+        developer_head=developer_head or None,
+        co_developers=co_developers,
+        effective_date=effective_date or None,
+        abbreviations=abbreviations,
+        source_kind="mintrud_xml",
     )
 
 def get_element_ids_from_page(page_url: str) -> List[str]:
@@ -171,28 +445,72 @@ def get_element_ids_from_page(page_url: str) -> List[str]:
                 ids.add(params['ELEMENT_ID'][0])
     return list(ids)
 
-def get_all_element_ids(base_url: str) -> List[str]:
-    """Обходит все страницы реестра, останавливается при таймауте или пустом ответе."""
+def get_all_element_ids(base_url: str, page_size: int = 100, max_retries: int = 3) -> List[str]:
+    """Обходит все страницы реестра с повторами при ошибках."""
     all_ids = set()
     page = 1
-    while True:
-        url = f"{base_url}?PAGEN_1={page}&SIZEN_1=100"
+    empty_streak = 0
+    expected_total = None
+
+    while empty_streak < 2:
+        url = f"{base_url}?PAGEN_1={page}&SIZEN_1={page_size}"
         print(f"Парсинг страницы {page}...")
-        try:
-            ids = get_element_ids_from_page(url)
-            if not ids:
-                print(f"Страница {page} пуста, завершаем сбор.")
+        ids = None
+        page_total = None
+
+        for attempt in range(max_retries):
+            try:
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                }
+                response = requests.get(url, headers=headers, verify=False, timeout=90)
+                response.raise_for_status()
+                soup = BeautifulSoup(response.text, 'html.parser')
+                total_match = re.search(r'из\s*(\d+)', response.text)
+                if total_match:
+                    page_total = int(total_match.group(1))
+                    if expected_total is None:
+                        expected_total = page_total
+                        print(f"  На сайте указано всего: {expected_total}")
+
+                ids = set()
+                for link in soup.find_all('a', href=True):
+                    href = link['href']
+                    if 'reestr-professionalnykh-standartov/index.php' in href and 'ELEMENT_ID=' in href:
+                        parsed = urlparse(href)
+                        params = parse_qs(parsed.query)
+                        if 'ELEMENT_ID' in params:
+                            ids.add(params['ELEMENT_ID'][0])
                 break
-            all_ids.update(ids)
-            print(f"На странице {page} найдено {len(ids)} ID, всего собрано {len(all_ids)}")
+            except Exception as e:
+                print(f"  Ошибка (попытка {attempt + 1}/{max_retries}): {e}")
+                time.sleep(2 * (attempt + 1))
+
+        if not ids:
+            print(f"  Страница {page} пуста или недоступна.")
+            empty_streak += 1
             page += 1
-            time.sleep(0.5)
-        except Exception as e:
-            # Если страница не загружается (таймаут, ошибка соединения), вероятно, это конец списка
-            print(f"Ошибка при загрузке страницы {page}: {e}")
-            print("Предполагаем, что это конец списка, завершаем сбор.")
+            continue
+
+        empty_streak = 0
+        prev_len = len(all_ids)
+        all_ids.update(ids)
+        new_count = len(all_ids) - prev_len
+        print(f"  На странице {len(ids)} ID, +{new_count} новых, всего {len(all_ids)}")
+
+        if new_count == 0:
+            empty_streak += 1
+
+        if expected_total and len(all_ids) >= expected_total:
+            print(f"  Достигнуто ожидаемое количество ({expected_total}).")
             break
-    print(f"Всего собрано ID: {len(all_ids)}")
+
+        page += 1
+        time.sleep(0.5)
+
+    print(f"Всего собрано ID: {len(all_ids)}" + (f" (ожидалось {expected_total})" if expected_total else ""))
+    if expected_total and len(all_ids) < expected_total:
+        print(f"⚠️  Не хватает {expected_total - len(all_ids)} ID — проверьте сеть или запустите analyze_missing_standards.py")
     return list(all_ids)
 
 def download_bulk_xml_chunk(element_ids: List[str], save_path: str) -> str:
@@ -419,18 +737,14 @@ def fetch_all_standards_bulk(download_dir: str = "downloads", auto_enrich: bool 
         print(f"\n✅ Всего загружено стандартов в raw БД: {total_standards}")
 
         if auto_enrich:
-            print("\n🚀 Запуск автоматического обогащения всех загруженных ПС...")
-            from .enrichment import enrich_standard
-            stds = session.query(StandardRaw).all()
-            for i, std in enumerate(stds):
-                print(f"Обогащение {i+1}/{len(stds)}: {std.registration_number} - {std.name[:50]}...")
-                try:
-                    enrich_standard(std.reg_number, session)
-                except Exception as e:
-                    print(f"  ⚠️ Ошибка обогащения {std.reg_number}: {e}")
-                if i % 10 == 0:
-                    time.sleep(1)
-            print("✅ Обогащение завершено.")
+            print("\n🚀 Автообогащение: только ПС без enriched-записи...")
+            from .enrichment import enrich_standards_batch
+            result = enrich_standards_batch(session, only_missing=True)
+            print(
+                f"✅ Обогащено: {len(result['processed'])}, "
+                f"ошибок: {len(result['failed'])}, "
+                f"всего enriched: {result['enriched']}"
+            )
 
     except Exception as e:
         session.rollback()
@@ -441,28 +755,238 @@ def fetch_all_standards_bulk(download_dir: str = "downloads", auto_enrich: bool 
 
     return loaded
 
-def find_element_id_by_reg_number(reg_number: str) -> str:
-    """
-    Ищет ELEMENT_ID профессионального стандарта по его регистрационному номеру.
-    Возвращает строку ID или None.
-    """
-    search_url = urljoin(REGISTRY_BASE_URL, f"index.php?search={reg_number}")
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+
+def extract_reg_number_from_link(text: str) -> str:
+    if not text:
+        return ""
+    m = re.search(r"(?<!\d)(\d{2,4})(?!\.\d)", text)
+    return m.group(1) if m else ""
+
+
+def extract_ps_code_from_link(text: str) -> str:
+    if not text:
+        return ""
+    m = re.search(r"\b(\d{2}\.\d{3})\b", text)
+    return m.group(1) if m else ""
+
+
+def _extract_element_id_from_row(tr) -> str:
+    for link in tr.find_all("a", href=True):
+        href = link["href"]
+        if "ELEMENT_ID=" not in href:
+            continue
+        eid = parse_qs(urlparse(href).query).get("ELEMENT_ID", [None])[0]
+        if eid:
+            return eid
+    return ""
+
+
+def _find_registry_table(soup: BeautifulSoup):
+    table = soup.find("table", class_="listofitemps")
+    if table is not None:
+        return table
+    tables = soup.find_all("table")
+    if not tables:
+        return None
+    return max(tables, key=lambda t: len(t.find_all("tr")))
+
+
+def parse_registry_table_rows(soup: BeautifulSoup) -> list[dict]:
+    """Парсит строки таблицы реестра на странице списка (6 основных колонок)."""
+    table = _find_registry_table(soup)
+    if table is None:
+        return []
+
+    items: list[dict] = []
+    seen: set[str] = set()
+    for tr in table.find_all("tr"):
+        cells = tr.find_all("td")
+        if len(cells) < 6:
+            continue
+
+        values = [cell.get_text(" ", strip=True) for cell in cells[:6]]
+        reg_number, ps_code, name, developer, effective_date, expiration_date = values
+        if not reg_number and not ps_code and not name:
+            continue
+
+        element_id = _extract_element_id_from_row(tr)
+        dedupe_key = element_id or f"{reg_number}|{ps_code}"
+        if dedupe_key in seen:
+            continue
+        seen.add(dedupe_key)
+
+        items.append(
+            {
+                "element_id": element_id,
+                "reg_number": reg_number,
+                "ps_code": ps_code,
+                "name": name,
+                "developer": developer,
+                "effective_date": effective_date,
+                "expiration_date": expiration_date,
+                "link_text": name or reg_number,
+            }
+        )
+    return items
+
+
+def fetch_registry_page_items(page: int, page_size: int = 100) -> tuple[list[dict], int | None]:
+    url = f"{REGISTRY_BASE_URL}?PAGEN_1={page}&SIZEN_1={page_size}"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
+    for attempt in range(3):
+        try:
+            response = requests.get(url, headers=headers, verify=False, timeout=90)
+            response.raise_for_status()
+            soup = BeautifulSoup(response.text, "html.parser")
+            items = parse_registry_table_rows(soup)
+            if not items:
+                items = []
+                seen: set[str] = set()
+                for link in soup.find_all("a", href=True):
+                    href = link["href"]
+                    if "ELEMENT_ID=" not in href or "reestr-professionalnykh-standartov" not in href:
+                        continue
+                    eid = parse_qs(urlparse(href).query).get("ELEMENT_ID", [None])[0]
+                    if not eid or eid in seen:
+                        continue
+                    seen.add(eid)
+                    text = link.get_text(" ", strip=True)
+                    items.append(
+                        {
+                            "element_id": eid,
+                            "reg_number": extract_reg_number_from_link(text),
+                            "ps_code": extract_ps_code_from_link(text),
+                            "link_text": text,
+                        }
+                    )
+            total_match = re.search(r"из\s*(\d+)", response.text)
+            page_total = int(total_match.group(1)) if total_match else None
+            return items, page_total
+        except Exception as e:
+            print(f"  страница {page}, попытка {attempt + 1}/3: {e}")
+            time.sleep(2 * (attempt + 1))
+    return [], None
+
+
+def build_reg_to_element_map(page_size: int = 100, refresh: bool = False) -> dict[str, str]:
+    """Строит карту рег. номер -> ELEMENT_ID, обходя все страницы реестра."""
+    global reg_to_element_cache, ps_code_to_element_cache
+    if reg_to_element_cache and not refresh:
+        return reg_to_element_cache
+
+    all_items: dict[str, dict] = {}
+    page_total = None
+    page = 1
+    empty_streak = 0
+
+    print("Обход реестра на сайте Минтруда...")
+    while empty_streak < 2:
+        print(f"  страница {page}...")
+        items, total = fetch_registry_page_items(page, page_size)
+        if total and not page_total:
+            page_total = total
+            print(f"  на сайте указано всего: {page_total}")
+
+        if not items:
+            empty_streak += 1
+            page += 1
+            continue
+
+        empty_streak = 0
+        new = 0
+        for item in items:
+            if item["element_id"] not in all_items:
+                all_items[item["element_id"]] = item
+                new += 1
+        print(f"  ссылок: {len(items)}, новых ID: {new}, уникальных: {len(all_items)}")
+        page += 1
+        time.sleep(0.5)
+
+        if page_total and len(all_items) >= page_total:
+            break
+
+    reg_map: dict[str, str] = {}
+    ps_map: dict[str, str] = {}
+    for item in all_items.values():
+        reg = str(item.get("reg_number") or "").strip()
+        eid = item["element_id"]
+        if reg and reg not in reg_map:
+            reg_map[reg] = eid
+        ps_code = str(item.get("ps_code") or "").strip()
+        if ps_code and ps_code not in ps_map:
+            ps_map[ps_code] = eid
+
+    reg_to_element_cache = reg_map
+    ps_code_to_element_cache = ps_map
+    print(f"  карта reg->ELEMENT_ID: {len(reg_map)} записей")
+    return reg_map
+
+
+def _search_element_id(query: str, expected_reg: str | None = None) -> str | None:
+    if not query:
+        return None
+    search_url = f"{REGISTRY_BASE_URL}?search={quote(str(query))}"
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
     try:
         response = requests.get(search_url, headers=headers, verify=False, timeout=30)
         response.raise_for_status()
     except Exception as e:
-        print(f"  Ошибка поиска ELEMENT_ID для {reg_number}: {e}")
+        print(f"  Ошибка поиска «{query}»: {e}")
         return None
 
-    soup = BeautifulSoup(response.text, 'html.parser')
-    for link in soup.find_all('a', href=True):
-        href = link['href']
-        if 'reestr-professionalnykh-standartov/index.php' in href and 'ELEMENT_ID=' in href:
-            text = link.get_text(strip=True)
-            if reg_number in text:
-                import re
-                match = re.search(r'ELEMENT_ID=(\d+)', href)
-                if match:
-                    return match.group(1)
+    soup = BeautifulSoup(response.text, "html.parser")
+    for link in soup.find_all("a", href=True):
+        href = link["href"]
+        if "reestr-professionalnykh-standartov/index.php" not in href or "ELEMENT_ID=" not in href:
+            continue
+        match = re.search(r"ELEMENT_ID=(\d+)", href)
+        if not match:
+            continue
+        eid = match.group(1)
+        if not expected_reg:
+            return eid
+        block = link.find_parent("tr") or link.find_parent("li") or link.find_parent("div")
+        text = block.get_text(" ", strip=True) if block else link.get_text(" ", strip=True)
+        if re.search(rf"(?<!\d){re.escape(expected_reg)}(?!\.\d)", text):
+            return eid
+    return None
+
+
+def find_element_id_by_reg_number(
+    reg_number: str,
+    ps_code: str | None = None,
+    order_number: str | None = None,
+) -> str | None:
+    """
+    Ищет ELEMENT_ID профессионального стандарта по рег. номеру.
+    Сначала карта реестра, затем поиск по рег. номеру / коду ПС / приказу.
+    """
+    reg = str(reg_number or "").strip()
+    if not reg:
+        return None
+
+    if reg_to_element_cache:
+        if reg in reg_to_element_cache:
+            return reg_to_element_cache[reg]
+    else:
+        build_reg_to_element_map()
+        if reg in reg_to_element_cache:
+            return reg_to_element_cache[reg]
+
+    queries: list[str] = [reg]
+    if ps_code:
+        queries.append(ps_code)
+    if order_number:
+        m = re.search(r"(\d+[а-я]?)", str(order_number), re.IGNORECASE)
+        if m:
+            queries.append(m.group(1))
+
+    for query in queries:
+        eid = _search_element_id(query, expected_reg=reg)
+        if eid:
+            reg_to_element_cache[reg] = eid
+            return eid
+
     return None

@@ -1,0 +1,6 @@
+ОТЧЁТ BACKFILL МАКЕТА ПС
+==================================================
+Всего ПС: 1682
+P0 заполнены (ps_code+developer+education): 170 (10.11%)
+Пробелы: {'education_training': 1512, 'source': 125, 'abbreviations': 1574, 'developer_org': 2}
+Действия прогона: {'registry_updated': 1682, 'xml_error:403 Client Error: Forbidden for url: https://profstandart.rosmintrud.ru/obshchiy-informatsionnyy-blok/natsionalnyy-reestr-professionalnykh-standartov/reestr-professionalnykh-standartov/wservGenXMLSave.php': 1664, 'classinform_fail': 125, 'p0_gap': 1512, 'classinform_ok': 1557, 'p0_ok': 170, "xml_error:('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно разорвал существующее подключение', None, 10054, None))": 5}

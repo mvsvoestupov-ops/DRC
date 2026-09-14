@@ -105,7 +105,7 @@ python -c "from app.db import Base, engine; Base.metadata.create_all(bind=engine
 python create_test_users.py
 Пользователи:
 
-Администратор: admin@admin.ru / Aonk2019!
+Администратор: admin@aonk.ru / Aonk2026!
 
 Тестовые пользователи: stol1@mail.ru / pass1 ... stol7@mail.ru / pass7
 
@@ -222,12 +222,24 @@ JWT-токены хранятся в localStorage.
 8	Валидация	Экспертиза по чек-листу
 9	Доработка	Исправление замечаний
 10	Защита	Финальная сводка и сохранение компетенции
-🧪 Парсинг квалификаций (на сервере)
+🧪 Парсинг квалификаций (nok-nark.ru, без Selenium)
+Локально (Windows):
+  backend\run-fetch-missing-qualifications.bat
+  или: venv\Scripts\python.exe scripts\fetch_missing_qualifications.py
+
+Обход списка идёт по фильтрам ОПД/СПК (короткие страницы). Сплошной page=1..405
+после ~375 часто отдаёт пустые ответы — для догрузки используйте этот скрипт.
+Отчёт: backend\scripts\output\missing_qualifications_report.{json,txt}
+
+Только индекс/отчёт без карточек:
+  venv\Scripts\python.exe scripts\fetch_missing_qualifications.py --report-only
+
+На сервере:
 bash
 cd /var/www/drc.ao-nk.ru/backend
 source venv/bin/activate
-nohup python -c "from app.qualifications_parser import fetch_all_qualifications; fetch_all_qualifications(save=True)" > quals_parser.log 2>&1 &
-tail -f quals_parser.log
+nohup python scripts/fetch_missing_qualifications.py > quals_missing.log 2>&1 &
+tail -f quals_missing.log
 После завершения проверьте количество:
 
 bash
@@ -257,7 +269,8 @@ SECRET_KEY=your-secret-key-here
 ⚠️ Известные особенности
 Обогащение требует torch и sentence-transformers. На сервере рекомендуется использовать CPU-версию torch.
 
-Парсинг квалификаций требует установленного Google Chrome или Chromium + chromedriver.
+Парсинг квалификаций — через requests/BeautifulSoup (nok-nark.ru). Для догрузки
+недостающих после обрыва на page~375: scripts/fetch_missing_qualifications.py.
 
 При переносе базы данных с локальной машины на сервер убедитесь, что все таблицы созданы, а user_id в competences существует.
 

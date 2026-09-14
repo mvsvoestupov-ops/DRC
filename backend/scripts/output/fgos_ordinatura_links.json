@@ -1,0 +1,870 @@
+{
+  "category": "ordinatura",
+  "count": 96,
+  "items": [
+    {
+      "url": "https://classinform.ru/fgos/31.08.01-akusherstvo-i-ginekologiia.html",
+      "code": "31.08.01",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.02-anesteziologiia-reanimatologiia.html",
+      "code": "31.08.02",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.03-toksikologiia.html",
+      "code": "31.08.03",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.04-transfuziologiia.html",
+      "code": "31.08.04",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.05-clinicheskaia-laboratornaia-diagnostika.html",
+      "code": "31.08.05",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.06-laboratornaia-genetika.html",
+      "code": "31.08.06",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.07-patologicheskaia-anatomiia.html",
+      "code": "31.08.07",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.08-radiologiia.html",
+      "code": "31.08.08",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.09-rentgenologiia.html",
+      "code": "31.08.09",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.10-sudebno-meditcinskaia-ekspertiza.html",
+      "code": "31.08.10",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.11-ultrazvukovaia-diagnostika.html",
+      "code": "31.08.11",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.12-funktcionalnaia-diagnostika.html",
+      "code": "31.08.12",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.13-detskaia-kardiologiia.html",
+      "code": "31.08.13",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.14-detskaia-onkologiia.html",
+      "code": "31.08.14",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.15-detskaia-urologiia-andrologiia.html",
+      "code": "31.08.15",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.16-detskaia-hirurgiia.html",
+      "code": "31.08.16",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.17-detskaia-endokrinologiia.html",
+      "code": "31.08.17",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.18-neonatologiia.html",
+      "code": "31.08.18",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.19-pediatriia.html",
+      "code": "31.08.19",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.20-psihiatriia.html",
+      "code": "31.08.20",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.21-psihiatriia-narkologiia.html",
+      "code": "31.08.21",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.22-psihoterapiia.html",
+      "code": "31.08.22",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.23-seksologiia.html",
+      "code": "31.08.23",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.24-sudebno-psihiatricheskaia-ekspertiza.html",
+      "code": "31.08.24",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.25-aviatcionnaia-i-kosmicheskaia-meditcina.html",
+      "code": "31.08.25",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.26-allergologiia-i-immunologiia.html",
+      "code": "31.08.26",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.27-vodolaznaia-meditcina.html",
+      "code": "31.08.27",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.28-gastroenterologiia.html",
+      "code": "31.08.28",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.29-gematologiia.html",
+      "code": "31.08.29",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.30-genetika.html",
+      "code": "31.08.30",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.31-geriatriia.html",
+      "code": "31.08.31",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.32-dermatovenerologiia.html",
+      "code": "31.08.32",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.33-diabetologiia.html",
+      "code": "31.08.33",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.34-dietologiia.html",
+      "code": "31.08.34",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.35-infektcionnye-bolezni.html",
+      "code": "31.08.35",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.36-kardiologiia.html",
+      "code": "31.08.36",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.37-clinicheskaia-farmakologiia.html",
+      "code": "31.08.37",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.38-kosmetologiia.html",
+      "code": "31.08.38",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.39-lechebnaia-fizkultura-i-sportivnaia-meditcina.html",
+      "code": "31.08.39",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.40-manualnaia-terapiia.html",
+      "code": "31.08.40",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.41-mediko-sotcialnaia-ekspertiza.html",
+      "code": "31.08.41",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.42-nevrologiia.html",
+      "code": "31.08.42",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.43-nefrologiia.html",
+      "code": "31.08.43",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.44-profpatologiia.html",
+      "code": "31.08.44",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.45-pulmonologiia.html",
+      "code": "31.08.45",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.46-revmatologiia.html",
+      "code": "31.08.46",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.47-refleksoterapiia.html",
+      "code": "31.08.47",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.48-skoraia-meditcinskaia-pomoshch.html",
+      "code": "31.08.48",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.49-terapiia.html",
+      "code": "31.08.49",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.50-fizioterapiia.html",
+      "code": "31.08.50",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.51-ftiziatriia.html",
+      "code": "31.08.51",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.52-osteopatiia.html",
+      "code": "31.08.52",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.53-endokrinologiia.html",
+      "code": "31.08.53",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.54-obshchaia-vrachebnaia-praktika-semeinaia-meditcina.html",
+      "code": "31.08.54",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.55-koloproktologiia.html",
+      "code": "31.08.55",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.56-neirohirurgiia.html",
+      "code": "31.08.56",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.57-onkologiia.html",
+      "code": "31.08.57",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.58-otorinolaringologiia.html",
+      "code": "31.08.58",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.59-oftalmologiia.html",
+      "code": "31.08.59",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.60-plasticheskaia-hirurgiia.html",
+      "code": "31.08.60",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.61-radioterapiia.html",
+      "code": "31.08.61",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.62-rentgenendovaskuliarnye-diagnostika-i-lechenie.html",
+      "code": "31.08.62",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.63-serdechno-sosudistaia-hirurgiia.html",
+      "code": "31.08.63",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.64-surdologiia-otorinolaringologiia.html",
+      "code": "31.08.64",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.65-torakalnaia-hirurgiia.html",
+      "code": "31.08.65",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.66-travmatologiia-i-ortopediia.html",
+      "code": "31.08.66",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.67-hirurgiia.html",
+      "code": "31.08.67",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.68-urologiia.html",
+      "code": "31.08.68",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.69-cheliustno-litcevaia-hirurgiia.html",
+      "code": "31.08.69",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.70-endoskopiia.html",
+      "code": "31.08.70",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.71-organizatciia-zdravookhraneniia-i-obshchestvennoe-zdorove.html",
+      "code": "31.08.71",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.72-stomatologiia-obshchei-praktiki.html",
+      "code": "31.08.72",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.73-stomatologiia-terapevticheskaia.html",
+      "code": "31.08.73",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.74-stomatologiia-hirurgicheskaia.html",
+      "code": "31.08.74",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.75-stomatologiia-ortopedicheskaia.html",
+      "code": "31.08.75",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.76-stomatologiia-detskaia.html",
+      "code": "31.08.76",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.77-ortodontiia.html",
+      "code": "31.08.77",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/31.08.78-fizicheskaia-i-reabilitatcionnaia-meditcina.html",
+      "code": "31.08.78",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "31.00.00",
+      "group_name": "Клиническая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/32.08.01-gigiena-detei-i-podrostkov.html",
+      "code": "32.08.01",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "32.00.00",
+      "group_name": "Науки о здоровье и профилактическая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/32.08.02-gigiena-pitaniia.html",
+      "code": "32.08.02",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "32.00.00",
+      "group_name": "Науки о здоровье и профилактическая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/32.08.03-gigiena-truda.html",
+      "code": "32.08.03",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "32.00.00",
+      "group_name": "Науки о здоровье и профилактическая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/32.08.04-gigienicheskoe-vospitanie.html",
+      "code": "32.08.04",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "32.00.00",
+      "group_name": "Науки о здоровье и профилактическая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/32.08.05-dezinfektologiia.html",
+      "code": "32.08.05",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "32.00.00",
+      "group_name": "Науки о здоровье и профилактическая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/32.08.06-kommunalnaia-gigiena.html",
+      "code": "32.08.06",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "32.00.00",
+      "group_name": "Науки о здоровье и профилактическая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/32.08.07-obshchaia-gigiena.html",
+      "code": "32.08.07",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "32.00.00",
+      "group_name": "Науки о здоровье и профилактическая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/32.08.08-parazitologiia.html",
+      "code": "32.08.08",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "32.00.00",
+      "group_name": "Науки о здоровье и профилактическая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/32.08.09-radiatcionnaia-gigiena.html",
+      "code": "32.08.09",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "32.00.00",
+      "group_name": "Науки о здоровье и профилактическая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/32.08.10-sanitarno-gigienicheskie-laboratornye-issledovaniia.html",
+      "code": "32.08.10",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "32.00.00",
+      "group_name": "Науки о здоровье и профилактическая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/32.08.11-sotcialnaia-gigiena-i-organizatciia-gossanepidsluzhby.html",
+      "code": "32.08.11",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "32.00.00",
+      "group_name": "Науки о здоровье и профилактическая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/32.08.12-epidemiologiia.html",
+      "code": "32.08.12",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "32.00.00",
+      "group_name": "Науки о здоровье и профилактическая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/32.08.13-virusologiia.html",
+      "code": "32.08.13",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "32.00.00",
+      "group_name": "Науки о здоровье и профилактическая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/32.08.14-bakteriologiia.html",
+      "code": "32.08.14",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "32.00.00",
+      "group_name": "Науки о здоровье и профилактическая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/32.08.15-meditcinskaia-mikrobiologiia.html",
+      "code": "32.08.15",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "32.00.00",
+      "group_name": "Науки о здоровье и профилактическая медицина (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/33.08.01-farmatcevticheskaia-tekhnologiia.html",
+      "code": "33.08.01",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "33.00.00",
+      "group_name": "Фармация (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/33.08.02-upravlenie-i-ekonomika-farmatcii.html",
+      "code": "33.08.02",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "33.00.00",
+      "group_name": "Фармация (уровень 8)"
+    },
+    {
+      "url": "https://classinform.ru/fgos/33.08.03-farmatcevticheskaia-himiia-i-farmakognoziia.html",
+      "code": "33.08.03",
+      "category": "ordinatura",
+      "industry_code": "8.3",
+      "industry_name": "Здравоохранение и медицинские науки (уровень 8)",
+      "group_code": "33.00.00",
+      "group_name": "Фармация (уровень 8)"
+    }
+  ]
+}
