@@ -36,6 +36,7 @@ const StrategicSession = () => {
     qualification_name: '',
     qualification_level: '',
     selected_labor_functions: [],
+    competence_name: '', // название компетенции
     testThreshold: 70,
   });
   const [loading, setLoading] = useState(false);
@@ -91,14 +92,24 @@ const StrategicSession = () => {
         });
       }
 
+      // Преобразуем структуру A/B/C в массивы строк
+      const structureToStrings = (items) => {
+        if (!items || !Array.isArray(items)) return [];
+        return items.map(item => typeof item === 'string' ? item : item.text || item);
+      };
+
       const payload = {
-        name: sessionData.qualification_name || 'Компетенция (стратегическая сессия)',
+        name: sessionData.competence_name || sessionData.qualification_name || 'Компетенция (стратегическая сессия)',
         qualification_name: sessionData.qualification_name || '',
         qualification_level: sessionData.qualification_level || '',
         prof_standard_id: sessionData.prof_standard_id || 0,
         qualification_id: sessionData.qualification_id || null,
         labor_functions: (sessionData.selected_tf_codes || []).map(code => ({ code })),
-        structure: sessionData.structure || { A: [], B: [], C: [] },
+        structure: {
+          A: structureToStrings(sessionData.structure?.A),
+          B: structureToStrings(sessionData.structure?.B),
+          C: structureToStrings(sessionData.structure?.C),
+        },
         descriptors: sessionData.descriptors || {},
         discipline_mapping: sessionData.discipline_mapping || [],
         ed_technologies: sessionData.ed_technologies || [],
@@ -112,13 +123,28 @@ const StrategicSession = () => {
         hours: '',
       };
 
-      console.log('Sending payload:', payload);
+      console.log('Sending payload:', JSON.stringify(payload, null, 2));
       await createCompetence(payload);
       message.success('Компетенция сохранена');
       navigate('/my-projects');
     } catch (error) {
       console.error('Error saving competence:', error);
-      message.error('Ошибка сохранения: ' + (error.response?.data?.detail || error.message));
+      let errorMsg = 'Ошибка сохранения. ';
+      if (error.response?.data?.detail) {
+        const detail = error.response.data.detail;
+        if (Array.isArray(detail)) {
+          const messages = detail.map(err => {
+            const field = err.loc ? err.loc.join('.') : 'unknown';
+            return `${field}: ${err.msg}`;
+          });
+          errorMsg += messages.join('; ');
+        } else {
+          errorMsg += detail;
+        }
+      } else if (error.message) {
+        errorMsg += error.message;
+      }
+      message.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -164,7 +190,7 @@ const StrategicSession = () => {
       <div style={{ marginTop: 24, display: 'flex', justifyContent: 'space-between' }}>
         <Button onClick={prevStep} disabled={currentStep === 0}>Назад</Button>
         <div>
-          {currentStep < 9 && (
+          {currentStep < 9 && currentStep !== 0 && (
             <Button type="primary" onClick={nextStep}>
               Далее
             </Button>

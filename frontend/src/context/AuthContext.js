@@ -10,8 +10,6 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     if (token) {
-      // можно проверить валидность токена, но для простоты сохраняем
-      // мы не храним роль отдельно, но можем получить из локального хранилища
       const role = localStorage.getItem('role') || null;
       setUser({ role });
     }
@@ -20,16 +18,21 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const formData = new FormData();
-      formData.append('username', email);
-      formData.append('password', password);
-      const response = await axios.post('http://localhost:8000/token', formData);
+      // Используем URLSearchParams для правильного формата
+      const params = new URLSearchParams();
+      const emailLower = email.toLowerCase();
+      params.append('username', email);
+      params.append('password', password);
+      
+      const response = await axios.post('http://localhost:10000/token', params, {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+      });
+      
       const { access_token, role } = response.data;
       localStorage.setItem('token', access_token);
       localStorage.setItem('role', role);
       setToken(access_token);
       setUser({ role });
-      // Устанавливаем заголовок для будущих запросов
       axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
       return true;
     } catch (error) {

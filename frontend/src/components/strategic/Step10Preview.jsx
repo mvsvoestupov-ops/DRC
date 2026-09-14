@@ -111,7 +111,7 @@ const Step10Preview = ({ data, onFinish, loading }) => {
 
       <Card title="Паспорт компетенции" style={{ marginBottom: 16 }}>
         <Descriptions bordered column={1}>
-          <Descriptions.Item label="Название компетенции">{qualification_name || '—'}</Descriptions.Item>
+          <Descriptions.Item label="Название компетенции"> {data.competence_name || data.qualification_name || '—'}</Descriptions.Item>
           <Descriptions.Item label="Профессиональный стандарт (код, название)">{psName}</Descriptions.Item>
           <Descriptions.Item label="Название квалификации">{qualification_name || '—'}</Descriptions.Item>
           <Descriptions.Item label="Процент сформированности">{coveragePercent ? `${coveragePercent}%` : '—'}</Descriptions.Item>

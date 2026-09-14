@@ -1,42 +1,90 @@
 import React, { useState } from 'react';
-import { Form, Input, Button, Card, message } from 'antd';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
+import { Label } from '../components/ui/Label';
 
 const LoginPage = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
-  const onFinish = async (values) => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!email || !password) {
+      setError('Введите email и пароль');
+      return;
+    }
     setLoading(true);
-    const success = await login(values.email, values.password);
+    setError('');
+    const success = await login(email, password);
     setLoading(false);
     if (success) {
-      message.success('Вход выполнен');
       navigate('/');
     } else {
-      message.error('Неверный email или пароль');
+      setError('Неверный email или пароль');
     }
   };
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#f0f2f5' }}>
-      <Card title="Вход в систему" style={{ width: 400 }}>
-        <Form name="login" onFinish={onFinish} layout="vertical">
-          <Form.Item label="Email" name="email" rules={[{ required: true, type: 'email', message: 'Введите корректный email' }]}>
-            <Input placeholder="admin@admin.ru" />
-          </Form.Item>
-          <Form.Item label="Пароль" name="password" rules={[{ required: true, message: 'Введите пароль' }]}>
-            <Input.Password placeholder="••••••••" />
-          </Form.Item>
-          <Form.Item>
-            <Button type="primary" htmlType="submit" loading={loading} block>
-              Войти
-            </Button>
-          </Form.Item>
-        </Form>
-      </Card>
+    <div className="flex justify-center items-center min-h-screen bg-muted/50">
+      <div className="w-full max-w-md px-4">
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle>Вход в систему</CardTitle>
+            <CardDescription>
+              Войдите, чтобы продолжить работу с реестром компетенций
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit}>
+              <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="admin@admin.ru"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="password">Пароль</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </div>
+                {error && (
+                  <div className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">
+                    {error}
+                  </div>
+                )}
+                <Button type="submit" disabled={loading} className="w-full">
+                  {loading ? 'Вход...' : 'Войти'}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+          <CardFooter>
+            <p className="text-sm text-muted-foreground text-center w-full">
+              Нет аккаунта?{' '}
+              <Link to="/register" className="text-primary hover:underline">
+                Зарегистрироваться
+              </Link>
+            </p>
+          </CardFooter>
+        </Card>
+      </div>
     </div>
   );
 };

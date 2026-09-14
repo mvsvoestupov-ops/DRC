@@ -1,20 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import {
-  Card, Descriptions, Tag, Spin, Button, Tabs, Collapse,
-  Typography, List, Row, Col, Badge, Space, Divider
-} from 'antd';
-import {
-  ArrowLeftOutlined,
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  ExclamationCircleOutlined
-} from '@ant-design/icons';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/Tabs';
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '../components/ui/Accordion';
+import { Badge } from '../components/ui/Badge';
+import { ArrowLeft, Clock, AlertTriangle, CheckCircle, Briefcase, BookOpen, Award, Microscope } from 'lucide-react';
 import { getCompetence } from '../api';
 
-const { Title, Text, Paragraph } = Typography;
-const { TabPane } = Tabs;
-const { Panel } = Collapse;
+const statusMap = {
+  'проект': { variant: 'secondary', icon: <Clock className="w-4 h-4" />, label: 'Проект' },
+  'на экспертизе': { variant: 'warning', icon: <AlertTriangle className="w-4 h-4" />, label: 'На экспертизе' },
+  'утверждена': { variant: 'success', icon: <CheckCircle className="w-4 h-4" />, label: 'Утверждена' },
+};
 
 const CompetenceDetail = () => {
   const { id } = useParams();
@@ -29,186 +27,200 @@ const CompetenceDetail = () => {
       .finally(() => setLoading(false));
   }, [id]);
 
-  if (loading) return <Spin size="large" style={{ display: 'block', margin: '40px auto' }} />;
-  if (!comp) return <div style={{ padding: 24 }}>Компетенция не найдена</div>;
+  if (loading) return (
+    <div className="flex justify-center py-12">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+    </div>
+  );
+  if (!comp) return <div className="p-6">Компетенция не найдена</div>;
 
-  // Статус
-  const statusMap = {
-    'проект': { color: 'default', icon: <ClockCircleOutlined />, text: 'Проект' },
-    'на экспертизе': { color: 'processing', icon: <ExclamationCircleOutlined />, text: 'На экспертизе' },
-    'утверждена': { color: 'success', icon: <CheckCircleOutlined />, text: 'Утверждена' },
-  };
-  const statusInfo = statusMap[comp.status] || statusMap['проект'];
-
-  // Дескрипторы – ожидаем структуру { "A_базовый": "...", "B_продвинутый": "...", ... }
+  const status = statusMap[comp.status] || statusMap['проект'];
   const descriptors = comp.descriptors || {};
   const categories = ['A', 'B', 'C'];
   const levels = ['базовый', 'продвинутый', 'экспертный'];
 
   return (
-    <div style={{ padding: 24, maxWidth: 1200, margin: '0 auto' }}>
-      <Button
-        icon={<ArrowLeftOutlined />}
-        onClick={() => navigate(-1)}
-        style={{ marginBottom: 16 }}
-      >
+    <div className="space-y-6 max-w-5xl mx-auto">
+      <Button variant="ghost" onClick={() => navigate(-1)}>
+        <ArrowLeft className="w-4 h-4 mr-2" />
         Назад
       </Button>
 
-      <Card
-        title={
-          <Space size="middle">
-            <span style={{ fontSize: 20, fontWeight: 600 }}>{comp.name}</span>
-            <Badge
-              status={statusInfo.color === 'success' ? 'success' : 'processing'}
-              text={statusInfo.text}
-            />
-          </Space>
-        }
-        extra={
-          <Space>
-            <Tag color="blue">Уровень: {comp.qualification_level || '—'}</Tag>
-            <Tag color="purple">ID: {comp.id}</Tag>
-          </Space>
-        }
-      >
-        <Tabs defaultActiveKey="1">
-          {/* Вкладка 1: Основная информация */}
-          <TabPane tab="Основное" key="1">
-            <Descriptions column={2} bordered>
-              <Descriptions.Item label="Код квалификации">{comp.qualification_name || '—'}</Descriptions.Item>
-              <Descriptions.Item label="Уровень квалификации">{comp.qualification_level || '—'}</Descriptions.Item>
-              <Descriptions.Item label="Профстандарт ID">{comp.prof_standard_id || '—'}</Descriptions.Item>
-              <Descriptions.Item label="Квалификация ID">{comp.qualification_id || '—'}</Descriptions.Item>
-              <Descriptions.Item label="Разработчик">{comp.developer || '—'}</Descriptions.Item>
-              <Descriptions.Item label="Валидатор">{comp.validator || '—'}</Descriptions.Item>
-              <Descriptions.Item label="Отрасль">{comp.raw_data?.industry || comp.industry || '—'}</Descriptions.Item>
-              <Descriptions.Item label="Трудоёмкость">{comp.raw_data?.hours || comp.hours || '—'} ч.</Descriptions.Item>
-              <Descriptions.Item label="Описание" span={2}>{comp.raw_data?.description || comp.description || '—'}</Descriptions.Item>
-            </Descriptions>
+      <Card>
+        <CardHeader>
+          <div className="flex items-start justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-3">
+              <h2 className="text-xl font-medium">{comp.name}</h2>
+              <Badge variant={status.variant} className="flex items-center gap-1">
+                {status.icon}{status.label}
+              </Badge>
+            </div>
+            <div className="flex gap-2">
+              <Badge variant="outline">Уровень: {comp.qualification_level || '—'}</Badge>
+              <Badge variant="outline">ID: {comp.id}</Badge>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="main">
+            <TabsList className="w-full mb-4 overflow-x-auto">
+              <TabsTrigger value="main" className="flex-1">Основное</TabsTrigger>
+              <TabsTrigger value="structure" className="flex-1">Структура A/B/C</TabsTrigger>
+              <TabsTrigger value="disciplines" className="flex-1">Дисциплины и технологии</TabsTrigger>
+              <TabsTrigger value="assessment" className="flex-1">Оценочные средства</TabsTrigger>
+              <TabsTrigger value="resources" className="flex-1">Ресурсы</TabsTrigger>
+            </TabsList>
 
-            <Divider orientation="left">Трудовые функции</Divider>
-            {comp.labor_functions?.length > 0 ? (
-              <List
-                dataSource={comp.labor_functions}
-                renderItem={item => (
-                  <List.Item>
-                    <Tag color="cyan">{item.code}</Tag> {item.name || item.code}
-                  </List.Item>
-                )}
-              />
-            ) : <Text type="secondary">Не указаны</Text>}
-          </TabPane>
+            {/* Вкладка Основное */}
+            <TabsContent value="main">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <InfoItem label="Код квалификации" value={comp.qualification_name || '—'} />
+                <InfoItem label="Уровень квалификации" value={comp.qualification_level || '—'} />
+                <InfoItem label="Профстандарт ID" value={comp.prof_standard_id || '—'} />
+                <InfoItem label="Квалификация ID" value={comp.qualification_id || '—'} />
+                <InfoItem label="Разработчик" value={comp.developer || '—'} />
+                <InfoItem label="Валидатор" value={comp.validator || '—'} />
+                <InfoItem label="Отрасль" value={comp.raw_data?.industry || comp.industry || '—'} />
+                <InfoItem label="Трудоёмкость" value={comp.raw_data?.hours || comp.hours || '—'} />
+              </div>
+              <InfoItem label="Описание" value={comp.raw_data?.description || comp.description || '—'} />
 
-          {/* Вкладка 2: Структура A/B/C и дескрипторы */}
-          <TabPane tab="Структура A/B/C" key="2">
-            <Row gutter={16}>
-              {categories.map(cat => (
-                <Col span={8} key={cat}>
-                  <Card title={`Категория ${cat}`} size="small">
-                    <List
-                      dataSource={comp.structure?.[cat] || []}
-                      renderItem={item => <List.Item>{item}</List.Item>}
-                      locale={{ emptyText: 'Нет данных' }}
-                    />
+              <h4 className="text-sm font-medium mt-6 mb-2">Трудовые функции</h4>
+              {comp.labor_functions?.length > 0 ? (
+                <ul className="space-y-2">
+                  {comp.labor_functions.map((item, idx) => (
+                    <li key={idx} className="flex items-center gap-2 text-sm">
+                      <Badge variant="secondary" className="text-xs">{item.code}</Badge>
+                      {item.name || item.code}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-muted-foreground text-sm">Не указаны</p>
+              )}
+            </TabsContent>
+
+            {/* Вкладка Структура A/B/C */}
+            <TabsContent value="structure">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                {categories.map(cat => (
+                  <Card key={cat}>
+                    <CardHeader><CardTitle className="text-base">Категория {cat}</CardTitle></CardHeader>
+                    <CardContent>
+                      {comp.structure?.[cat]?.length > 0 ? (
+                        <ul className="list-disc list-inside text-sm space-y-1">
+                          {comp.structure[cat].map((item, idx) => (
+                            <li key={idx}>{item}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-muted-foreground text-sm">Нет данных</p>
+                      )}
+                    </CardContent>
                   </Card>
-                </Col>
-              ))}
-            </Row>
-
-            <Divider orientation="left">Дескрипторы уровней</Divider>
-            <Collapse>
-              {categories.map(cat => (
-                <Panel header={`Категория ${cat}`} key={cat}>
-                  <Descriptions column={1} bordered size="small">
-                    {levels.map(level => {
-                      const key = `${cat}_${level}`;
-                      return (
-                        <Descriptions.Item label={level.charAt(0).toUpperCase() + level.slice(1)} key={key}>
-                          {descriptors[key] || '—'}
-                        </Descriptions.Item>
-                      );
-                    })}
-                  </Descriptions>
-                </Panel>
-              ))}
-            </Collapse>
-          </TabPane>
-
-          {/* Вкладка 3: Дисциплины и технологии */}
-          <TabPane tab="Дисциплины и технологии" key="3">
-            <Title level={5}>Привязка к дисциплинам / модулям</Title>
-            {comp.discipline_mapping?.length > 0 ? (
-              <List
-                dataSource={comp.discipline_mapping}
-                renderItem={item => (
-                  <List.Item>
-                    <Space>
-                      <Tag color="geekblue">{item.component || '—'}</Tag>
-                      <Text strong>{item.discipline}</Text>
-                      <Tag color="orange">{item.control || '—'}</Tag>
-                    </Space>
-                  </List.Item>
-                )}
-              />
-            ) : <Text type="secondary">Не указано</Text>}
-
-            <Divider orientation="left">Образовательные технологии</Divider>
-            {comp.ed_technologies?.length > 0 ? (
-              <Space wrap>
-                {comp.ed_technologies.map((tech, idx) => (
-                  <Tag color="green" key={idx}>{tech}</Tag>
                 ))}
-              </Space>
-            ) : <Text type="secondary">Не указаны</Text>}
-          </TabPane>
+              </div>
 
-          {/* Вкладка 4: Оценочные средства */}
-          <TabPane tab="Оценочные средства" key="4">
-            {comp.assessment_tools?.length > 0 ? (
-              <List
-                dataSource={comp.assessment_tools}
-                renderItem={item => (
-                  <List.Item>
-                    <List.Item.Meta
-                      title={
-                        <Space>
-                          <Tag color={item.level === 'базовый' ? 'blue' : item.level === 'продвинутый' ? 'orange' : 'red'}>
-                            {item.level}
-                          </Tag>
-                          <Text strong>{item.tool}</Text>
-                          {item.for_nok && <Tag color="magenta">НОК</Tag>}
-                        </Space>
-                      }
-                      description={item.criteria || 'Критерии не указаны'}
-                    />
-                  </List.Item>
-                )}
-              />
-            ) : <Text type="secondary">Не указаны</Text>}
-          </TabPane>
+              <h4 className="text-sm font-medium mb-3">Дескрипторы уровней</h4>
+              <Accordion type="single" collapsible>
+                {categories.map(cat => (
+                  <AccordionItem key={cat} value={cat}>
+                    <AccordionTrigger>Категория {cat}</AccordionTrigger>
+                    <AccordionContent>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        {levels.map(level => {
+                          const key = `${cat}_${level}`;
+                          return (
+                            <div key={key}>
+                              <span className="text-xs text-muted-foreground capitalize">{level}</span>
+                              <p className="text-sm font-medium">{descriptors[key] || '—'}</p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </TabsContent>
 
-          {/* Вкладка 5: Ресурсы и прочее */}
-          <TabPane tab="Ресурсы" key="5">
-            <Title level={5}>Материально-техническая база</Title>
-            {comp.resources?.length > 0 ? (
-              <List
-                dataSource={comp.resources}
-                renderItem={item => <List.Item><Text>{item}</Text></List.Item>}
-              />
-            ) : <Text type="secondary">Не указана</Text>}
+            {/* Вкладка Дисциплины и технологии */}
+            <TabsContent value="disciplines">
+              <h4 className="text-sm font-medium mb-3">Привязка к дисциплинам / модулям</h4>
+              {comp.discipline_mapping?.length > 0 ? (
+                <ul className="space-y-3">
+                  {comp.discipline_mapping.map((item, idx) => (
+                    <li key={idx} className="flex items-center gap-2 flex-wrap">
+                      <Badge variant="secondary" className="text-xs">{item.component || '—'}</Badge>
+                      <span className="text-sm font-medium">{item.discipline}</span>
+                      <Badge variant="outline" className="text-xs">{item.control || '—'}</Badge>
+                    </li>
+                  ))}
+                </ul>
+              ) : <p className="text-muted-foreground text-sm">Не указано</p>}
 
-            <Divider orientation="left">Дополнительные метаданные</Divider>
-            <Descriptions column={1} bordered size="small">
-              <Descriptions.Item label="Создана">{comp.created_at ? new Date(comp.created_at).toLocaleString() : '—'}</Descriptions.Item>
-              <Descriptions.Item label="Обновлена">{comp.updated_at ? new Date(comp.updated_at).toLocaleString() : '—'}</Descriptions.Item>
-              <Descriptions.Item label="Активна">{comp.is_active ? 'Да' : 'Нет'}</Descriptions.Item>
-            </Descriptions>
-          </TabPane>
-        </Tabs>
+              <h4 className="text-sm font-medium mt-6 mb-3">Образовательные технологии</h4>
+              {comp.ed_technologies?.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {comp.ed_technologies.map((tech, idx) => (
+                    <Badge key={idx} variant="success" className="text-xs">{tech}</Badge>
+                  ))}
+                </div>
+              ) : <p className="text-muted-foreground text-sm">Не указаны</p>}
+            </TabsContent>
+
+            {/* Вкладка Оценочные средства */}
+            <TabsContent value="assessment">
+              {comp.assessment_tools?.length > 0 ? (
+                <ul className="space-y-4">
+                  {comp.assessment_tools.map((item, idx) => (
+                    <li key={idx} className="border-b pb-3 last:border-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge variant={item.level === 'базовый' ? 'secondary' : item.level === 'продвинутый' ? 'warning' : 'default'} className="text-xs">
+                          {item.level}
+                        </Badge>
+                        <span className="font-medium text-sm">{item.tool}</span>
+                        {item.for_nok && <Badge variant="success" className="text-xs">НОК</Badge>}
+                      </div>
+                      <p className="text-sm text-muted-foreground">{item.criteria || 'Критерии не указаны'}</p>
+                    </li>
+                  ))}
+                </ul>
+              ) : <p className="text-muted-foreground text-sm">Не указаны</p>}
+            </TabsContent>
+
+            {/* Вкладка Ресурсы */}
+            <TabsContent value="resources">
+              <h4 className="text-sm font-medium mb-3">Материально-техническая база</h4>
+              {comp.resources?.length > 0 ? (
+                <ul className="list-disc list-inside text-sm space-y-1">
+                  {comp.resources.map((item, idx) => (
+                    <li key={idx}>{item}</li>
+                  ))}
+                </ul>
+              ) : <p className="text-muted-foreground text-sm">Не указана</p>}
+
+              <h4 className="text-sm font-medium mt-6 mb-3">Дополнительные метаданные</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <InfoItem label="Создана" value={comp.created_at ? new Date(comp.created_at).toLocaleString() : '—'} />
+                <InfoItem label="Обновлена" value={comp.updated_at ? new Date(comp.updated_at).toLocaleString() : '—'} />
+                <InfoItem label="Активна" value={comp.is_active ? 'Да' : 'Нет'} />
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
       </Card>
     </div>
   );
 };
+
+function InfoItem({ label, value }) {
+  return (
+    <div>
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <p className="text-sm font-medium">{value}</p>
+    </div>
+  );
+}
 
 export default CompetenceDetail;

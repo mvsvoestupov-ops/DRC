@@ -9,40 +9,23 @@ let idCounter = 0;
 const genId = () => ++idCounter;
 
 const Step2StructureABC = ({ data, updateData }) => {
-  const [structure, setStructure] = useState(() => {
-    const initial = data.structure || { A: [], B: [], C: [] };
-    ['A', 'B', 'C'].forEach(key => {
-      initial[key] = (initial[key] || []).map(item => ({
-        ...item,
-        id: item.id || genId(),
-      }));
-    });
-    return initial;
-  });
-
+  const [structure, setStructure] = useState(() => ({
+    A: [],
+    B: [],
+    C: [],
+  }));
   const [laborActionOptions, setLaborActionOptions] = useState([]);
-
   const [modalVisible, setModalVisible] = useState({ A: false, B: false, C: false });
   const [newItemText, setNewItemText] = useState('');
   const [newItemTfCode, setNewItemTfCode] = useState(null);
 
-  useEffect(() => {
-    if (data.structure) {
-      const newStructure = { ...data.structure };
-      ['A', 'B', 'C'].forEach(key => {
-        newStructure[key] = (newStructure[key] || []).map(item => ({
-          ...item,
-          id: item.id || genId(),
-        }));
-      });
-      setStructure(newStructure);
-    }
-  }, [data.structure]);
-
+  // Заполняем A и B из выбранных ТФ при изменении selected_labor_functions
   useEffect(() => {
     const selectedLaborFunctions = data.selected_labor_functions || [];
-    console.log('Step2StructureABC: selected_labor_functions', selectedLaborFunctions);
-    if (selectedLaborFunctions.length === 0) return;
+    if (selectedLaborFunctions.length === 0) {
+      // Можно оставить структуру как есть или очистить, но лучше не трогать вручную добавленные
+      return;
+    }
 
     const allKnowledge = [];
     const allSkills = [];
@@ -51,7 +34,7 @@ const Step2StructureABC = ({ data, updateData }) => {
     selectedLaborFunctions.forEach(tf => {
       const tfCode = tf.code;
       (tf.labor_actions || []).forEach((la, idx) => {
-        const tdText = la.text || `ТД ${idx+1}`;
+        const tdText = la.text || `ТД ${idx + 1}`;
         const key = `${tfCode}-${idx}`;
         options.push({
           value: key,
@@ -77,17 +60,17 @@ const Step2StructureABC = ({ data, updateData }) => {
 
     setLaborActionOptions(options);
 
-    setStructure(prev => {
-      const newA = prev.A.length === 0 ? allKnowledge.map(item => ({ ...item, id: genId() })) : prev.A;
-      const newB = prev.B.length === 0 ? allSkills.map(item => ({ ...item, id: genId() })) : prev.B;
-      return { ...prev, A: newA, B: newB };
-    });
+    setStructure(prev => ({
+      A: allKnowledge.map(item => ({ ...item, id: genId() })),
+      B: allSkills.map(item => ({ ...item, id: genId() })),
+      C: prev.C || [], // сохраняем ранее добавленные вручную элементы в С
+    }));
   }, [data.selected_labor_functions]);
 
-  const updateStructure = (newStructure) => {
-    setStructure(newStructure);
-    updateData({ structure: newStructure });
-  };
+  // Сохраняем структуру в родительское состояние при изменении
+  useEffect(() => {
+    updateData({ structure });
+  }, [structure]);
 
   const addItem = (container) => {
     if (!newItemText.trim()) {
@@ -112,11 +95,10 @@ const Step2StructureABC = ({ data, updateData }) => {
       tfCode: container === 'C' ? null : tfCode,
       tdText: container === 'C' ? null : tdText,
     };
-    const newStructure = {
-      ...structure,
-      [container]: [...structure[container], newItem],
-    };
-    updateStructure(newStructure);
+    setStructure(prev => ({
+      ...prev,
+      [container]: [...prev[container], newItem],
+    }));
     setNewItemText('');
     setNewItemTfCode(null);
     setModalVisible({ ...modalVisible, [container]: false });
@@ -124,11 +106,10 @@ const Step2StructureABC = ({ data, updateData }) => {
   };
 
   const deleteItem = (container, id) => {
-    const newStructure = {
-      ...structure,
-      [container]: structure[container].filter(item => item.id !== id),
-    };
-    updateStructure(newStructure);
+    setStructure(prev => ({
+      ...prev,
+      [container]: prev[container].filter(item => item.id !== id),
+    }));
   };
 
   const moveToC = (id) => {
@@ -136,8 +117,7 @@ const Step2StructureABC = ({ data, updateData }) => {
     if (!item) return;
     const newB = structure.B.filter(el => el.id !== id);
     const newC = [...structure.C, { ...item, tfCode: null, tdText: null }];
-    const newStructure = { ...structure, B: newB, C: newC };
-    updateStructure(newStructure);
+    setStructure({ ...structure, B: newB, C: newC });
     message.success('Умение перенесено в практические навыки');
   };
 

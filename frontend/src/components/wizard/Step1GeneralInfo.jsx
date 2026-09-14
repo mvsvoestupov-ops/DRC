@@ -1,61 +1,94 @@
 import React from 'react';
-import { Form, Input, Select, InputNumber } from 'antd';
-
-const { TextArea } = Input;
+import { Input } from '../../components/ui/Input';
+import { Label } from '../../components/ui/Label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/Select';
+import { Textarea } from '../../components/ui/Textarea';
 
 const Step1GeneralInfo = ({ data, updateData }) => {
-  const [form] = Form.useForm();
-
-  const onValuesChange = (changedValues, allValues) => {
-    updateData(allValues);
+  const handleChange = (field, value) => {
+    updateData({ [field]: value });
   };
 
   return (
-    <Form form={form} layout="vertical" onValuesChange={onValuesChange} initialValues={data}>
-      <Form.Item
-        name="name"
-        label="Название компетенции"
-        rules={[{ required: true, message: 'Введите название' }]}
-      >
-        <Input placeholder="Например: Способен применять..." />
-      </Form.Item>
-      <Form.Item
-        name="description"
-        label="Описание компетенции"
-      >
-        <TextArea rows={4} placeholder="Подробное описание компетенции..." />
-      </Form.Item>
-      <Form.Item
-        name="industry"
-        label="Отрасль"
-        rules={[{ required: true, message: 'Выберите отрасль' }]}
-      >
-        <Select placeholder="Выберите отрасль">
-          <Select.Option value="19">Добыча нефти и газа</Select.Option>
-          <Select.Option value="40">Сквозные виды деятельности</Select.Option>
-          <Select.Option value="01">Образование</Select.Option>
-          {/* добавить другие из справочника */}
-        </Select>
-      </Form.Item>
-      <Form.Item
-        name="level"
-        label="Уровень квалификации"
-        rules={[{ required: true, message: 'Выберите уровень' }]}
-      >
-        <Select placeholder="Выберите уровень">
-          {[1,2,3,4,5,6,7,8].map(l => (
-            <Select.Option key={l} value={String(l)}>{l}</Select.Option>
-          ))}
-        </Select>
-      </Form.Item>
-      <Form.Item
-        name="hours"
-        label="Рекомендуемая трудоёмкость (часы)"
-      >
-        <InputNumber min={0} style={{ width: '100%' }} placeholder="Например: 180" />
-      </Form.Item>
-    </Form>
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-medium">Общая информация о компетенции</h3>
+        <p className="text-muted-foreground text-sm">Заполните основные данные</p>
+      </div>
+
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="name">
+            <span className="text-destructive">*</span> Название компетенции
+          </Label>
+          <Input
+            id="name"
+            value={data.name || ''}
+            onChange={(e) => handleChange('name', e.target.value)}
+            placeholder="Например: Способен применять..."
+            required
+          />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="description">Описание компетенции</Label>
+          <Textarea
+            id="description"
+            value={data.description || ''}
+            onChange={(e) => handleChange('description', e.target.value)}
+            placeholder="Подробное описание компетенции..."
+            rows={4}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="industry">
+              <span className="text-destructive">*</span> Отрасль
+            </Label>
+            <Select value={data.industry || ''} onValueChange={(val) => handleChange('industry', val)}>
+              <SelectTrigger id="industry">
+                <SelectValue placeholder="Выберите отрасль" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="19">19 - Добыча нефти и газа</SelectItem>
+                <SelectItem value="40">40 - Сквозные виды деятельности</SelectItem>
+                <SelectItem value="01">01 - Образование</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="level">
+              <span className="text-destructive">*</span> Уровень квалификации
+            </Label>
+            <Select value={data.level || ''} onValueChange={(val) => handleChange('level', val)}>
+              <SelectTrigger id="level">
+                <SelectValue placeholder="Выберите уровень" />
+              </SelectTrigger>
+              <SelectContent>
+                {[1,2,3,4,5,6,7,8].map(l => (
+                  <SelectItem key={l} value={String(l)}>{l}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="hours">Рекомендуемая трудоёмкость (часы)</Label>
+          <Input
+            id="hours"
+            type="number"
+            min="0"
+            value={data.hours || ''}
+            onChange={(e) => handleChange('hours', e.target.value)}
+            placeholder="Например: 180"
+          />
+        </div>
+      </div>
+    </div>
   );
 };
 
-export default Step1GeneralInfo;// Step1GeneralInfo 
+export default Step1GeneralInfo;

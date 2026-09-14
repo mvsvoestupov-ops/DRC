@@ -31,3 +31,6 @@ stol4@mail.ru", "pass4",
 stol5@mail.ru", "pass5",
 stol6@mail.ru", "pass6",
 stol7@mail.ru", "pass7"
+
+ssh -p 2222 root@186.246.7.200
+o2+NssN.v4DkVJ

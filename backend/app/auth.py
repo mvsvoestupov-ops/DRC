@@ -15,11 +15,16 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 дней
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
+def truncate_password(password: str) -> str:
+    """Обрезает пароль до 72 байт в кодировке UTF-8 во избежание ошибки bcrypt."""
+    encoded = password.encode('utf-8')[:72]
+    return encoded.decode('utf-8', errors='ignore')
+
 def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+    return pwd_context.verify(truncate_password(plain_password), hashed_password)
 
 def get_password_hash(password):
-    return pwd_context.hash(password)
+    return pwd_context.hash(truncate_password(password))
 
 def authenticate_user(db: Session, email: str, password: str):
     user = db.query(User).filter(User.email == email).first()

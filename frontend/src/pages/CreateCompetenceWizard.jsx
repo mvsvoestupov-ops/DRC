@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
-import { Steps, Button, message, Spin } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { Steps, Step } from '../components/ui/Steps';
+import { Button } from '../components/ui/Button';
+import { Card, CardContent } from '../components/ui/Card';
 import Step1GeneralInfo from '../components/wizard/Step1GeneralInfo';
 import Step2ConnectToStandard from '../components/wizard/Step2ConnectToStandard';
 import Step3StructureABC from '../components/wizard/Step3StructureABC';
 import Step4AssessmentTools from '../components/wizard/Step4AssessmentTools';
 import Step5Preview from '../components/wizard/Step5Preview';
 import { createCompetence } from '../api';
-
-const { Step } = Steps;
 
 const CreateCompetenceWizard = () => {
   const navigate = useNavigate();
@@ -20,6 +20,7 @@ const CreateCompetenceWizard = () => {
     assessment_tools: [],
   });
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState(null);
 
   const updateFormData = (data) => setFormData(prev => ({ ...prev, ...data }));
   const nextStep = () => setCurrentStep(prev => prev + 1);
@@ -27,6 +28,7 @@ const CreateCompetenceWizard = () => {
 
   const handleSubmit = async (status) => {
     setLoading(true);
+    setMessage(null);
     try {
       const payload = {
         name: formData.name,
@@ -44,10 +46,10 @@ const CreateCompetenceWizard = () => {
         hours: formData.hours,
       };
       await createCompetence(payload);
-      message.success('Компетенция сохранена');
-      navigate('/');
+      setMessage({ type: 'success', text: 'Компетенция сохранена' });
+      setTimeout(() => navigate('/'), 1500);
     } catch (err) {
-      message.error('Ошибка: ' + err.message);
+      setMessage({ type: 'error', text: 'Ошибка: ' + (err.message || '') });
     } finally {
       setLoading(false);
     }
@@ -62,16 +64,40 @@ const CreateCompetenceWizard = () => {
   ];
 
   return (
-    <div style={{ padding: 24, background: '#fff', minHeight: '100vh' }}>
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-medium">Создание компетенции</h2>
+        <p className="text-muted-foreground text-sm">Пошаговый мастер для создания новой компетенции</p>
+      </div>
+
+      {message && (
+        <div className={`p-3 rounded-md text-sm ${
+          message.type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-destructive/10 text-destructive border border-destructive/20'
+        }`}>
+          {message.text}
+        </div>
+      )}
+
       <Steps current={currentStep}>
         {steps.map(item => <Step key={item.title} title={item.title} />)}
       </Steps>
-      <div style={{ minHeight: 300, marginTop: 24 }}>{steps[currentStep].content}</div>
-      <div style={{ marginTop: 24, display: 'flex', justifyContent: 'space-between' }}>
-        <Button onClick={prevStep} disabled={currentStep === 0}>Назад</Button>
-        {currentStep < steps.length - 1 && <Button type="primary" onClick={nextStep}>Далее</Button>}
+
+      <Card>
+        <CardContent className="p-6">
+          {steps[currentStep].content}
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-between">
+        <Button variant="outline" onClick={prevStep} disabled={currentStep === 0}>
+          Назад
+        </Button>
+        {currentStep < steps.length - 1 && (
+          <Button onClick={nextStep}>
+            Далее
+          </Button>
+        )}
       </div>
-      {loading && <Spin tip="Сохранение..." />}
     </div>
   );
 };

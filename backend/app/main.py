@@ -13,6 +13,7 @@ from .db.qualifications_models import Qualification
 from .db.competence_models import Competence, CompetenceStatus
 from .db.feedback_models import Feedback
 from .db.user_models import User
+from .db.registration_models import Registration
 from .db_operations import save_raw_standard
 from .enrichment import enrich_standard
 from .auth import (
@@ -22,7 +23,6 @@ from .auth import (
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
-# Создаём таблицы (если их нет)
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
@@ -119,7 +119,7 @@ async def register_user(email: str, password: str, role: str = "user", current_u
     db.close()
     return {"message": "User created", "email": new_user.email}
 
-# ---------- Профессиональные стандарты (доступны всем авторизованным) ----------
+# ---------- Профессиональные стандарты ----------
 
 @app.get("/standards")
 async def list_standards(current_user: User = Depends(get_current_user)):
@@ -236,7 +236,7 @@ async def search_standards(q: str, limit: int = 20, current_user: User = Depends
     finally:
         session.close()
 
-# ---------- Обогащённые стандарты (доступны всем авторизованным) ----------
+# ---------- Обогащённые стандарты ----------
 
 @app.get("/enriched-standards")
 async def list_enriched_standards(current_user: User = Depends(get_current_user)):
@@ -303,7 +303,7 @@ async def get_enriched_standard(reg_number: str, current_user: User = Depends(ge
     finally:
         session.close()
 
-# ---------- Административные эндпоинты для ПС (только админ) ----------
+# ---------- Административные эндпоинты для ПС ----------
 
 @app.post("/upload")
 async def upload_file(file: UploadFile = File(...), current_user: User = Depends(get_current_admin)):
@@ -350,7 +350,7 @@ async def run_enrichment(reg_number: str = None, current_user: User = Depends(ge
     finally:
         session.close()
 
-# ---------- Квалификации (чтение квалификаций по ПС – всем, остальное – админу) ----------
+# ---------- Квалификации ----------
 
 @app.get("/qualifications/by-standard/{standard_id}")
 async def get_qualifications_by_standard(standard_id: int, current_user: User = Depends(get_current_user)):
@@ -386,7 +386,7 @@ async def get_qualification(id: int, current_user: User = Depends(get_current_ad
     finally:
         session.close()
 
-# ---------- Компетенции (доступны всем, фильтруются по пользователю) ----------
+# ---------- Компетенции ----------
 
 @app.post("/competences")
 async def create_competence(data: CompetenceCreate, current_user: User = Depends(get_current_user)):
@@ -511,7 +511,7 @@ async def delete_competence(comp_id: int, current_user: User = Depends(get_curre
     finally:
         session.close()
 
-# ---------- Расчёт покрытия (доступен всем) ----------
+# ---------- Расчёт покрытия ----------
 
 @app.post("/competence/coverage")
 async def calculate_coverage(req: CoverageRequest, current_user: User = Depends(get_current_user)):
@@ -540,7 +540,7 @@ async def calculate_coverage(req: CoverageRequest, current_user: User = Depends(
     finally:
         session.close()
 
-# ---------- Обратная связь (доступна всем, просмотр – админу) ----------
+# ---------- Обратная связь ----------
 
 @app.post("/feedback")
 async def create_feedback(data: FeedbackCreate, current_user: User = Depends(get_current_user)):
@@ -553,7 +553,7 @@ async def create_feedback(data: FeedbackCreate, current_user: User = Depends(get
         return {"status": "ok", "id": feedback.id}
     except Exception as e:
         session.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(400, detail=str(e))
     finally:
         session.close()
 
@@ -570,6 +570,49 @@ async def list_feedback(current_user: User = Depends(get_current_admin)):
                 "created_at": f.created_at.isoformat() if f.created_at else None
             }
             for f in items
+        ]
+    finally:
+        session.close()
+
+# ---------- Регистрация ----------
+
+@app.post("/register")
+async def register(data: dict):
+    session = SessionLocal()
+    try:
+        reg = Registration(
+            full_name=data['fullName'],
+            email=data['email'],
+            phone=data['phone'],
+            organization=data['organization'],
+            position=data['position']
+        )
+        session.add(reg)
+        session.commit()
+        session.refresh(reg)
+        return {"status": "ok", "id": reg.id}
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(400, detail=str(e))
+    finally:
+        session.close()
+
+@app.get("/registrations")
+async def get_registrations(current_user: User = Depends(get_current_admin)):
+    session = SessionLocal()
+    try:
+        registrations = session.query(Registration).order_by(Registration.created_at.desc()).all()
+        return [
+            {
+                "id": r.id,
+                "full_name": r.full_name,
+                "email": r.email,
+                "phone": r.phone,
+                "organization": r.organization,
+                "position": r.position,
+                "created_at": r.created_at.isoformat()
+            }
+            for r in registrations
         ]
     finally:
         session.close()

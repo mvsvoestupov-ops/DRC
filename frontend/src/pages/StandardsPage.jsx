@@ -1,6 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { Upload, Button, List, message, Tabs, Modal, Spin, Switch } from 'antd';
-import { UploadOutlined, ReloadOutlined, ThunderboltOutlined, AppstoreOutlined, UnorderedListOutlined } from '@ant-design/icons';
+import React, { useState, useEffect, useRef } from 'react';
+import { Button } from '../components/ui/Button';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/Tabs';
+import { Switch } from '../components/ui/Switch';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/Dialog';
+import { Card, CardContent } from '../components/ui/Card';
+import { Upload, RefreshCw, Zap, TreePine, LayoutGrid } from 'lucide-react';
 import {
   uploadFile,
   getStandards,
@@ -13,31 +17,35 @@ import {
 import StandardStructureViewer from '../components/StandardStructureViewer';
 import StandardCardGraph from '../components/StandardCardGraph';
 
-const { TabPane } = Tabs;
-
 const MIN_MODAL_DISPLAY_TIME = 800;
 
 const StandardsPage = () => {
   const [standards, setStandards] = useState([]);
   const [enrichedStandards, setEnrichedStandards] = useState([]);
   const [selected, setSelected] = useState(null);
+  const [activeTab, setActiveTab] = useState('raw');
+  const [viewMode, setViewMode] = useState('tree'); // 'tree' | 'cards'
+  const [message, setMessage] = useState({ type: '', text: '' });
+
+  // Loading states
   const [loading, setLoading] = useState(false);
   const [bulkLoading, setBulkLoading] = useState(false);
   const [enrichLoading, setEnrichLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('raw');
-  const [viewMode, setViewMode] = useState('tree');
 
-  const [modalVisible, setModalVisible] = useState(false);
-  const [modalTitle, setModalTitle] = useState('');
-  const [modalText, setModalText] = useState('');
-  const [modalSpinning, setModalSpinning] = useState(false);
+  // Dialog
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogText, setDialogText] = useState('');
+  const [dialogSpinning, setDialogSpinning] = useState(false);
+
+  const fileInputRef = useRef(null);
 
   const loadRawList = async () => {
     try {
       const res = await getStandards();
       setStandards(res.data);
     } catch (err) {
-      message.error('Ошибка загрузки сырых стандартов');
+      setMessage({ type: 'error', text: 'Ошибка загрузки сырых стандартов' });
     }
   };
 
@@ -46,7 +54,7 @@ const StandardsPage = () => {
       const res = await getEnrichedStandards();
       setEnrichedStandards(res.data);
     } catch (err) {
-      message.error('Ошибка загрузки обогащённых стандартов');
+      setMessage({ type: 'error', text: 'Ошибка загрузки обогащённых стандартов' });
     }
   };
 
@@ -55,26 +63,28 @@ const StandardsPage = () => {
     loadEnrichedList();
   }, []);
 
-  const handleUpload = async (file) => {
+  const handleUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
     setLoading(true);
+    setMessage({ type: '', text: '' });
     try {
       await uploadFile(file);
-      message.success('Файл загружен');
+      setMessage({ type: 'success', text: 'Файл загружен' });
       await loadRawList();
     } catch (err) {
-      message.error('Ошибка загрузки: ' + err.response?.data?.detail);
+      setMessage({ type: 'error', text: 'Ошибка загрузки: ' + (err.response?.data?.detail || '') });
     } finally {
       setLoading(false);
     }
-    return false;
   };
 
   const handleFetchBulk = async () => {
     setBulkLoading(true);
-    setModalVisible(true);
-    setModalTitle('Загрузка стандартов из реестра');
-    setModalText('Идёт сбор и загрузка данных...');
-    setModalSpinning(true);
+    setDialogOpen(true);
+    setDialogTitle('Загрузка стандартов из реестра');
+    setDialogText('Идёт сбор и загрузка данных...');
+    setDialogSpinning(true);
     const startTime = Date.now();
 
     try {
@@ -82,29 +92,26 @@ const StandardsPage = () => {
       const elapsed = Date.now() - startTime;
       const remaining = Math.max(0, MIN_MODAL_DISPLAY_TIME - elapsed);
       if (remaining > 0) await new Promise(resolve => setTimeout(resolve, remaining));
-
-      setModalText(`Загружено ${res.data.loaded?.length || 0} стандартов`);
-      message.success(`Загружено ${res.data.loaded?.length || 0} стандартов`);
+      setMessage({ type: 'success', text: `Загружено ${res.data.loaded?.length || 0} стандартов` });
       await loadRawList();
     } catch (err) {
       const elapsed = Date.now() - startTime;
       const remaining = Math.max(0, MIN_MODAL_DISPLAY_TIME - elapsed);
       if (remaining > 0) await new Promise(resolve => setTimeout(resolve, remaining));
-      message.error('Ошибка при массовой загрузке');
-      setModalText('Ошибка загрузки');
+      setMessage({ type: 'error', text: 'Ошибка при массовой загрузке' });
     } finally {
       setBulkLoading(false);
-      setModalSpinning(false);
-      setModalVisible(false);
+      setDialogSpinning(false);
+      setDialogOpen(false);
     }
   };
 
   const handleRunEnrichment = async () => {
     setEnrichLoading(true);
-    setModalVisible(true);
-    setModalTitle('Обогащение стандартов');
-    setModalText('Идёт обогащение данных...');
-    setModalSpinning(true);
+    setDialogOpen(true);
+    setDialogTitle('Обогащение стандартов');
+    setDialogText('Идёт обогащение данных...');
+    setDialogSpinning(true);
     const startTime = Date.now();
 
     try {
@@ -112,20 +119,17 @@ const StandardsPage = () => {
       const elapsed = Date.now() - startTime;
       const remaining = Math.max(0, MIN_MODAL_DISPLAY_TIME - elapsed);
       if (remaining > 0) await new Promise(resolve => setTimeout(resolve, remaining));
-
-      setModalText(`Обогащено ${res.data.processed?.length || 0} стандартов`);
-      message.success(`Обогащено ${res.data.processed?.length || 0} стандартов`);
+      setMessage({ type: 'success', text: `Обогащено ${res.data.processed?.length || 0} стандартов` });
       await loadEnrichedList();
     } catch (err) {
       const elapsed = Date.now() - startTime;
       const remaining = Math.max(0, MIN_MODAL_DISPLAY_TIME - elapsed);
       if (remaining > 0) await new Promise(resolve => setTimeout(resolve, remaining));
-      message.error('Ошибка при обогащении');
-      setModalText('Ошибка обогащения');
+      setMessage({ type: 'error', text: 'Ошибка при обогащении' });
     } finally {
       setEnrichLoading(false);
-      setModalSpinning(false);
-      setModalVisible(false);
+      setDialogSpinning(false);
+      setDialogOpen(false);
     }
   };
 
@@ -134,7 +138,7 @@ const StandardsPage = () => {
       const res = await getStandard(regNumber);
       setSelected({ ...res.data, type: 'raw' });
     } catch (err) {
-      message.error('Ошибка получения данных');
+      setMessage({ type: 'error', text: 'Ошибка получения данных' });
     }
   };
 
@@ -143,97 +147,133 @@ const StandardsPage = () => {
       const res = await getEnrichedStandard(regNumber);
       setSelected({ ...res.data, type: 'enriched' });
     } catch (err) {
-      message.error('Ошибка получения обогащённых данных');
+      setMessage({ type: 'error', text: 'Ошибка получения обогащённых данных' });
     }
   };
 
   const renderStandardList = (items, onSelect) => (
-    <List
-      dataSource={items}
-      renderItem={item => (
-        <List.Item
+    <div className="space-y-1">
+      {items.map((item) => (
+        <div
+          key={item.reg_number}
           onClick={() => onSelect(item.reg_number)}
-          style={{ cursor: 'pointer', borderBottom: '1px solid #ddd' }}
+          className="cursor-pointer p-3 rounded-lg hover:bg-accent transition-colors"
         >
-          <div>
-            <strong>{item.name}</strong><br />
-            <small>Рег. № {item.reg_number}</small>
-          </div>
-        </List.Item>
+          <div className="font-medium text-sm line-clamp-2">{item.name}</div>
+          <div className="text-xs text-muted-foreground mt-1">Рег. № {item.reg_number}</div>
+        </div>
+      ))}
+      {items.length === 0 && (
+        <div className="text-center text-muted-foreground text-sm py-8">Нет данных</div>
       )}
-    />
+    </div>
   );
 
   return (
-    <div style={{ padding: '24px' }}>
-      <div style={{ display: 'flex', gap: 16, marginBottom: 16, flexWrap: 'wrap' }}>
-        <Upload beforeUpload={handleUpload} showUploadList={false}>
-          <Button icon={<UploadOutlined />} loading={loading}>Загрузить XML</Button>
-        </Upload>
-        <Button onClick={handleFetchBulk} loading={bulkLoading} type="primary" icon={<ReloadOutlined />}>
+    <div className="space-y-6">
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-3">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".xml"
+          onChange={handleUpload}
+          className="hidden"
+        />
+        <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={loading}>
+          <Upload className="w-4 h-4 mr-2" />
+          Загрузить XML
+        </Button>
+        <Button onClick={handleFetchBulk} disabled={bulkLoading}>
+          <RefreshCw className={`w-4 h-4 mr-2 ${bulkLoading ? 'animate-spin' : ''}`} />
           Загрузить все стандарты (bulk)
         </Button>
-        <Button onClick={handleRunEnrichment} loading={enrichLoading} icon={<ThunderboltOutlined />}>
+        <Button onClick={handleRunEnrichment} disabled={enrichLoading} variant="secondary">
+          <Zap className="w-4 h-4 mr-2" />
           Обогатить все
         </Button>
-        <Switch
-          checkedChildren={<AppstoreOutlined />}
-          unCheckedChildren={<UnorderedListOutlined />}
-          checked={viewMode === 'cards'}
-          onChange={(checked) => setViewMode(checked ? 'cards' : 'tree')}
-          style={{ marginLeft: 'auto' }}
-        />
-      </div>
 
-      <div style={{ display: 'flex', gap: 24 }}>
-        <div style={{ flex: '0 0 300px', background: '#f5f5f5', padding: 16, borderRadius: 8, maxHeight: '80vh', overflow: 'auto' }}>
-          <Tabs activeKey={activeTab} onChange={setActiveTab}>
-            <TabPane tab="Сырые" key="raw">
-              {renderStandardList(standards, handleSelectRaw)}
-            </TabPane>
-            <TabPane tab="Обогащённые" key="enriched">
-              {renderStandardList(enrichedStandards, handleSelectEnriched)}
-            </TabPane>
-          </Tabs>
-        </div>
-
-        <div style={{ flex: 1, background: '#fff', padding: 16, borderRadius: 8, maxHeight: '80vh', overflow: 'auto' }}>
-          {selected ? (
-            <>
-              <div style={{ marginBottom: '12px', display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontWeight: 'bold' }}>{selected.name}</span>
-                <span style={{ fontSize: '12px', color: '#888' }}>Рег. № {selected.reg_number}</span>
-              </div>
-              {viewMode === 'tree' ? (
-                <StandardStructureViewer standard={selected} />
-              ) : (
-                <StandardCardGraph standard={selected} />
-              )}
-            </>
+        <div className="ml-auto flex items-center gap-2">
+          <Switch
+            checked={viewMode === 'cards'}
+            onCheckedChange={(checked) => setViewMode(checked ? 'cards' : 'tree')}
+          />
+          {viewMode === 'tree' ? (
+            <TreePine className="w-4 h-4 text-muted-foreground" />
           ) : (
-            <div style={{ textAlign: 'center', color: '#aaa', padding: '40px 0' }}>
-              Выберите стандарт из списка слева
-            </div>
+            <LayoutGrid className="w-4 h-4 text-muted-foreground" />
           )}
         </div>
       </div>
 
-      <Modal
-        title={modalTitle}
-        visible={modalVisible}
-        footer={null}
-        closable={false}
-        maskClosable={false}
-        width={400}
-        centered
-      >
-        <div style={{ textAlign: 'center', padding: '20px 0' }}>
-          <Spin spinning={modalSpinning} size="large" />
-          <div style={{ marginTop: 16, fontSize: 14, color: '#888' }}>
-            {modalText}
-          </div>
+      {/* Message */}
+      {message.text && (
+        <div className={`p-3 rounded-md text-sm ${
+          message.type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-destructive/10 text-destructive border border-destructive/20'
+        }`}>
+          {message.text}
         </div>
-      </Modal>
+      )}
+
+      {/* Main layout */}
+      <div className="flex flex-col md:flex-row gap-6">
+        {/* Left panel: list */}
+        <div className="w-full md:w-72 shrink-0">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="w-full mb-3">
+              <TabsTrigger value="raw" className="flex-1">Сырые</TabsTrigger>
+              <TabsTrigger value="enriched" className="flex-1">Обогащённые</TabsTrigger>
+            </TabsList>
+            <TabsContent value="raw" className="max-h-[70vh] overflow-auto">
+              {renderStandardList(standards, handleSelectRaw)}
+            </TabsContent>
+            <TabsContent value="enriched" className="max-h-[70vh] overflow-auto">
+              {renderStandardList(enrichedStandards, handleSelectEnriched)}
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        {/* Right panel: viewer */}
+        <div className="flex-1 min-h-[60vh]">
+          {selected ? (
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start mb-4">
+                  <span className="font-semibold text-sm">{selected.name}</span>
+                  <span className="text-xs text-muted-foreground">Рег. № {selected.reg_number}</span>
+                </div>
+                {viewMode === 'tree' ? (
+                  <StandardStructureViewer standard={selected} />
+                ) : (
+                  <StandardCardGraph standard={selected} />
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="border-dashed">
+              <CardContent className="p-12 text-center">
+                <Upload className="w-12 h-12 mx-auto text-muted-foreground/50 mb-3" />
+                <p className="text-muted-foreground">Выберите стандарт из списка слева</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+
+      {/* Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{dialogTitle}</DialogTitle>
+            <DialogDescription>{dialogText}</DialogDescription>
+          </DialogHeader>
+          {dialogSpinning && (
+            <div className="flex justify-center py-4">
+              <RefreshCw className="w-8 h-8 animate-spin text-muted-foreground" />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
