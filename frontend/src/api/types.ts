@@ -152,6 +152,7 @@ export interface Competence {
   developer?: string;
   validator?: string;
   validation_notes?: string;
+  expertise?: Record<string, { value?: string; comment?: string }>;
   user_id?: number;
   reviewers?: User[];
   labor_functions?: Array<{ code: string; name?: string }>;

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Steps, Button, Typography, message, ConfigProvider } from 'antd';
+import { Button, Typography, message, ConfigProvider } from 'antd';
 import { useNavigate } from 'react-router';
 import { createCompetence } from '@/api/compat';
+import { useAuth } from '@/context/AuthContext';
 import Step1SelectStandard from '@/legacy/components/strategic/Step1SelectStandard';
 import Step2StructureABC from '@/legacy/components/strategic/Step2StructureABC';
 import Step3Descriptors from '@/legacy/components/strategic/Step3Descriptors';
@@ -13,11 +14,11 @@ import Step8Validation from '@/legacy/components/strategic/Step8Validation';
 import Step9Revision from '@/legacy/components/strategic/Step9Revision';
 import Step10Preview from '@/legacy/components/strategic/Step10Preview';
 
-const { Step } = Steps;
 const { Title } = Typography;
 
 const StrategicSession = () => {
   const navigate = useNavigate();
+  const { isAdmin } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [sessionData, setSessionData] = useState({
     prof_standard_id: null,
@@ -146,7 +147,7 @@ const StrategicSession = () => {
   };
 
   const stepComponents = [
-    <Step1SelectStandard key={0} data={sessionData} updateData={updateSessionData} goToNext={nextStep} />,
+    <Step1SelectStandard key={0} data={sessionData} updateData={updateSessionData} goToNext={nextStep} skipRequired={isAdmin} />,
     <Step2StructureABC key={1} data={sessionData} updateData={updateSessionData} />,
     <Step3Descriptors key={2} data={sessionData} updateData={updateSessionData} />,
     <Step4DisciplineMapping key={3} data={sessionData} updateData={updateSessionData} />,
@@ -159,16 +160,16 @@ const StrategicSession = () => {
   ];
 
   const stepTitles = [
-    '1. ПС и квалиф.',
-    '2. A/B/C',
-    '3. Дескрипторы',
-    '4. Дисциплины',
-    '5. Технологии',
-    '6. Оценочные средства',
-    '7. Материально-техн.',
-    '8. Валидация',
-    '9. Доработка',
-    '10. Защита'
+    'ПС и квалиф.',
+    'A/B/C',
+    'Дескрипторы',
+    'Дисциплины',
+    'Технологии',
+    'Оценочные средства',
+    'Материально-техн.',
+    'Валидация',
+    'Доработка',
+    'Защита',
   ];
 
   return (
@@ -186,18 +187,47 @@ const StrategicSession = () => {
           Стратегическая сессия: разработка компетенции
         </Title>
         <div className="surface-padded">
-          <Steps current={currentStep} style={{ marginBottom: 24 }}>
-            {stepTitles.map((title, idx) => (
-              <Step key={idx} title={title} />
-            ))}
-          </Steps>
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+            {stepTitles.map((title, idx) => {
+              const isCurrent = currentStep === idx;
+              const isDone = currentStep > idx;
+              return (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => isAdmin && setCurrentStep(idx)}
+                  title={title}
+                  className={`flex items-center min-w-0 text-left ${isAdmin ? 'cursor-pointer' : 'cursor-default'}`}
+                >
+                  <span
+                    className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-sm font-semibold ${
+                      isCurrent
+                        ? 'bg-primary text-white ring-2 ring-primary/30'
+                        : isDone
+                          ? 'bg-green-500 text-white'
+                          : 'bg-gray-200 text-gray-600'
+                    } ${isAdmin && !isCurrent ? 'hover:opacity-90' : ''}`}
+                  >
+                    {idx + 1}
+                  </span>
+                  <span
+                    className={`ml-2 text-sm font-medium truncate ${
+                      isCurrent ? 'text-gray-900' : 'text-gray-500'
+                    }`}
+                  >
+                    {title}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
           <div style={{ minHeight: 400 }}>
             {stepComponents[currentStep]}
           </div>
           <div style={{ marginTop: 24, display: 'flex', justifyContent: 'space-between' }}>
             <Button onClick={prevStep} disabled={currentStep === 0}>Назад</Button>
             <div>
-              {currentStep < 9 && currentStep !== 0 && (
+              {currentStep < 9 && (currentStep !== 0 || isAdmin) && (
                 <Button type="primary" onClick={nextStep}>
                   Далее
                 </Button>

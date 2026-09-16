@@ -8,6 +8,7 @@ import os
 import datetime
 import re
 from sqlalchemy import or_, func, false as sa_false, String
+from sqlalchemy.orm.attributes import flag_modified
 
 from .parser import (
     parse_xml,
@@ -326,6 +327,7 @@ class CompetenceUpdate(BaseModel):
     developer: Optional[str] = None
     validator: Optional[str] = None
     validation_notes: Optional[str] = None
+    expertise: Optional[Dict[str, Any]] = None
     status: Optional[str] = None
     description: Optional[str] = None
     industry: Optional[str] = None
@@ -2895,6 +2897,7 @@ def serialize_competence(comp: Competence, include_matrix: bool = False, reviewe
         "developer": comp.developer,
         "validator": comp.validator,
         "validation_notes": comp.validation_notes,
+        "expertise": raw.get("expertise") or {},
         "user_id": comp.user_id,
         "reviewers": reviewers if reviewers is not None else [],
         "description": raw.get("description", ""),
@@ -3306,6 +3309,7 @@ async def update_competence(comp_id: int, data: CompetenceUpdate, current_user: 
             raise HTTPException(403, "Доступ запрещён")
 
         update_data = data.dict(exclude_unset=True)
+        incoming_keys = set(update_data.keys())
         role = user_role(current_user)
         assigned = _is_assigned_reviewer(session, comp.id, current_user.id)
         is_owner = comp.user_id == current_user.id
@@ -3345,6 +3349,7 @@ async def update_competence(comp_id: int, data: CompetenceUpdate, current_user: 
             "fgos_category",
             "universal_skills",
             "competence_kind",
+            "expertise",
         ):
             if key in update_data:
                 raw_fields[key] = update_data.pop(key)
@@ -3386,22 +3391,29 @@ async def update_competence(comp_id: int, data: CompetenceUpdate, current_user: 
             qualification_level=comp.qualification_level,
             universal_skills=raw_fields.get("universal_skills", existing_profile.get("universal_skills")),
         )
+        if "expertise" in raw_fields:
+            raw = dict(comp.raw_data or {})
+            raw["expertise"] = raw_fields["expertise"] or {}
+            comp.raw_data = raw
+            flag_modified(comp, "raw_data")
 
-        strict = comp.status == CompetenceStatus.REVIEW
-        validation_errors = validate_competence_payload(
-            competence_kind=competence_kind,
-            qualification_level=comp.qualification_level,
-            labor_functions=comp.labor_functions,
-            descriptors=comp.descriptors,
-            assessment_tools=comp.assessment_tools,
-            strict=strict,
-        )
-        if validation_errors:
-            raise HTTPException(400, detail="; ".join(validation_errors))
+        review_only = incoming_keys <= {"status", "validation_notes", "validator", "expertise"}
+        if not review_only:
+            strict = comp.status == CompetenceStatus.REVIEW
+            validation_errors = validate_competence_payload(
+                competence_kind=competence_kind,
+                qualification_level=comp.qualification_level,
+                labor_functions=comp.labor_functions,
+                descriptors=comp.descriptors,
+                assessment_tools=comp.assessment_tools,
+                strict=strict,
+            )
+            if validation_errors:
+                raise HTTPException(400, detail="; ".join(validation_errors))
 
         session.commit()
         session.refresh(comp)
-        return serialize_competence(comp, include_matrix=True)
+        return serialize_competence(comp, include_matrix=not review_only)
     except HTTPException:
         session.rollback()
         raise

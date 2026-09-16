@@ -5,7 +5,7 @@ import SelectStandardForCompetence from '@/legacy/components/SelectStandardForCo
 
 const { Title, Paragraph } = Typography;
 
-const Step1SelectStandard = ({ data, updateData, goToNext }) => {
+const Step1SelectStandard = ({ data, updateData, goToNext, skipRequired = false }) => {
   const handleSelect = (selection) => {
     console.log('Выбранные данные:', selection);
     
@@ -34,7 +34,9 @@ const Step1SelectStandard = ({ data, updateData, goToNext }) => {
   };
 
   // Кнопка «Далее» активна только если выбрано название и есть подтверждённый выбор ПС (prof_standard_id)
-  const isNextDisabled = !data.competence_name || !data.prof_standard_id || !data.selected_tf_codes?.length;
+  const isNextDisabled = skipRequired
+    ? false
+    : !data.competence_name || !data.prof_standard_id || !data.selected_tf_codes?.length;
 
   return (
     <div>

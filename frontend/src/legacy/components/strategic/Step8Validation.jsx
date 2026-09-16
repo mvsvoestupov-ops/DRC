@@ -1,19 +1,11 @@
 import React, { useState } from 'react';
 import { Table, Select, Input, Typography } from 'antd';
+import { EXPERTISE_CRITERIA } from '@/lib/expertiseCriteria';
 
 const { Title, Paragraph } = Typography;
 
 const Step8Validation = ({ data, updateData }) => {
-  const criteria = [
-    'Соответствие трудовой функции (прямая ссылка на ТФ)',
-    'Ясность формулировок компонентов (A/B/C)',
-    'Наличие дескрипторов для всех уровней (базовый, продвинутый, экспертный)',
-    'Наличие оценочных средств для каждого уровня',
-    'Оценочные средства пригодны для НОК (отмечено)',
-    'Отсутствие дублирования с существующими компетенциями',
-    'Практическая значимость обоснована',
-    'Материально-техническая база описана',
-  ];
+  const criteria = EXPERTISE_CRITERIA;
 
   const [validation, setValidation] = useState(data.validation || {});
 

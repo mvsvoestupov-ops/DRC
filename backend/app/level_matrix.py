@@ -299,8 +299,12 @@ def build_structured_matrix(data: dict[str, Any]) -> dict[str, Any]:
 def load_structured_matrix(force_refresh: bool = False) -> dict[str, Any]:
     data = load_matrix(force_refresh=force_refresh)
     structured = build_structured_matrix(data)
-    with DATA_PATH.open("w", encoding="utf-8") as f:
-        json.dump(structured, f, ensure_ascii=False, indent=2)
+    try:
+        DATA_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with DATA_PATH.open("w", encoding="utf-8") as f:
+            json.dump(structured, f, ensure_ascii=False, indent=2)
+    except OSError:
+        pass
     return structured
 
 

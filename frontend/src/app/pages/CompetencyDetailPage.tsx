@@ -10,6 +10,7 @@ import { apiClient } from '@/api/client';
 import { useAuth } from '@/context/AuthContext';
 import type { Competence } from '@/api/types';
 import { FormationLevelsPanel } from '@/app/components/FormationLevelsPanel';
+import { CompetenceReviewSection } from '@/app/components/CompetenceReviewSection';
 import {
   FORMATION_LEVELS,
   FORMATION_LEVEL_LABELS,
@@ -26,16 +27,20 @@ const statusMap: Record<string, { variant: 'default' | 'secondary' | 'destructiv
 };
 
 async function fetchCompetence(id: number, isAuthenticated: boolean): Promise<Competence | null> {
-  try {
-    return await apiClient.getPublicCompetenceById(id);
-  } catch {
-    if (isAuthenticated) {
+  if (isAuthenticated) {
+    try {
+      return await apiClient.getCompetenceById(id);
+    } catch {
       try {
-        return await apiClient.getCompetenceById(id);
+        return await apiClient.getPublicCompetenceById(id);
       } catch {
         return null;
       }
     }
+  }
+  try {
+    return await apiClient.getPublicCompetenceById(id);
+  } catch {
     return null;
   }
 }
@@ -43,7 +48,7 @@ async function fetchCompetence(id: number, isAuthenticated: boolean): Promise<Co
 export function CompetencyDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isExpert, isModerator } = useAuth();
   const [comp, setComp] = useState<Competence | null>(null);
   const [loading, setLoading] = useState(true);
   const [downloadingDocx, setDownloadingDocx] = useState(false);
@@ -278,6 +283,10 @@ export function CompetencyDetailPage() {
           </Tabs>
         </CardContent>
       </Card>
+
+      {(isExpert || isModerator) && (
+        <CompetenceReviewSection competence={comp} onUpdated={setComp} />
+      )}
     </PageShell>
   );
 }
