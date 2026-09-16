@@ -15,7 +15,7 @@ from .reference_data import (
 
 KIND_LABELS = {
     "professional": "Профессиональная",
-    "general": "Общекультурная",
+    "general": "Общепрофессиональная",
     "universal": "Универсальная",
 }
 

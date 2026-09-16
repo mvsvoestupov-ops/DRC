@@ -203,7 +203,7 @@ export function NewCompetencyPage() {
   ];
   const competenceKinds: { value: CompetenceKind; label: string }[] = [
     { value: "professional", label: "Профессиональная" },
-    { value: "general", label: "Общекультурная" },
+    { value: "general", label: "Общепрофессиональная" },
     { value: "universal", label: "Универсальная" },
   ];
 
@@ -423,7 +423,7 @@ export function NewCompetencyPage() {
     if (selected.length === 0) return;
     setFormData((prev) => ({
       ...prev,
-      structure: buildStructureFromLaborFunctions(selected, prev.structure.C),
+      structure: buildStructureFromLaborFunctions(selected, prev.structure),
     }));
   }, [selectedTfKey, laborFunctions, formData.competenceKind, formData.selectedLaborFunctionIds]);
 
@@ -1290,7 +1290,7 @@ export function NewCompetencyPage() {
                   {formData.competenceKind !== "professional" && (
                     <div className="bg-secondary border border-primary/20 rounded-xl p-4">
                       <p className="text-sm text-primary">
-                        Для общекультурных и универсальных компетенций связь с профстандартом необязательна.
+                        Для общепрофессиональных и универсальных компетенций связь с профстандартом необязательна.
                       </p>
                     </div>
                   )}

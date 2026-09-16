@@ -17,11 +17,22 @@ export interface LaborFunctionDetail {
   standard_name?: string;
 }
 
+export type StructureItemOrigin = 'ps' | 'manual';
+
 export interface StructureItem {
   id: string;
   text: string;
   tfCode?: string | null;
   tdText?: string | null;
+  origin?: StructureItemOrigin;
+}
+
+export function isManualStructureItem(item: StructureItem): boolean {
+  return item.origin === 'manual';
+}
+
+function structureItemKey(item: Pick<StructureItem, 'text' | 'tfCode'>): string {
+  return `${item.tfCode || ''}::${item.text.trim().toLowerCase()}`;
 }
 
 export type StructureABC = {
@@ -45,12 +56,13 @@ export function structureToPayload(structure: StructureABC) {
 
 export function buildStructureFromLaborFunctions(
   selectedLaborFunctions: LaborFunctionDetail[],
-  preserveC: StructureItem[] = [],
+  previous: StructureABC = emptyStructure(),
 ): StructureABC {
   const knowledge: StructureItem[] = [];
   const skills: StructureItem[] = [];
   const seenA = new Set<string>();
   const seenB = new Set<string>();
+  const movedToC = new Set(previous.C.map(structureItemKey));
 
   selectedLaborFunctions.forEach((tf) => {
     const tfCode = tf.code;
@@ -60,34 +72,49 @@ export function buildStructureFromLaborFunctions(
         const text = (typeof raw === 'string' ? raw : (raw as { text?: string }).text || '').trim();
         if (!text) return;
         const key = `${tfCode}::${text.toLowerCase()}`;
-        if (seenA.has(key)) return;
+        if (seenA.has(key) || movedToC.has(key)) return;
         seenA.add(key);
         knowledge.push({
           id: createStructureItemId(),
           text,
           tfCode,
           tdText,
+          origin: 'ps',
         });
       });
       (la.skills || []).forEach((raw) => {
         const text = (typeof raw === 'string' ? raw : (raw as { text?: string }).text || '').trim();
         if (!text) return;
         const key = `${tfCode}::${text.toLowerCase()}`;
-        if (seenB.has(key)) return;
+        if (seenB.has(key) || movedToC.has(key)) return;
         seenB.add(key);
         skills.push({
           id: createStructureItemId(),
           text,
           tfCode,
           tdText,
+          origin: 'ps',
         });
       });
     });
   });
 
+  previous.A.filter(isManualStructureItem).forEach((item) => {
+    const key = structureItemKey(item);
+    if (seenA.has(key)) return;
+    seenA.add(key);
+    knowledge.push(item);
+  });
+  previous.B.filter(isManualStructureItem).forEach((item) => {
+    const key = structureItemKey(item);
+    if (seenB.has(key) || movedToC.has(key)) return;
+    seenB.add(key);
+    skills.push(item);
+  });
+
   return {
     A: knowledge,
     B: skills,
-    C: preserveC,
+    C: previous.C,
   };
 }

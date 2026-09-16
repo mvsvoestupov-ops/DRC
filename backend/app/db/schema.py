@@ -124,6 +124,13 @@ def ensure_fgos_columns() -> list[str]:
     return added
 
 
+def ensure_competence_public_code_column() -> list[str]:
+    added: list[str] = []
+    if _add_column_if_missing("competences", "public_code", "public_code VARCHAR(32)"):
+        added.append("competences.public_code")
+    return added
+
+
 def ensure_assessment_tools_columns() -> list[str]:
     """Статус ревизии ОС: active / inactive."""
     added: list[str] = []

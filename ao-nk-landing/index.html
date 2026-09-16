@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>АО «Национальные квалификации» — цифровые сервисы</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --nav: #215e71;
+      --ink: #212529;
+      --muted: #5c656c;
+      --line: #dee2e6;
+      --paper: #f5f5f5;
+      --jumbo: #e9ecef;
+      --btn: #007bff;
+      --btn-hover: #0069d9;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Roboto Condensed", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: #fff;
+      font-size: 18px;
+      line-height: 1.45;
+    }
+
+    a { color: inherit; }
+
+    .nav {
+      background: var(--nav);
+      color: #fff;
+    }
+
+    .nav-inner, .bar-inner, .hero-inner, .section, .footer-inner {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 52px;
+      font-size: 15px;
+      letter-spacing: 0.04em;
+    }
+
+    .nav a { color: #fff; text-decoration: none; opacity: 0.92; }
+    .nav a:hover { opacity: 1; text-decoration: underline; }
+
+    .bar {
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .bar-inner {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding-top: 14px;
+      padding-bottom: 14px;
+    }
+
+    .bar-inner img {
+      height: 64px;
+      width: auto;
+      display: block;
+    }
+
+    .org {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      line-height: 1.2;
+    }
+
+    .org small {
+      display: block;
+      margin-top: 4px;
+      font-size: 13px;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+      color: var(--muted);
+    }
+
+    .hero {
+      position: relative;
+      color: #fff;
+      background:
+        linear-gradient(180deg, rgba(10, 32, 42, 0.55), rgba(10, 32, 42, 0.72)),
+        radial-gradient(circle at 20% 40%, rgba(90, 200, 220, 0.35), transparent 42%),
+        radial-gradient(circle at 80% 30%, rgba(70, 160, 190, 0.28), transparent 38%),
+        #0b2530;
+      overflow: hidden;
+    }
+
+    .hero svg.net {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.45;
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 1;
+      padding-top: 64px;
+      padding-bottom: 72px;
+    }
+
+    .hero h1 {
+      font-size: clamp(28px, 4vw, 42px);
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      max-width: 18em;
+    }
+
+    .hero p {
+      margin-top: 16px;
+      max-width: 38em;
+      font-size: 20px;
+      font-weight: 400;
+      opacity: 0.92;
+    }
+
+    .section {
+      padding: 56px 20px 72px;
+    }
+
+    .section h2 {
+      text-align: center;
+      font-size: 28px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 36px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .card {
+      display: flex;
+      flex-direction: column;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      min-height: 320px;
+      padding: 28px 24px 24px;
+      text-decoration: none;
+    }
+
+    .card:hover {
+      border-color: var(--nav);
+      box-shadow: 0 8px 24px rgba(33, 94, 113, 0.12);
+    }
+
+    .card .tag {
+      color: var(--nav);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .card h3 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .card p {
+      color: var(--muted);
+      font-size: 16px;
+      flex: 1;
+    }
+
+    .btn {
+      display: inline-block;
+      align-self: flex-start;
+      margin-top: 22px;
+      background: var(--btn);
+      color: #fff;
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 10px 22px;
+    }
+
+    .card:hover .btn { background: var(--btn-hover); }
+
+    .note {
+      margin-top: 28px;
+      background: #d1ecf1;
+      color: #0c5460;
+      text-align: center;
+      padding: 16px;
+      font-size: 16px;
+    }
+
+    .note a { color: #0c5460; font-weight: 700; }
+
+    footer {
+      background: var(--nav);
+      color: #fff;
+      padding: 36px 0 28px;
+      font-size: 16px;
+    }
+
+    .footer-inner {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 24px;
+    }
+
+    footer a { color: #fff; }
+
+    .copy {
+      margin-top: 24px;
+      opacity: 0.8;
+      font-size: 14px;
+    }
+
+    @media (max-width: 900px) {
+      .grid, .footer-inner { grid-template-columns: 1fr; }
+      .bar-inner { align-items: flex-start; }
+      .bar-inner img { height: 52px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="nav">
+    <div class="nav-inner">
+      <span>Цифровой оператор национальной системы квалификаций</span>
+      <a href="https://ao-nk.ru/">Корпоративный сайт ao-nk.ru</a>
+    </div>
+  </div>
+
+  <div class="bar">
+    <div class="bar-inner">
+      <img src="https://ao-nk.ru/template/images/logo_full.png" alt="АО Национальные квалификации" />
+      <div class="org">
+        АО «Национальные квалификации»
+        <small>Член Российского союза промышленников и предпринимателей</small>
+      </div>
+    </div>
+  </div>
+
+  <section class="hero">
+    <svg class="net" viewBox="0 0 1200 360" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <g fill="none" stroke="#7ec8d8" stroke-width="1.1">
+        <path d="M40 80 L180 40 L320 120 L480 60 L640 140 L820 50 L980 130 L1160 70" />
+        <path d="M80 220 L240 180 L400 260 L560 170 L740 250 L900 190 L1100 240" />
+        <path d="M180 40 L240 180 L320 120 L400 260 L480 60 L560 170" />
+        <path d="M640 140 L740 250 L820 50 L900 190 L980 130" />
+      </g>
+      <g fill="#9ad7e4">
+        <circle cx="180" cy="40" r="4" /><circle cx="320" cy="120" r="4" />
+        <circle cx="480" cy="60" r="4" /><circle cx="640" cy="140" r="4" />
+        <circle cx="240" cy="180" r="4" /><circle cx="400" cy="260" r="4" />
+        <circle cx="820" cy="50" r="4" /><circle cx="900" cy="190" r="4" />
+      </g>
+    </svg>
+    <div class="hero-inner">
+      <h1>Цифровые сервисы организации</h1>
+      <p>Выберите платформу для работы. Все контуры доступны по защищённому соединению HTTPS.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Наши сервисы</h2>
+    <div class="grid">
+      <a class="card" href="https://drc.ao-nk.online/">
+        <div class="tag">CRK</div>
+        <h3>ЦРК</h3>
+        <p>Цифровой реестр компетенций: профессиональные стандарты, квалификации и разработка компетенций.</p>
+        <span class="btn">Войти</span>
+      </a>
+      <a class="card" href="https://veche.ao-nk.online/">
+        <div class="tag">Veche</div>
+        <h3>Вече</h3>
+        <p>Платформа Вече — рабочий контур АО «НК» для профильных цифровых сервисов организации.</p>
+        <span class="btn">Войти</span>
+      </a>
+      <a class="card" href="https://sok.ao-nk.online/">
+        <div class="tag">SOK</div>
+        <h3>СОК</h3>
+        <p>Платформа СОК — отдельный сервис АО «НК» на защищённом домене организации.</p>
+        <span class="btn">Войти</span>
+      </a>
+    </div>
+    <p class="note">
+      Основной сайт компании:
+      <a href="https://ao-nk.ru/">ao-nk.ru</a>
+    </p>
+  </section>
+
+  <footer>
+    <div class="footer-inner">
+      <div>
+        <strong>Реквизиты и контакты</strong><br />
+        123423, Москва, пр-кт Маршала Жукова, д. 39 к. 1<br />
+        +7 926 530-79-13<br />
+        <a href="mailto:aonk@ao-nk.ru">aonk@ao-nk.ru</a><br />
+        Техподдержка: <a href="mailto:support@ao-nk.ru">support@ao-nk.ru</a>
+      </div>
+      <div>
+        Акционерное общество «Национальные квалификации» — цифровой оператор национальной системы профессиональных квалификаций.
+        <div class="copy">© АО «НК» 2026</div>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
-import { ArrowRight, Plus, Trash2, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Plus, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { LaborFunctionDetail, StructureABC, StructureItem } from '@/lib/structureFromLaborFunctions';
-import { createStructureItemId } from '@/lib/structureFromLaborFunctions';
+import { createStructureItemId, isManualStructureItem } from '@/lib/structureFromLaborFunctions';
 
 type Container = 'A' | 'B' | 'C';
 
@@ -27,7 +27,7 @@ const CONTAINER_META: Record<Container, { title: string; subtitle: string; badge
   },
   C: {
     title: 'C – Практические навыки',
-    subtitle: 'Перенесённые из B или добавленные вручную',
+    subtitle: 'Перенесённые из B или добавленные вручную. Можно вернуть в B.',
     badge: 'C',
     badgeClass: 'bg-purple-100 text-purple-700',
   },
@@ -68,7 +68,17 @@ export function StructureABCEditor({ structure, selectedLaborFunctions, onChange
     onChange({
       ...structure,
       B: structure.B.filter((el) => el.id !== id),
-      C: [...structure.C, { ...item, tfCode: null, tdText: null }],
+      C: [...structure.C, item],
+    });
+  };
+
+  const moveToB = (id: string) => {
+    const item = structure.C.find((el) => el.id === id);
+    if (!item) return;
+    onChange({
+      ...structure,
+      C: structure.C.filter((el) => el.id !== id),
+      B: [...structure.B, item],
     });
   };
 
@@ -95,6 +105,7 @@ export function StructureABCEditor({ structure, selectedLaborFunctions, onChange
         text: newText.trim(),
         tfCode,
         tdText,
+        origin: 'manual',
       },
     ]);
     setAddTarget(null);
@@ -103,15 +114,15 @@ export function StructureABCEditor({ structure, selectedLaborFunctions, onChange
 
   const renderList = (container: Container) => {
     const items = structure[container];
-    const showTd = container !== 'C';
-    const showMove = container === 'B';
+    const showMoveToC = container === 'B';
+    const showMoveToB = container === 'C';
 
     if (items.length === 0) {
       return (
         <div className="rounded-lg border border-dashed border-gray-200 px-4 py-8 text-center text-sm text-gray-500">
           {container === 'A' || container === 'B'
             ? 'Выберите трудовые функции на предыдущем шаге или добавьте элемент вручную'
-            : 'Перенесите умения из колонки B или добавьте навык вручную'}
+            : 'Перенесите умения из колонки B, верните их обратно или добавьте навык вручную'}
         </div>
       );
     }
@@ -125,7 +136,7 @@ export function StructureABCEditor({ structure, selectedLaborFunctions, onChange
           >
             <div className="flex-1 min-w-0">
               <p className="text-sm text-gray-900">{item.text}</p>
-              {showTd && item.tfCode && (
+              {item.tfCode && (
                 <p className="text-xs text-gray-500 mt-1">
                   {item.tfCode}
                   {item.tdText ? ` · ТД: ${item.tdText}` : ''}
@@ -133,7 +144,7 @@ export function StructureABCEditor({ structure, selectedLaborFunctions, onChange
               )}
             </div>
             <div className="flex items-center gap-1 shrink-0">
-              {showMove && (
+              {showMoveToC && (
                 <button
                   type="button"
                   title="Перенести в практические навыки"
@@ -143,14 +154,26 @@ export function StructureABCEditor({ structure, selectedLaborFunctions, onChange
                   <ArrowRight className="w-4 h-4" />
                 </button>
               )}
-              <button
-                type="button"
-                title="Удалить"
-                onClick={() => deleteItem(container, item.id)}
-                className="p-1.5 rounded-md text-red-600 hover:bg-red-50"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+              {showMoveToB && (
+                <button
+                  type="button"
+                  title="Вернуть в умения"
+                  onClick={() => moveToB(item.id)}
+                  className="p-1.5 rounded-md text-primary hover:bg-primary/10"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </button>
+              )}
+              {isManualStructureItem(item) && (
+                <button
+                  type="button"
+                  title="Удалить"
+                  onClick={() => deleteItem(container, item.id)}
+                  className="p-1.5 rounded-md text-red-600 hover:bg-red-50"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
             </div>
           </li>
         ))}
@@ -163,8 +186,8 @@ export function StructureABCEditor({ structure, selectedLaborFunctions, onChange
       <div>
         <h2 className="text-xl font-semibold text-gray-900 mb-2">Структура компетенции (A/B/C)</h2>
         <p className="text-sm text-gray-500">
-          Знания и умения загружаются из трудовых действий выбранных функций профстандарта.
-          Умения из колонки B можно перенести в практические навыки (C), как в стратегической сессии.
+          Знания и умения из профстандарта нельзя удалить — только перенести умение в практические навыки и вернуть обратно.
+          Удаляются лишь элементы, добавленные вручную.
         </p>
       </div>
 
