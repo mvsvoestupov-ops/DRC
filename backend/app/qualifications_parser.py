@@ -1408,7 +1408,8 @@ def get_qualification_stats() -> dict:
         elif ps_id is not None:
             linked_to_ps += 1
         expected = ps_code_from_qualification_code(code_s)
-        if (not without) and expected and expected not in xlsx_codes:
+        # Пустой реестр ≠ «все утратили силу»: без кодов XLSX revoked не считаем.
+        if xlsx_codes and (not without) and expected and expected not in xlsx_codes:
             revoked += 1
 
     return {
@@ -1444,6 +1445,55 @@ def _is_without_ps_code(code: str) -> bool:
 
 
 _xlsx_ps_codes_cache: set[str] | None = None
+_SCRIPTS_OUTPUT_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)),
+    "scripts",
+    "output",
+)
+
+
+def _codes_from_json_payload(data) -> set[str]:
+    from .qualification_links import normalize_ps_code
+
+    if isinstance(data, list):
+        items = data
+    elif isinstance(data, dict):
+        if isinstance(data.get("codes"), list):
+            items = data["codes"]
+        else:
+            items = data.get("only_in_xlsx") or data.get("xlsx_items") or []
+    else:
+        items = []
+
+    codes: set[str] = set()
+    for item in items:
+        raw = item if isinstance(item, str) else (item or {}).get("ps_code") or (item or {}).get("code")
+        normalized = normalize_ps_code(str(raw or ""))
+        if normalized:
+            codes.add(normalized)
+    return codes
+
+
+def _load_xlsx_ps_codes_from_json() -> set[str]:
+    """Снимок кодов реестра, если сам XLSX на сервере не лежит."""
+    candidates = [
+        os.environ.get("XLSX_PS_CODES_JSON"),
+        os.path.join(_SCRIPTS_OUTPUT_DIR, "xlsx_ps_codes.json"),
+        os.path.join(_SCRIPTS_OUTPUT_DIR, "xlsx_vs_mintrud_site.json"),
+    ]
+    for path in candidates:
+        if not path or not os.path.isfile(path):
+            continue
+        try:
+            with open(path, encoding="utf-8") as fh:
+                codes = _codes_from_json_payload(json.load(fh))
+        except Exception as exc:
+            print(f"Не удалось прочитать коды ПС из {path}: {exc}")
+            continue
+        if codes:
+            print(f"Коды ПС для квалификаций загружены из {path}: {len(codes)}")
+            return codes
+    return set()
 
 
 def _load_xlsx_ps_codes() -> set[str]:
@@ -1464,8 +1514,48 @@ def _load_xlsx_ps_codes() -> set[str]:
         codes = collect_xlsx_ps_codes(None)
     except Exception as exc:
         print(f"Не удалось загрузить коды ПС из XLSX для статистики: {exc}")
+        codes = set()
+
+    # Малый/битый XLSX на проде даёт ложные «утратившие силу». Берём снимок.
+    if len(codes) < 500:
+        json_codes = _load_xlsx_ps_codes_from_json()
+        if json_codes:
+            print(
+                f"Коды ПС из XLSX отброшены ({len(codes)}), "
+                f"используется JSON-снимок ({len(json_codes)})"
+            )
+            codes = json_codes
+
+    if len(codes) < 500:
+        db_codes = _load_xlsx_ps_codes_from_db()
+        if db_codes:
+            print(f"Коды ПС из БД профстандартов: {len(db_codes)}")
+            codes = db_codes
 
     _xlsx_ps_codes_cache = codes
+    return codes
+
+
+def _load_xlsx_ps_codes_from_db() -> set[str]:
+    """Коды ПС из таблицы стандартов, если Excel/JSON на сервере нет."""
+    from .db.raw_models import StandardRaw
+    from .qualification_links import normalize_ps_code
+
+    session = SessionLocal()
+    try:
+        rows = session.query(StandardRaw.ps_code, StandardRaw.professional_area_code).all()
+    except Exception as exc:
+        print(f"Не удалось прочитать коды ПС из БД: {exc}")
+        return set()
+    finally:
+        session.close()
+
+    codes: set[str] = set()
+    for ps_code, area_code in rows:
+        for raw in (ps_code, area_code):
+            normalized = normalize_ps_code(str(raw or ""))
+            if normalized:
+                codes.add(normalized)
     return codes
 
 

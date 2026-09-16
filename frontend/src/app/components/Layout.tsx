@@ -1,14 +1,15 @@
 import { Outlet, Link, useNavigate, useLocation } from "react-router";
-import { Search, User, LogOut, FolderOpen, BookOpen, GraduationCap, Play, ScrollText, ClipboardList } from "lucide-react";
+import { Search, User, LogOut, FolderOpen, BookOpen, GraduationCap, Play, ScrollText, ClipboardList, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
+import { formatUserName } from "@/lib/userDisplay";
 
 function NavLink({ to, children }: { to: string; children: React.ReactNode }) {
   const { pathname } = useLocation();
-  const active = pathname === to || (to !== "/" && pathname.startsWith(to));
+  const active = pathname === to || (to !== "/" && pathname.startsWith(`${to}/`));
   return (
     <Link
       to={to}
@@ -26,7 +27,7 @@ export function Layout() {
   const [language, setLanguage] = useState("RU");
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
-  const { isAuthenticated, isAdmin, user, logout } = useAuth();
+  const { isAuthenticated, isAdmin, isExpert, user, logout, isImpersonating, impersonatorEmail, stopImpersonation } = useAuth();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,6 +38,26 @@ export function Layout() {
 
   return (
     <div className="min-h-screen flex flex-col bg-page font-sans">
+      {isImpersonating ? (
+        <div className="bg-amber-500 text-amber-950 px-4 py-2 text-sm flex flex-wrap items-center justify-center gap-3">
+          <span>
+            Вы вошли как <strong>{user?.email}</strong>
+            {impersonatorEmail ? <> от имени администратора {impersonatorEmail}</> : null}.
+            Действия выполняются от этого пользователя.
+          </span>
+          <Button
+            size="sm"
+            variant="secondary"
+            className="h-7"
+            onClick={() => {
+              stopImpersonation();
+              navigate("/admin/users");
+            }}
+          >
+            Вернуться в админку
+          </Button>
+        </div>
+      ) : null}
       <header className="bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-[1440px] mx-auto px-8">
           <div className="flex justify-between items-center h-20">
@@ -92,7 +113,15 @@ export function Layout() {
 
               {isAuthenticated ? (
                 <div className="flex items-center gap-3">
-                  <span className="text-sm text-gray-600 hidden lg:block">{user?.email}</span>
+                  <Link to="/profile" className="text-sm text-gray-600 hidden lg:block hover:text-primary">
+                    {formatUserName(user) || user?.email}
+                  </Link>
+                  <Button variant="outline" size="default" className="gap-2" asChild>
+                    <Link to="/profile">
+                      <User className="w-4 h-4" />
+                      <span>Кабинет</span>
+                    </Link>
+                  </Button>
                   <Button variant="outline" size="default" className="gap-2" asChild>
                     <Link to="/my-projects">
                       <FolderOpen className="w-4 h-4" />
@@ -136,7 +165,7 @@ export function Layout() {
                     <Play className="w-3.5 h-3.5" />
                     Стратегическая сессия
                   </NavLink>
-                  {isAdmin && (
+                  {isExpert && (
                     <>
                       <NavLink to="/standards">
                         <BookOpen className="w-3.5 h-3.5" />
@@ -158,7 +187,13 @@ export function Layout() {
                   )}
                 </>
               )}
-              {isAdmin && <NavLink to="/admin">Панель эксперта</NavLink>}
+              {isExpert && <NavLink to="/admin">Панель эксперта</NavLink>}
+              {isAdmin && !isImpersonating && (
+                <NavLink to="/admin/users">
+                  <Users className="w-3.5 h-3.5" />
+                  Пользователи
+                </NavLink>
+              )}
               <NavLink to="/integration">Интеграция</NavLink>
             </nav>
           </div>

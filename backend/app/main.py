@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException, Depends, status, BackgroundTasks, Query
+from fastapi import FastAPI, UploadFile, File, HTTPException, Depends, status, BackgroundTasks, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.responses import HTMLResponse, Response
@@ -67,8 +67,21 @@ from .qualification_links import (
 )
 from .progress import qualifications_fetch_progress, assessment_tools_fetch_progress
 from .auth import (
-    authenticate_user, create_access_token, get_current_user,
-    get_current_admin, get_password_hash, oauth2_scheme
+    create_access_token, get_current_user,
+    get_current_admin, get_current_expert, get_password_hash, oauth2_scheme,
+    get_current_user_or_api_key, get_token_claim, is_user_active,
+    is_email_confirmed, user_if_password_ok, UNCONFIRMED_EMAIL_DETAIL,
+    generate_user_password, verify_password, is_staff_role,
+)
+from .mail import (
+    confirmation_link,
+    frontend_base_url,
+    hash_confirm_token,
+    issue_confirm_token,
+    issue_reset_token,
+    reset_password_link,
+    send_invite_email,
+    send_reset_password_email,
 )
 from sqlalchemy.orm import Session
 from sqlalchemy import text
@@ -79,6 +92,7 @@ from .db.schema import (
     ensure_fgos_columns,
     ensure_users_columns,
     ensure_assessment_tools_columns,
+    ensure_competence_public_code_column,
 )
 from .level_matrix import load_matrix, load_structured_matrix, matrix_summary, DOCX_PATH
 from .reference_data import (
@@ -118,6 +132,8 @@ for col in ensure_fgos_columns():
 for col in ensure_users_columns():
     print(f"DB migration: added column {col}")
 for col in ensure_assessment_tools_columns():
+    print(f"DB migration: added column {col}")
+for col in ensure_competence_public_code_column():
     print(f"DB migration: added column {col}")
 
 
@@ -199,6 +215,7 @@ def ensure_admin_credentials() -> None:
             admin.hashed_password = hashed
             admin.role = "admin"
             admin.is_active = True
+            admin.email_confirmed = True
             if old_admin and old_admin.id != admin.id:
                 db.delete(old_admin)
         elif old_admin:
@@ -206,6 +223,7 @@ def ensure_admin_credentials() -> None:
             old_admin.hashed_password = hashed
             old_admin.role = "admin"
             old_admin.is_active = True
+            old_admin.email_confirmed = True
         else:
             db.add(
                 User(
@@ -213,6 +231,7 @@ def ensure_admin_credentials() -> None:
                     hashed_password=hashed,
                     role="admin",
                     is_active=True,
+                    email_confirmed=True,
                 )
             )
         db.commit()
@@ -240,6 +259,7 @@ app.add_middleware(
 @app.on_event("startup")
 def warm_level_matrix_cache() -> None:
     ensure_admin_credentials()
+    _ensure_competence_public_code_column()
     try:
         data = load_matrix(force_refresh=True)
         structured = load_structured_matrix(force_refresh=False)
@@ -333,39 +353,492 @@ class FeedbackCreate(BaseModel):
     section: str
     text: str
 
-# ---------- Аутентификация ----------
+
+class UserCreate(BaseModel):
+    email: str
+    password: Optional[str] = None
+    role: str = "user"
+    is_active: bool = True
+    last_name: str
+    first_name: str
+    middle_name: Optional[str] = None
+    organization: str
+
+
+class UserSignup(BaseModel):
+    email: str
+    password: str
+    last_name: str
+    first_name: str
+    middle_name: Optional[str] = None
+    organization: str
+
+
+class UserUpdate(BaseModel):
+    role: Optional[str] = None
+    is_active: Optional[bool] = None
+    password: Optional[str] = None
+    last_name: Optional[str] = None
+    first_name: Optional[str] = None
+    middle_name: Optional[str] = None
+    organization: Optional[str] = None
+
+
+class ProfileUpdate(BaseModel):
+    last_name: Optional[str] = None
+    first_name: Optional[str] = None
+    middle_name: Optional[str] = None
+    organization: Optional[str] = None
+    current_password: Optional[str] = None
+    new_password: Optional[str] = None
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    password: str
+
+
+USER_ROLES = ("user", "expert", "admin")
+
+
+def _serialize_user(user: User) -> dict:
+    return {
+        "id": user.id,
+        "email": user.email,
+        "role": user.role or "user",
+        "is_active": is_user_active(user),
+        "email_confirmed": is_email_confirmed(user),
+        "last_name": getattr(user, "last_name", None) or "",
+        "first_name": getattr(user, "first_name", None) or "",
+        "middle_name": getattr(user, "middle_name", None) or "",
+        "organization": getattr(user, "organization", None) or "",
+        "created_at": user.created_at.isoformat() if user.created_at else None,
+    }
+
+
+def _normalize_email(email: str) -> str:
+    return (email or "").strip().lower()
+
+
+def _normalize_person_field(value: Optional[str], *, required: bool, label: str, max_len: int = 255) -> str:
+    text = " ".join((value or "").split())
+    if required and not text:
+        raise HTTPException(400, f"Укажите {label}")
+    if len(text) > max_len:
+        raise HTTPException(400, f"{label} слишком длинное")
+    return text
+
+
+def _normalize_role(role: str) -> str:
+    value = (role or "user").strip().lower()
+    if value not in USER_ROLES:
+        raise HTTPException(400, "Роль должна быть user, expert или admin")
+    return value
+
+
+def _active_admin_count(session, exclude_id: int | None = None) -> int:
+    rows = session.query(User).filter(User.role == "admin").all()
+    return sum(
+        1
+        for row in rows
+        if is_user_active(row) and (exclude_id is None or row.id != exclude_id)
+    )
+
 
 @app.post("/token")
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     db = SessionLocal()
-    user = authenticate_user(db, form_data.username, form_data.password)
-    db.close()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    access_token = create_access_token(data={"sub": user.email})
-    return {"access_token": access_token, "token_type": "bearer", "role": user.role}
+    try:
+        user = user_if_password_ok(db, form_data.username, form_data.password)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Неверный email или пароль",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        if not is_email_confirmed(user):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=UNCONFIRMED_EMAIL_DETAIL)
+        if not is_user_active(user):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Учётная запись отключена")
+        access_token = create_access_token(data={"sub": user.email})
+        return {"access_token": access_token, "token_type": "bearer", "role": user.role}
+    finally:
+        db.close()
 
 @app.get("/users/me")
 async def get_me(current_user: User = Depends(get_current_user)):
-    return {"email": current_user.email, "role": current_user.role}
+    return _serialize_user(current_user)
+
+
+@app.patch("/users/me")
+async def update_me(data: ProfileUpdate, current_user: User = Depends(get_current_user)):
+    session = SessionLocal()
+    try:
+        user = session.query(User).filter(User.id == current_user.id).first()
+        if not user:
+            raise HTTPException(404, "Пользователь не найден")
+        if data.last_name is not None:
+            user.last_name = _normalize_person_field(data.last_name, required=True, label="фамилию")
+        if data.first_name is not None:
+            user.first_name = _normalize_person_field(data.first_name, required=True, label="имя")
+        if data.middle_name is not None:
+            user.middle_name = _normalize_person_field(data.middle_name, required=False, label="отчество")
+        if data.organization is not None:
+            user.organization = _normalize_person_field(data.organization, required=True, label="организацию")
+        new_password = (data.new_password or "").strip()
+        if new_password:
+            current_password = (data.current_password or "").strip()
+            if not current_password or not verify_password(current_password, user.hashed_password):
+                raise HTTPException(400, "Неверный текущий пароль")
+            if len(new_password) < 6:
+                raise HTTPException(400, "Пароль должен быть не короче 6 символов")
+            user.hashed_password = get_password_hash(new_password)
+            user.password_reset_token = None
+            user.password_reset_expires = None
+        session.commit()
+        session.refresh(user)
+        return _serialize_user(user)
+    except HTTPException:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+
+@app.get("/users")
+async def list_users(current_user: User = Depends(get_current_admin)):
+    session = SessionLocal()
+    try:
+        rows = session.query(User).order_by(User.id.asc()).all()
+        return [_serialize_user(row) for row in rows]
+    finally:
+        session.close()
+
+
+def _create_user_record(
+    session,
+    email: str,
+    password: str,
+    role: str,
+    is_active: bool = True,
+    email_confirmed: bool = False,
+    last_name: str = "",
+    first_name: str = "",
+    middle_name: str = "",
+    organization: str = "",
+) -> User:
+    email_n = _normalize_email(email)
+    if not email_n or "@" not in email_n:
+        raise HTTPException(400, "Укажите корректный email")
+    if not password or len(password) < 6:
+        raise HTTPException(400, "Пароль должен быть не короче 6 символов")
+    role_n = _normalize_role(role)
+    last_n = _normalize_person_field(last_name, required=True, label="фамилию")
+    first_n = _normalize_person_field(first_name, required=True, label="имя")
+    middle_n = _normalize_person_field(middle_name, required=False, label="отчество")
+    org_n = _normalize_person_field(organization, required=True, label="организацию")
+    existing = session.query(User).filter(func.lower(User.email) == email_n).first()
+    if existing:
+        raise HTTPException(400, "Пользователь с таким email уже есть")
+    user = User(
+        email=email_n,
+        hashed_password=get_password_hash(password),
+        role=role_n,
+        is_active=is_active,
+        email_confirmed=email_confirmed,
+        last_name=last_n,
+        first_name=first_n,
+        middle_name=middle_n,
+        organization=org_n,
+    )
+    session.add(user)
+    session.flush()
+    return user
+
+
+def _deliver_invite(user: User, password: str | None, request: Request) -> None:
+    raw_token = issue_confirm_token(user)
+    send_invite_email(user.email, password, confirmation_link(frontend_base_url(request), raw_token))
+
+
+@app.post("/users")
+async def create_user(data: UserCreate, request: Request, current_user: User = Depends(get_current_admin)):
+    session = SessionLocal()
+    try:
+        password = (data.password or "").strip() or generate_user_password()
+        user = _create_user_record(
+            session,
+            data.email,
+            password,
+            data.role,
+            data.is_active,
+            False,
+            data.last_name,
+            data.first_name,
+            data.middle_name or "",
+            data.organization,
+        )
+        _deliver_invite(user, password, request)
+        session.commit()
+        session.refresh(user)
+        return _serialize_user(user)
+    except HTTPException:
+        session.rollback()
+        raise
+    except Exception as exc:
+        session.rollback()
+        raise HTTPException(status_code=502, detail=str(exc) or "Не удалось отправить письмо")
+    finally:
+        session.close()
+
 
 @app.post("/users/register")
-async def register_user(email: str, password: str, role: str = "user", current_user: User = Depends(get_current_admin)):
-    db = SessionLocal()
-    existing = db.query(User).filter(User.email == email).first()
-    if existing:
-        raise HTTPException(400, "Email already registered")
-    hashed = get_password_hash(password)
-    new_user = User(email=email, hashed_password=hashed, role=role)
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    db.close()
-    return {"message": "User created", "email": new_user.email}
+async def register_user(
+    request: Request,
+    email: str,
+    password: str = "",
+    role: str = "user",
+    last_name: str = "",
+    first_name: str = "",
+    middle_name: str = "",
+    organization: str = "",
+    current_user: User = Depends(get_current_admin),
+):
+    session = SessionLocal()
+    try:
+        password = (password or "").strip() or generate_user_password()
+        user = _create_user_record(
+            session, email, password, role, True, False,
+            last_name, first_name, middle_name, organization,
+        )
+        _deliver_invite(user, password, request)
+        session.commit()
+        session.refresh(user)
+        return {"message": "User created", "email": user.email, **_serialize_user(user)}
+    except HTTPException:
+        session.rollback()
+        raise
+    except Exception as exc:
+        session.rollback()
+        raise HTTPException(status_code=502, detail=str(exc) or "Не удалось отправить письмо")
+    finally:
+        session.close()
+
+
+@app.post("/users/signup")
+async def signup_user(data: UserSignup, request: Request):
+    session = SessionLocal()
+    try:
+        user = _create_user_record(
+            session,
+            data.email,
+            data.password,
+            "user",
+            True,
+            False,
+            data.last_name,
+            data.first_name,
+            data.middle_name or "",
+            data.organization,
+        )
+        _deliver_invite(user, None, request)
+        session.commit()
+        return {
+            "ok": True,
+            "email": user.email,
+            "message": "Письмо с ссылкой подтверждения отправлено на указанный email",
+        }
+    except HTTPException:
+        session.rollback()
+        raise
+    except Exception as exc:
+        session.rollback()
+        raise HTTPException(status_code=502, detail=str(exc) or "Не удалось отправить письмо")
+    finally:
+        session.close()
+
+
+@app.post("/users/forgot-password")
+async def forgot_password(data: ForgotPasswordRequest, request: Request):
+    message = "Если такой email есть в системе, мы отправили письмо со ссылкой для сброса пароля."
+    email_n = _normalize_email(data.email)
+    session = SessionLocal()
+    try:
+        user = session.query(User).filter(func.lower(User.email) == email_n).first()
+        if user and is_user_active(user) and is_email_confirmed(user):
+            raw = issue_reset_token(user)
+            send_reset_password_email(
+                user.email,
+                reset_password_link(frontend_base_url(request), raw),
+            )
+            session.commit()
+        return {"ok": True, "message": message}
+    except HTTPException:
+        session.rollback()
+        raise
+    except Exception as exc:
+        session.rollback()
+        raise HTTPException(status_code=502, detail=str(exc) or "Не удалось отправить письмо")
+    finally:
+        session.close()
+
+
+@app.post("/users/reset-password")
+async def reset_password(data: ResetPasswordRequest):
+    raw = (data.token or "").strip()
+    password = (data.password or "").strip()
+    if not raw:
+        raise HTTPException(400, "Нет токена сброса пароля")
+    if len(password) < 6:
+        raise HTTPException(400, "Пароль должен быть не короче 6 символов")
+    token_hash = hash_confirm_token(raw)
+    session = SessionLocal()
+    try:
+        user = session.query(User).filter(User.password_reset_token == token_hash).first()
+        if not user:
+            raise HTTPException(400, "Ссылка сброса пароля недействительна или уже использована")
+        expires = getattr(user, "password_reset_expires", None)
+        if expires and expires < datetime.datetime.utcnow():
+            raise HTTPException(400, "Срок действия ссылки истёк. Запросите восстановление пароля ещё раз")
+        user.hashed_password = get_password_hash(password)
+        user.password_reset_token = None
+        user.password_reset_expires = None
+        session.commit()
+        return {"ok": True, "message": "Пароль изменён. Можно войти в систему."}
+    except HTTPException:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+
+@app.api_route("/users/confirm-email", methods=["GET", "POST"])
+async def confirm_email(token: str = Query(...)):
+    raw = (token or "").strip()
+    if not raw:
+        raise HTTPException(400, "Нет токена подтверждения")
+    token_hash = hash_confirm_token(raw)
+    session = SessionLocal()
+    try:
+        user = session.query(User).filter(User.email_confirm_token == token_hash).first()
+        if not user:
+            raise HTTPException(400, "Ссылка подтверждения недействительна или уже использована")
+        expires = getattr(user, "email_confirm_expires", None)
+        if expires and expires < datetime.datetime.utcnow():
+            raise HTTPException(400, "Срок действия ссылки истёк. Попросите администратора отправить письмо ещё раз")
+        user.email_confirmed = True
+        user.email_confirm_token = None
+        user.email_confirm_expires = None
+        session.commit()
+        return {"ok": True, "email": user.email, "message": "Email подтверждён. Можно войти в систему."}
+    except HTTPException:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+
+@app.post("/users/{user_id}/resend-invite")
+async def resend_invite(user_id: int, request: Request, current_user: User = Depends(get_current_admin)):
+    session = SessionLocal()
+    try:
+        user = session.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(404, "Пользователь не найден")
+        if is_email_confirmed(user):
+            raise HTTPException(400, "Email уже подтверждён")
+        _deliver_invite(user, None, request)
+        session.commit()
+        return _serialize_user(user)
+    except HTTPException:
+        session.rollback()
+        raise
+    except Exception as exc:
+        session.rollback()
+        raise HTTPException(status_code=502, detail=str(exc) or "Не удалось отправить письмо")
+    finally:
+        session.close()
+
+
+@app.patch("/users/{user_id}")
+async def update_user(user_id: int, data: UserUpdate, current_user: User = Depends(get_current_admin)):
+    session = SessionLocal()
+    try:
+        user = session.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(404, "Пользователь не найден")
+
+        next_role = _normalize_role(data.role) if data.role is not None else (user.role or "user")
+        next_active = is_user_active(user) if data.is_active is None else bool(data.is_active)
+
+        losing_admin = (user.role or "") == "admin" and is_user_active(user) and (
+            next_role != "admin" or not next_active
+        )
+        if losing_admin and _active_admin_count(session, exclude_id=user.id) < 1:
+            raise HTTPException(400, "Нельзя снять или отключить последнего администратора")
+
+        if data.role is not None:
+            user.role = next_role
+        if data.is_active is not None:
+            user.is_active = next_active
+        if data.password is not None:
+            if len(data.password) < 6:
+                raise HTTPException(400, "Пароль должен быть не короче 6 символов")
+            user.hashed_password = get_password_hash(data.password)
+        if data.last_name is not None:
+            user.last_name = _normalize_person_field(data.last_name, required=True, label="фамилию")
+        if data.first_name is not None:
+            user.first_name = _normalize_person_field(data.first_name, required=True, label="имя")
+        if data.middle_name is not None:
+            user.middle_name = _normalize_person_field(data.middle_name, required=False, label="отчество")
+        if data.organization is not None:
+            user.organization = _normalize_person_field(data.organization, required=True, label="организацию")
+
+        session.commit()
+        session.refresh(user)
+        return _serialize_user(user)
+    except HTTPException:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+
+@app.post("/users/{user_id}/impersonate")
+async def impersonate_user(
+    user_id: int,
+    token: str = Depends(oauth2_scheme),
+    current_user: User = Depends(get_current_admin),
+):
+    if get_token_claim(token, "imp"):
+        raise HTTPException(403, "Уже выполнен вход от имени другого пользователя")
+    if current_user.id == user_id:
+        raise HTTPException(400, "Нельзя войти от своего имени")
+
+    session = SessionLocal()
+    try:
+        target = session.query(User).filter(User.id == user_id).first()
+        if not target:
+            raise HTTPException(404, "Пользователь не найден")
+        if not is_user_active(target):
+            raise HTTPException(400, "Пользователь отключён")
+        access_token = create_access_token(
+            data={"sub": target.email, "imp": current_user.email}
+        )
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "role": target.role or "user",
+            "email": target.email,
+            "impersonator": current_user.email,
+        }
+    finally:
+        session.close()
+
 
 # ---------- Профессиональные стандарты ----------
 
@@ -1834,7 +2307,7 @@ def serialize_assessment_tool(tool: AssessmentTool, *, detailed: bool = False) -
 
 
 @app.get("/assessment-tools/stats")
-async def assessment_tools_stats(current_user: User = Depends(get_current_admin)):
+async def assessment_tools_stats(current_user: User = Depends(get_current_expert)):
     return get_assessment_tool_stats()
 
 
@@ -1904,7 +2377,7 @@ async def fetch_assessment_tools_status(current_user: User = Depends(get_current
 
 
 @app.get("/assessment-tools")
-async def list_assessment_tools(current_user: User = Depends(get_current_admin)):
+async def list_assessment_tools(current_user: User = Depends(get_current_expert)):
     from sqlalchemy.orm import load_only
 
     session = SessionLocal()
@@ -1937,7 +2410,7 @@ async def list_assessment_tools(current_user: User = Depends(get_current_admin))
 
 
 @app.get("/assessment-tools/{id}")
-async def get_assessment_tool(id: int, current_user: User = Depends(get_current_admin)):
+async def get_assessment_tool(id: int, current_user: User = Depends(get_current_expert)):
     from sqlalchemy.orm import joinedload
 
     session = SessionLocal()
@@ -1959,7 +2432,7 @@ async def get_assessment_tool(id: int, current_user: User = Depends(get_current_
 
 
 @app.get("/qualifications")
-async def list_qualifications(current_user: User = Depends(get_current_admin)):
+async def list_qualifications(current_user: User = Depends(get_current_expert)):
     from sqlalchemy.orm import load_only
 
     session = SessionLocal()
@@ -1996,7 +2469,7 @@ async def list_qualifications(current_user: User = Depends(get_current_admin)):
         session.close()
 
 @app.get("/qualifications/{id}")
-async def get_qualification(id: int, current_user: User = Depends(get_current_admin)):
+async def get_qualification(id: int, current_user: User = Depends(get_current_expert)):
     from sqlalchemy.orm import joinedload
 
     session = SessionLocal()
@@ -2090,7 +2563,7 @@ def serialize_fgos(item: FgosSpo, *, detailed: bool = False) -> dict:
 
 
 @app.get("/fgos/categories")
-async def fgos_categories(current_user: User = Depends(get_current_admin)):
+async def fgos_categories(current_user: User = Depends(get_current_expert)):
     from .fgos_parser import get_fgos_stats_by_category
 
     counts = get_fgos_stats_by_category()
@@ -2107,7 +2580,7 @@ async def fgos_categories(current_user: User = Depends(get_current_admin)):
 @app.get("/fgos/stats")
 async def fgos_stats(
     category: Optional[str] = None,
-    current_user: User = Depends(get_current_admin),
+    current_user: User = Depends(get_current_expert),
 ):
     from .fgos_parser import get_fgos_stats, get_fgos_stats_by_category
 
@@ -2128,7 +2601,7 @@ async def search_fgos(
     q: str = "",
     categories: Optional[str] = None,
     limit: int = 40,
-    current_user: User = Depends(get_current_user),
+    current_user = Depends(get_current_user_or_api_key),
 ):
     """Поиск ФГОС по коду/названию. categories — список id через запятую (spo,bachelor,...)."""
     query = (q or "").strip()
@@ -2168,10 +2641,32 @@ async def search_fgos(
         session.close()
 
 
+@app.get("/fgos/public/search")
+async def search_fgos_public(
+    q: str = "",
+    categories: Optional[str] = None,
+    limit: int = 40,
+):
+    """Публичный поиск ФГОС для сервиса учебных планов (без JWT)."""
+    return await search_fgos(q=q, categories=categories, limit=limit, current_user=None)  # type: ignore[arg-type]
+
+
+@app.get("/fgos/public/{item_id}")
+async def get_fgos_public(item_id: int):
+    session = SessionLocal()
+    try:
+        item = session.query(FgosSpo).filter(FgosSpo.id == item_id).first()
+        if not item:
+            raise HTTPException(status_code=404, detail="ФГОС не найден")
+        return serialize_fgos(item, detailed=True)
+    finally:
+        session.close()
+
+
 @app.get("/fgos")
 async def list_fgos(
     category: Optional[str] = None,
-    current_user: User = Depends(get_current_admin),
+    current_user: User = Depends(get_current_expert),
 ):
     session = SessionLocal()
     try:
@@ -2187,7 +2682,7 @@ async def list_fgos(
 
 
 @app.get("/fgos/{item_id}")
-async def get_fgos(item_id: int, current_user: User = Depends(get_current_admin)):
+async def get_fgos(item_id: int, current_user: User = Depends(get_current_expert)):
     session = SessionLocal()
     try:
         item = session.query(FgosSpo).filter(FgosSpo.id == item_id).first()
@@ -2256,13 +2751,32 @@ def _build_competence_raw_data(
     return raw
 
 
+def _ensure_competence_public_code_column() -> None:
+    ensure_competence_public_code_column()
+    session = None
+    try:
+        session = SessionLocal()
+        rows = session.query(Competence).filter((Competence.public_code.is_(None)) | (Competence.public_code == "")).all()
+        for comp in rows:
+            if comp.id:
+                comp.public_code = f"RUS-PK-{int(comp.id):04d}"
+        session.commit()
+    except Exception as exc:
+        print(f"public_code backfill skipped: {exc}")
+    finally:
+        if session is not None:
+            session.close()
+
+
 def serialize_competence(comp: Competence, include_matrix: bool = False) -> dict:
     raw = comp.raw_data or {}
     formation_profile = raw.get("formation_profile") or {}
     status = comp.status.value if comp.status else None
     ql_code = normalize_qualification_level_code(comp.qualification_level)
+    public_code = getattr(comp, "public_code", None) or (f"RUS-PK-{int(comp.id):04d}" if comp.id else None)
     payload = {
         "id": comp.id,
+        "public_code": public_code,
         "name": comp.name,
         "status": status,
         "qualification_name": comp.qualification_name,
@@ -2537,6 +3051,10 @@ async def create_competence(data: CompetenceCreate, current_user: User = Depends
         session.add(new_comp)
         session.commit()
         session.refresh(new_comp)
+        if not new_comp.public_code:
+            new_comp.public_code = f"RUS-PK-{int(new_comp.id):04d}"
+            session.commit()
+            session.refresh(new_comp)
         return serialize_competence(new_comp, include_matrix=True)
     except HTTPException:
         session.rollback()
@@ -2552,7 +3070,7 @@ async def list_competences(current_user: User = Depends(get_current_user)):
     session = SessionLocal()
     try:
         query = session.query(Competence).filter(Competence.is_active == 1)
-        if current_user.role != "admin":
+        if not is_staff_role(current_user):
             query = query.filter(Competence.user_id == current_user.id)
         competences = query.all()
         return [serialize_competence(c) for c in competences]
@@ -2564,13 +3082,13 @@ async def get_competence_stats(current_user: User = Depends(get_current_user)):
     session = SessionLocal()
     try:
         query = session.query(Competence).filter(Competence.is_active == 1)
-        if current_user.role != "admin":
+        if not is_staff_role(current_user):
             query = query.filter(Competence.user_id == current_user.id)
         total = query.count()
         active = query.filter(Competence.status == CompetenceStatus.APPROVED).count()
         review = query.filter(Competence.status == CompetenceStatus.REVIEW).count()
         archived = session.query(Competence).filter(Competence.is_active == 0)
-        if current_user.role != "admin":
+        if not is_staff_role(current_user):
             archived = archived.filter(Competence.user_id == current_user.id)
         archived_count = archived.count()
         return {"total": total, "active": active, "review": review, "archived": archived_count}
@@ -2584,7 +3102,7 @@ async def get_competence(comp_id: int, current_user: User = Depends(get_current_
         comp = session.query(Competence).filter(Competence.id == comp_id).first()
         if not comp:
             raise HTTPException(404, "Компетенция не найдена")
-        if current_user.role != "admin" and comp.user_id != current_user.id:
+        if not is_staff_role(current_user) and comp.user_id != current_user.id:
             raise HTTPException(403, "Доступ запрещён")
         return serialize_competence(comp, include_matrix=True)
     finally:
@@ -2597,7 +3115,7 @@ async def update_competence(comp_id: int, data: CompetenceUpdate, current_user: 
         comp = session.query(Competence).filter(Competence.id == comp_id).first()
         if not comp:
             raise HTTPException(404, "Компетенция не найдена")
-        if current_user.role != "admin" and comp.user_id != current_user.id:
+        if not is_staff_role(current_user) and comp.user_id != current_user.id:
             raise HTTPException(403, "Доступ запрещён")
 
         update_data = data.dict(exclude_unset=True)
@@ -2686,7 +3204,7 @@ async def delete_competence(comp_id: int, current_user: User = Depends(get_curre
         comp = session.query(Competence).filter(Competence.id == comp_id).first()
         if not comp:
             raise HTTPException(404, "Компетенция не найдена")
-        if current_user.role != "admin" and comp.user_id != current_user.id:
+        if not is_staff_role(current_user) and comp.user_id != current_user.id:
             raise HTTPException(403, "Доступ запрещён")
         comp.is_active = 0
         session.commit()

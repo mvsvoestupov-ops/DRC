@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Search, RefreshCw, Database, Link2, Unlink, ClipboardList, Ban } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 import {
   getAssessmentTools,
   getAssessmentToolsStats,
@@ -43,6 +44,7 @@ function FilterStatCard({ active, icon: Icon, color, bg, value, label, onClick, 
 const FILTERS = { all: 'all', linked: 'linked', unlinked: 'unlinked', inactive: 'inactive' };
 
 const AssessmentToolsList = () => {
+  const { isAdmin } = useAuth();
   const [items, setItems] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -195,6 +197,7 @@ const AssessmentToolsList = () => {
         />
       </div>
 
+      {isAdmin ? (
       <div className="flex flex-wrap gap-3 items-center">
         <Button variant="secondary" disabled={fetchLoading} onClick={() => handleFetchFromNark(true)}>
           <RefreshCw className={`w-4 h-4 mr-2 ${fetchLoading ? 'animate-spin' : ''}`} />
@@ -213,6 +216,7 @@ const AssessmentToolsList = () => {
         </Button>
         {fetchMessage && <span className="text-sm text-muted-foreground">{fetchMessage}</span>}
       </div>
+      ) : null}
 
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">

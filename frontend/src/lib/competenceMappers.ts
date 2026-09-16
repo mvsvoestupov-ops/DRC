@@ -24,8 +24,9 @@ export function mapUiStatusToApi(status: UiStatus): string | undefined {
   return UI_TO_API[status] ?? undefined;
 }
 
-export function formatCompetenceId(id: number): string {
-  return `RUS-PK-${String(id).padStart(4, '0')}`;
+export function formatCompetenceId(id: number, publicCode?: string): string {
+  if (publicCode) return publicCode;
+  return `RUS-PK-${String(id).padStart(4, "0")}`;
 }
 
 export interface CompetenceListItem {
@@ -47,7 +48,7 @@ export function toListItem(comp: Competence): CompetenceListItem {
   const industry = comp.industry || raw.raw_data?.industry || '';
   return {
     id: comp.id,
-    displayId: formatCompetenceId(comp.id),
+    displayId: formatCompetenceId(comp.id, comp.public_code),
     title: comp.name,
     description,
     status: mapApiStatusToUi(comp.status, (comp as Competence & { is_active?: number }).is_active ?? 1),

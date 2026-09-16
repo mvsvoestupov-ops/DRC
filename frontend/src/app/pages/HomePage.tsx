@@ -59,7 +59,7 @@ function StatCard({ to, state, icon: Icon, color, bg, value, label, trend, loadi
 }
 
 export function HomePage() {
-  const { isAdmin } = useAuth();
+  const { isExpert } = useAuth();
   const [recentCompetencies, setRecentCompetencies] = useState<CompetenceListItem[]>([]);
   const [recentQualifications, setRecentQualifications] = useState<PublicQualificationItem[]>([]);
   const [industries, setIndustries] = useState<string[]>(defaultIndustries);
@@ -68,10 +68,10 @@ export function HomePage() {
   const [loading, setLoading] = useState(true);
   const [qualLoading, setQualLoading] = useState(true);
 
-  const qualListHref = isAdmin ? "/qualifications" : "/login";
-  const qualListState = isAdmin ? undefined : { from: "/qualifications" };
-  const qualDetailHref = (id: number) => (isAdmin ? `/qualifications/${id}` : "/login");
-  const qualDetailState = (id: number) => (isAdmin ? undefined : { from: `/qualifications/${id}` });
+  const qualListHref = isExpert ? "/qualifications" : "/login";
+  const qualListState = isExpert ? undefined : { from: "/qualifications" };
+  const qualDetailHref = (id: number) => (isExpert ? `/qualifications/${id}` : "/login");
+  const qualDetailState = (id: number) => (isExpert ? undefined : { from: `/qualifications/${id}` });
 
   useEffect(() => {
     Promise.all([

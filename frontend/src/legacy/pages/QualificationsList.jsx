@@ -15,6 +15,7 @@ import {
   CheckCircle2,
   ClipboardList,
 } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 import {
   getQualifications,
   getQualificationsStats,
@@ -61,7 +62,7 @@ const expectedPsCode = (code) => {
 /** Утратившие силу: ожидаемый код ПС отсутствует в Excel (кроме маркера «без ПС»). */
 const isRevokedQualification = (q, xlsxCodeSet) => {
   if (isWithoutPs(q)) return false;
-  if (!xlsxCodeSet || xlsxCodeSet.size === 0) return false;
+  if (!xlsxCodeSet || xlsxCodeSet.size < 500) return false;
   const expected = expectedPsCode(q.code);
   return Boolean(expected && !xlsxCodeSet.has(expected));
 };
@@ -106,6 +107,7 @@ function FilterStatCard({ active, icon: Icon, color, bg, value, label, onClick, 
 }
 
 const QualificationsList = () => {
+  const { isAdmin } = useAuth();
   const [allQualifications, setAllQualifications] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -146,7 +148,8 @@ const QualificationsList = () => {
       }
     }
     const total = allQualifications.length;
-    const revokedFinal = xlsxCodeSet.size > 0 ? revoked : stats.revoked ?? 0;
+    const xlsxReady = xlsxCodeSet.size >= 500;
+    const revokedFinal = xlsxReady ? revoked : stats.revoked ?? 0;
     return {
       total,
       active: Math.max(0, total - revokedFinal),
@@ -322,6 +325,7 @@ const QualificationsList = () => {
         />
       </div>
 
+      {isAdmin ? (
       <div className="flex flex-wrap gap-3 items-center">
         <Button
           variant="secondary"
@@ -350,6 +354,7 @@ const QualificationsList = () => {
           <span className="text-sm text-muted-foreground">{fetchMessage}</span>
         )}
       </div>
+      ) : null}
 
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">

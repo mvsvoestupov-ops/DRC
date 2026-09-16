@@ -31,6 +31,7 @@ import {
   getAreaLabel,
   getStandardAreaCode,
 } from '@/lib/profStandardAreas';
+import { useAuth } from '@/context/AuthContext';
 
 const MIN_MODAL_DISPLAY_TIME = 800;
 const RAW_PAGE_SIZE = 40;
@@ -48,6 +49,7 @@ function filterStandards(items, query) {
 }
 
 const StandardsPage = () => {
+  const { isAdmin } = useAuth();
   const [rawItems, setRawItems] = useState([]);
   const [rawTotal, setRawTotal] = useState(0);
   const [rawPage, setRawPage] = useState(1);
@@ -602,6 +604,7 @@ const StandardsPage = () => {
       </div>
 
       {/* Панель инструментов */}
+      {isAdmin ? (
       <div className="flex flex-wrap items-center gap-3">
         <input ref={fileInputRef} type="file" accept=".xml" onChange={handleUpload} className="hidden" />
         <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={loading}>
@@ -650,6 +653,9 @@ const StandardsPage = () => {
           <Landmark className={`w-4 h-4 mr-2 ${spkImportLoading ? 'animate-pulse' : ''}`} />
           {spkImportLoading ? 'Импорт СПК…' : 'Импорт СПК из Excel'}
         </Button>
+      </div>
+      ) : null}
+      <div className="flex flex-wrap items-center gap-3">
         <div className="ml-auto flex items-center gap-2">
           <Switch checked={viewMode === 'cards'} onCheckedChange={(checked) => setViewMode(checked ? 'cards' : 'tree')} />
           {viewMode === 'tree' ? <TreePine className="w-4 h-4 text-muted-foreground" /> : <LayoutGrid className="w-4 h-4 text-muted-foreground" />}

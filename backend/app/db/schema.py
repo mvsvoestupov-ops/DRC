@@ -89,6 +89,22 @@ def ensure_users_columns() -> list[str]:
     added: list[str] = []
     if _add_column_if_missing("users", "is_active", "is_active BOOLEAN DEFAULT 1"):
         added.append("users.is_active")
+    if _add_column_if_missing("users", "email_confirmed", "email_confirmed BOOLEAN DEFAULT 1"):
+        added.append("users.email_confirmed")
+    if _add_column_if_missing("users", "email_confirm_token", "email_confirm_token VARCHAR(128)"):
+        added.append("users.email_confirm_token")
+    if _add_column_if_missing("users", "email_confirm_expires", "email_confirm_expires DATETIME"):
+        added.append("users.email_confirm_expires")
+    for column, ddl in (
+        ("last_name", "last_name VARCHAR(255)"),
+        ("first_name", "first_name VARCHAR(255)"),
+        ("middle_name", "middle_name VARCHAR(255)"),
+        ("organization", "organization VARCHAR(255)"),
+        ("password_reset_token", "password_reset_token VARCHAR(128)"),
+        ("password_reset_expires", "password_reset_expires DATETIME"),
+    ):
+        if _add_column_if_missing("users", column, ddl):
+            added.append(f"users.{column}")
     return added
 
 

@@ -65,7 +65,7 @@ export function AdminPage() {
           .map(mapCompetenceToReview);
         setApplications(reviewItems);
       })
-      .catch(() => setError("Не удалось загрузить заявки. Требуется авторизация администратора."))
+      .catch(() => setError("Не удалось загрузить заявки. Нужны права эксперта или администратора."))
       .finally(() => setLoading(false));
   };
 

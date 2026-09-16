@@ -92,8 +92,23 @@ def read_xlsx_path_file() -> str | None:
             path = os.path.expandvars(os.path.expanduser(line))
             if os.path.isfile(path):
                 return path
-            raise FileNotFoundError(f"Файл из xlsx_path.txt не найден: {path}")
+            print(f"xlsx_path.txt: файл не найден, пропуск: {path}")
     return None
+
+
+def iter_xlsx_fallback_paths() -> list[str]:
+    repo_root = os.path.dirname(BACKEND_DIR)
+    candidates = [
+        os.environ.get("REESTR_PS_XLSX"),
+        os.environ.get("XLSX_PS_PATH"),
+        os.environ.get("PS_REGISTRY_XLSX"),
+        os.path.join(repo_root, "Reestr_PS.xlsx"),
+        os.path.join(BACKEND_DIR, "Reestr_PS.xlsx"),
+        "/opt/drc/Reestr_PS.xlsx",
+        "/opt/drc/backend/Reestr_PS.xlsx",
+        DEFAULT_XLSX,
+    ]
+    return [path for path in candidates if path]
 
 
 def list_downloads_xlsx() -> list[str]:
@@ -122,8 +137,10 @@ def resolve_xlsx_path(cli_path: str | None) -> str:
         print(f"XLSX из scripts/xlsx_path.txt: {from_file}")
         return from_file
 
-    if os.path.exists(DEFAULT_XLSX):
-        return DEFAULT_XLSX
+    for candidate in iter_xlsx_fallback_paths():
+        if os.path.isfile(candidate):
+            print(f"XLSX найден: {candidate}")
+            return candidate
 
     found = find_xlsx_in_downloads()
     if found:

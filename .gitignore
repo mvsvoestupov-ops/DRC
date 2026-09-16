@@ -57,3 +57,4 @@ chromedriver-linux64/
 debug_startup.py
 fix_parser.py
 test_debug.db
+PassForDRC_mail.txt

@@ -1,5 +1,5 @@
-import React, { useState, FormEvent } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router';
+import React, { useState, FormEvent, useEffect } from 'react';
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -11,12 +11,20 @@ export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [params] = useSearchParams();
   const from = (location.state as { from?: string })?.from || '/my-projects';
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState(params.get('confirmed') === '1' ? 'Email подтверждён. Войдите с логином и паролем из письма.' : '');
+
+  useEffect(() => {
+    if (params.get('confirmed') === '1') {
+      setNotice('Email подтверждён. Войдите с логином и паролем из письма.');
+    }
+  }, [params]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -26,12 +34,13 @@ export function LoginPage() {
     }
     setLoading(true);
     setError('');
-    const success = await login(email.trim(), password.trim());
-    setLoading(false);
-    if (success) {
+    try {
+      await login(email.trim(), password.trim());
       navigate(from);
-    } else {
-      setError('Неверный email или пароль');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Неверный email или пароль');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -80,6 +89,11 @@ export function LoginPage() {
                     </button>
                   </div>
                 </div>
+                {notice && !error && (
+                  <div className="text-sm text-emerald-800 bg-emerald-50 px-3 py-2 rounded-md">
+                    {notice}
+                  </div>
+                )}
                 {error && (
                   <div className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">
                     {error}
@@ -88,6 +102,11 @@ export function LoginPage() {
                 <Button type="submit" disabled={loading} className="w-full">
                   {loading ? 'Вход...' : 'Войти'}
                 </Button>
+                <p className="text-sm text-center">
+                  <Link to="/forgot-password" className="text-primary hover:underline">
+                    Забыли пароль?
+                  </Link>
+                </p>
               </div>
             </form>
           </CardContent>

@@ -1,1 +1,4 @@
+# Локально: файл из Downloads (если есть).
 C:\Users\Mihail\Downloads\Реестр профессиональных стандартов 18.08.2026.xlsx
+# Прод: положите тот же реестр сюда, либо используйте JSON-снимок scripts/output.
+/opt/drc/Reestr_PS.xlsx

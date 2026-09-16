@@ -1,6 +1,14 @@
 export interface User {
   email: string;
   role: string;
+  id?: number;
+  is_active?: boolean;
+  email_confirmed?: boolean;
+  last_name?: string;
+  first_name?: string;
+  middle_name?: string;
+  organization?: string;
+  created_at?: string;
 }
 
 export interface AuthState {
@@ -9,6 +17,9 @@ export interface AuthState {
   loading: boolean;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isExpert: boolean;
+  isImpersonating: boolean;
+  impersonatorEmail: string | null;
 }
 
 export interface Standard {
@@ -108,6 +119,7 @@ export interface SuggestProfileResponse {
 
 export interface Competence {
   id: number;
+  public_code?: string;
   code?: string;
   name: string;
   status: string;

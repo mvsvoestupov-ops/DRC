@@ -13,6 +13,7 @@ class Competence(Base):
     __tablename__ = 'competences'
 
     id = Column(Integer, primary_key=True)
+    public_code = Column(String(32), unique=True, nullable=True)  # RUS-PK-0001, stable external id
     # Основные поля
     name = Column(String(255), nullable=False)                 # название компетенции
     qualification_name = Column(String(255))                   # название квалификации

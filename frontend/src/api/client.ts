@@ -1,3 +1,5 @@
+import { User } from './types';
+
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:10000';
 
 class ApiClient {
@@ -36,6 +38,10 @@ class ApiClient {
       if (response.status === 401) {
         localStorage.removeItem('token');
         localStorage.removeItem('role');
+        localStorage.removeItem('admin_token');
+        localStorage.removeItem('admin_role');
+        localStorage.removeItem('admin_email');
+        localStorage.removeItem('impersonating_email');
         window.dispatchEvent(new Event('auth:logout'));
       }
       throw error;
@@ -55,6 +61,9 @@ class ApiClient {
 
   put = <T>(endpoint: string, body?: unknown, options?: RequestInit) =>
     this.request<T>('PUT', endpoint, body, options);
+
+  patch = <T>(endpoint: string, body?: unknown, options?: RequestInit) =>
+    this.request<T>('PATCH', endpoint, body, options);
 
   delete = <T>(endpoint: string, options?: RequestInit) =>
     this.request<T>('DELETE', endpoint, undefined, options);
@@ -219,7 +228,63 @@ class ApiClient {
       category ? `/fgos/stats?category=${encodeURIComponent(category)}` : '/fgos/stats'
     );
 
-  getMe = () => this.get<{ email: string; role: string }>('/users/me');
+  getMe = () => this.get<User>('/users/me');
+  updateMe = (data: {
+    last_name?: string;
+    first_name?: string;
+    middle_name?: string;
+    organization?: string;
+    current_password?: string;
+    new_password?: string;
+  }) => this.patch<User>('/users/me', data);
+  listUsers = () => this.get<User[]>('/users');
+  createUser = (data: {
+    email: string;
+    password?: string;
+    role?: string;
+    is_active?: boolean;
+    last_name: string;
+    first_name: string;
+    middle_name?: string;
+    organization: string;
+  }) => this.post<User>('/users', data);
+  updateUser = (
+    id: number,
+    data: {
+      role?: string;
+      is_active?: boolean;
+      password?: string;
+      last_name?: string;
+      first_name?: string;
+      middle_name?: string;
+      organization?: string;
+    },
+  ) => this.patch<User>(`/users/${id}`, data);
+  resendInvite = (id: number) => this.post<User>(`/users/${id}/resend-invite`, {});
+  confirmEmail = (token: string) =>
+    this.get<{ ok: boolean; email: string; message: string }>(
+      `/users/confirm-email?token=${encodeURIComponent(token)}`,
+    );
+  signup = (data: {
+    email: string;
+    password: string;
+    last_name: string;
+    first_name: string;
+    middle_name?: string;
+    organization: string;
+  }) => this.post<{ ok: boolean; email: string; message: string }>('/users/signup', data);
+  forgotPassword = (email: string) =>
+    this.post<{ ok: boolean; message: string }>('/users/forgot-password', { email });
+  resetPassword = (token: string, password: string) =>
+    this.post<{ ok: boolean; message: string }>('/users/reset-password', { token, password });
+  impersonateUser = (id: number) =>
+    this.post<{
+      access_token: string;
+      token_type: string;
+      role: string;
+      email: string;
+      impersonator: string;
+    }>(`/users/${id}/impersonate`, {});
 
   // Reference — уровни квалификации и сформированности (приказ №148н)
   getReferenceBundle = () => this.get<any>('/reference');
