@@ -1,7 +1,16 @@
-import { defineConfig } from 'vite'
+import fs from 'fs'
 import path from 'path'
+import { defineConfig } from 'vite'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
+
+const publicDir = path.resolve(__dirname, 'public')
+const srcIcon = path.resolve(__dirname, '../iconDRC.png')
+if (fs.existsSync(srcIcon)) {
+  fs.mkdirSync(publicDir, { recursive: true })
+  fs.copyFileSync(srcIcon, path.join(publicDir, 'favicon.png'))
+  fs.copyFileSync(srcIcon, path.join(publicDir, 'apple-touch-icon.png'))
+}
 
 
 function figmaAssetResolver() {
