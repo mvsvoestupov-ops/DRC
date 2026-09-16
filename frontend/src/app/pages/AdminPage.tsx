@@ -3,10 +3,14 @@ import { Link } from "react-router";
 import { CheckCircle, XCircle, AlertCircle, MessageSquare, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/api/client";
-import type { Competence } from "@/api/types";
+import type { Competence, User } from "@/api/types";
 import { formatCompetenceId } from "@/lib/competenceMappers";
+import { formatUserName } from "@/lib/userDisplay";
 import { PageHeader } from "@/app/components/PageHeader";
 import { PageShell } from "@/app/components/PageShell";
+import { useAuth } from "@/context/AuthContext";
+
+const MIN_REVIEWERS = 3;
 
 interface ReviewItem {
   id: number;
@@ -16,6 +20,7 @@ interface ReviewItem {
   submittedDate: string;
   status: "pending" | "approved" | "rejected" | "revision";
   expert: string;
+  reviewers: User[];
   comments: { author: string; date: string; text: string }[];
 }
 
@@ -26,6 +31,7 @@ function mapCompetenceToReview(comp: Competence): ReviewItem {
   else if (apiStatus === "проект") status = "revision";
   else if (apiStatus === "на экспертизе") status = "pending";
 
+  const reviewers = comp.reviewers || [];
   const comments = (comp as Competence & { validation_notes?: string }).validation_notes
     ? [{
         author: (comp as Competence & { validator?: string }).validator || "Эксперт",
@@ -41,19 +47,24 @@ function mapCompetenceToReview(comp: Competence): ReviewItem {
     submittedBy: comp.developer || "—",
     submittedDate: comp.created_at || new Date().toISOString(),
     status,
-    expert: (comp as Competence & { validator?: string }).validator || "—",
+    expert: reviewers.map((row) => formatUserName(row) || row.email).join(", ") || "Не назначены",
+    reviewers,
     comments,
   };
 }
 
 export function AdminPage() {
-  const [filter, setFilter] = useState<string>("all");
+  const { isModerator, isExpert, isAdmin } = useAuth();
+  const [filter, setFilter] = useState<string>(isModerator && !isAdmin ? "pending" : "all");
   const [selectedApplication, setSelectedApplication] = useState<ReviewItem | null>(null);
   const [commentText, setCommentText] = useState("");
   const [applications, setApplications] = useState<ReviewItem[]>([]);
+  const [experts, setExperts] = useState<User[]>([]);
+  const [selectedExpertIds, setSelectedExpertIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
 
   const loadApplications = () => {
     setLoading(true);
@@ -64,14 +75,31 @@ export function AdminPage() {
           .filter((c) => c.status === "на экспертизе" || c.status === "утверждена" || c.status === "проект")
           .map(mapCompetenceToReview);
         setApplications(reviewItems);
+        setSelectedApplication((prev) => {
+          if (!prev) return prev;
+          return reviewItems.find((item) => item.id === prev.id) || null;
+        });
       })
-      .catch(() => setError("Не удалось загрузить заявки. Нужны права эксперта или администратора."))
+      .catch(() => setError("Не удалось загрузить заявки."))
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
     loadApplications();
-  }, []);
+    if (isModerator) {
+      apiClient.listExperts()
+        .then(setExperts)
+        .catch(() => setError("Не удалось загрузить список экспертов"));
+    }
+  }, [isModerator]);
+
+  useEffect(() => {
+    if (selectedApplication) {
+      setSelectedExpertIds(selectedApplication.reviewers.map((row) => Number(row.id)).filter(Boolean));
+    } else {
+      setSelectedExpertIds([]);
+    }
+  }, [selectedApplication]);
 
   const filteredApplications = filter === "all"
     ? applications
@@ -93,6 +121,7 @@ export function AdminPage() {
 
   const updateStatus = async (app: ReviewItem, status: string, notes?: string) => {
     setActionLoading(true);
+    setError("");
     try {
       await apiClient.updateCompetence(app.id, {
         status,
@@ -101,8 +130,8 @@ export function AdminPage() {
       loadApplications();
       setSelectedApplication(null);
       setCommentText("");
-    } catch {
-      setError("Ошибка при обновлении статуса");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Ошибка при обновлении статуса");
     } finally {
       setActionLoading(false);
     }
@@ -118,19 +147,55 @@ export function AdminPage() {
     }
   };
 
+  const toggleExpert = (id: number) => {
+    setSelectedExpertIds((prev) => (
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    ));
+  };
+
+  const handleAssign = async () => {
+    if (!selectedApplication) return;
+    if (selectedExpertIds.length < MIN_REVIEWERS) {
+      setError(`Назначьте не менее ${MIN_REVIEWERS} экспертов`);
+      return;
+    }
+    setActionLoading(true);
+    setError("");
+    setNotice("");
+    try {
+      await apiClient.assignReviewers(selectedApplication.id, selectedExpertIds);
+      setNotice("Эксперты назначены");
+      loadApplications();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Не удалось назначить экспертов");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const canReview = isExpert && selectedApplication?.status === "pending";
+  const canAssign = isModerator && selectedApplication?.status === "pending";
+
   return (
     <PageShell>
       <PageHeader
-        title="Панель модератора"
-        description="Управление заявками на новые компетенции"
+        title={isModerator ? "Панель модератора" : "Панель эксперта"}
+        description={
+          isModerator
+            ? "Компетенции на рассмотрении. Назначьте не менее трёх экспертов."
+            : "Утверждённые компетенции и заявки, назначенные вам на экспертизу."
+        }
       />
+      {notice && (
+        <p className="mb-4 text-sm text-emerald-800 bg-emerald-50 px-3 py-2 rounded-md">{notice}</p>
+      )}
       {error && (
         <p className="mb-6 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-2">{error}</p>
       )}
 
       <div className="grid grid-cols-4 gap-4 mb-8">
         {[
-          { icon: AlertCircle, color: "text-gray-400", label: "Всего заявок", value: applications.length },
+          { icon: AlertCircle, color: "text-gray-400", label: "Всего", value: applications.length },
           { icon: Calendar, color: "text-yellow-400", label: "На рассмотрении", value: applications.filter(a => a.status === "pending").length, valueColor: "text-yellow-600" },
           { icon: CheckCircle, color: "text-green-400", label: "Одобрено", value: applications.filter(a => a.status === "approved").length, valueColor: "text-green-600" },
           { icon: MessageSquare, color: "text-blue-400", label: "На доработке", value: applications.filter(a => a.status === "revision").length, valueColor: "text-blue-600" },
@@ -176,11 +241,13 @@ export function AdminPage() {
           <div className="surface overflow-hidden">
             {loading ? (
               <div className="text-center py-12 text-gray-500">Загрузка...</div>
+            ) : filteredApplications.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">Нет компетенций для отображения</div>
             ) : (
               <table className="data-table min-w-full">
                 <thead>
                   <tr>
-                    {["ID заявки", "Название компетенции", "Дата подачи", "Статус", "Эксперт"].map((head) => (
+                    {["ID заявки", "Название компетенции", "Дата подачи", "Статус", "Эксперты"].map((head) => (
                       <th key={head}>{head}</th>
                     ))}
                   </tr>
@@ -207,7 +274,12 @@ export function AdminPage() {
                           {statusLabels[app.status]}
                         </span>
                       </td>
-                      <td className="whitespace-nowrap text-gray-500">{app.expert}</td>
+                      <td className="text-gray-500 max-w-[220px]">
+                        <span className="line-clamp-2">{app.expert}</span>
+                        {app.status === "pending" && app.reviewers.length < MIN_REVIEWERS ? (
+                          <span className="block text-xs text-amber-700 mt-1">Нужно не менее {MIN_REVIEWERS}</span>
+                        ) : null}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -242,72 +314,118 @@ export function AdminPage() {
                 </div>
               </div>
 
-              <div className="border-t border-gray-200 pt-4 mb-6">
-                <h3 className="text-sm font-medium text-gray-900 mb-3">История комментариев</h3>
-                {selectedApplication.comments.length > 0 ? (
-                  <div className="space-y-3">
-                    {selectedApplication.comments.map((comment, index) => (
-                      <div key={index} className="bg-secondary rounded-lg p-3">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs font-medium text-gray-900">{comment.author}</span>
-                          <span className="text-xs text-gray-500">
-                            {new Date(comment.date).toLocaleDateString("ru-RU")}
+              {canAssign ? (
+                <div className="border-t border-gray-200 pt-4 mb-6">
+                  <h3 className="text-sm font-medium text-gray-900 mb-2">Назначить экспертов</h3>
+                  <p className="text-xs text-gray-500 mb-3">Выберите не менее {MIN_REVIEWERS} экспертов.</p>
+                  <div className="max-h-56 overflow-y-auto space-y-2 border border-gray-200 rounded-md p-2">
+                    {experts.length === 0 ? (
+                      <p className="text-sm text-gray-500">Нет активных экспертов. Добавьте роль «Эксперт» в списке пользователей.</p>
+                    ) : experts.map((expert) => {
+                      const id = Number(expert.id);
+                      return (
+                        <label key={id} className="flex items-start gap-2 text-sm cursor-pointer">
+                          <input
+                            type="checkbox"
+                            className="mt-1"
+                            checked={selectedExpertIds.includes(id)}
+                            onChange={() => toggleExpert(id)}
+                          />
+                          <span>
+                            <span className="font-medium">{formatUserName(expert) || expert.email}</span>
+                            <span className="block text-xs text-gray-500">{expert.email}</span>
                           </span>
-                        </div>
-                        <p className="text-sm text-gray-700">{comment.text}</p>
-                      </div>
-                    ))}
+                        </label>
+                      );
+                    })}
                   </div>
-                ) : (
-                  <p className="text-sm text-gray-500">Комментариев пока нет</p>
-                )}
-              </div>
+                  <p className="text-xs text-gray-500 mt-2">Выбрано: {selectedExpertIds.length}</p>
+                  <Button
+                    className="mt-3 w-full"
+                    onClick={handleAssign}
+                    disabled={actionLoading || selectedExpertIds.length < MIN_REVIEWERS}
+                  >
+                    Сохранить назначение
+                  </Button>
+                </div>
+              ) : null}
 
-              <div className="border-t border-gray-200 pt-4 mb-6">
-                <h3 className="text-sm font-medium text-gray-900 mb-2">Добавить комментарий</h3>
-                <textarea
-                  value={commentText}
-                  onChange={(e) => setCommentText(e.target.value)}
-                  rows={3}
-                  className="form-control"
-                  placeholder="Введите комментарий..."
-                />
-                <Button
-                  variant="secondary"
-                  onClick={addComment}
-                  disabled={actionLoading}
-                  className="mt-2 w-full"
-                >
-                  Добавить комментарий
-                </Button>
-              </div>
+              {isExpert ? (
+                <>
+                  <div className="border-t border-gray-200 pt-4 mb-6">
+                    <h3 className="text-sm font-medium text-gray-900 mb-3">История комментариев</h3>
+                    {selectedApplication.comments.length > 0 ? (
+                      <div className="space-y-3">
+                        {selectedApplication.comments.map((comment, index) => (
+                          <div key={index} className="bg-secondary rounded-lg p-3">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs font-medium text-gray-900">{comment.author}</span>
+                              <span className="text-xs text-gray-500">
+                                {new Date(comment.date).toLocaleDateString("ru-RU")}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-700">{comment.text}</p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500">Комментариев пока нет</p>
+                    )}
+                  </div>
 
-              <div className="space-y-2">
-                <Button
-                  onClick={() => handleApprove(selectedApplication)}
-                  disabled={selectedApplication.status === "approved" || actionLoading}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 gap-2"
-                >
-                  <CheckCircle className="w-4 h-4" />
-                  Утвердить
-                </Button>
-                <Button
-                  onClick={() => handleRevision(selectedApplication)}
-                  disabled={selectedApplication.status === "approved" || actionLoading}
-                  className="w-full gap-2 disabled:opacity-50"
-                >
-                  <MessageSquare className="w-4 h-4" />
-                  Отправить на доработку
-                </Button>
-                <Button
-                  onClick={() => handleReject(selectedApplication)}
-                  disabled={selectedApplication.status === "approved" || actionLoading}
-                  className="w-full bg-red-600 hover:bg-red-700 text-white disabled:opacity-50 gap-2"
-                >
-                  <XCircle className="w-4 h-4" />
-                  Отклонить
-                </Button>
-              </div>
+                  {canReview ? (
+                    <>
+                      <div className="border-t border-gray-200 pt-4 mb-6">
+                        <h3 className="text-sm font-medium text-gray-900 mb-2">Добавить комментарий</h3>
+                        <textarea
+                          value={commentText}
+                          onChange={(e) => setCommentText(e.target.value)}
+                          rows={3}
+                          className="form-control"
+                          placeholder="Введите комментарий..."
+                        />
+                        <Button
+                          variant="secondary"
+                          onClick={addComment}
+                          disabled={actionLoading}
+                          className="mt-2 w-full"
+                        >
+                          Добавить комментарий
+                        </Button>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Button
+                          onClick={() => handleApprove(selectedApplication)}
+                          disabled={actionLoading}
+                          className="w-full bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 gap-2"
+                        >
+                          <CheckCircle className="w-4 h-4" />
+                          Утвердить
+                        </Button>
+                        <Button
+                          onClick={() => handleRevision(selectedApplication)}
+                          disabled={actionLoading}
+                          className="w-full gap-2 disabled:opacity-50"
+                        >
+                          <MessageSquare className="w-4 h-4" />
+                          Отправить на доработку
+                        </Button>
+                        <Button
+                          onClick={() => handleReject(selectedApplication)}
+                          disabled={actionLoading}
+                          className="w-full bg-red-600 hover:bg-red-700 text-white disabled:opacity-50 gap-2"
+                        >
+                          <XCircle className="w-4 h-4" />
+                          Отклонить
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-sm text-gray-500">Утверждённые компетенции доступны для просмотра.</p>
+                  )}
+                </>
+              ) : null}
             </div>
           </div>
         )}

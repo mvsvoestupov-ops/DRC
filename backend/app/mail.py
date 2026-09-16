@@ -6,7 +6,9 @@ import html
 import os
 import secrets
 import smtplib
+import socket
 import ssl
+import time
 from datetime import datetime, timedelta
 from email.message import EmailMessage
 from pathlib import Path
@@ -171,6 +173,35 @@ def _invite_bodies(login: str, password: str | None, confirm_url: str) -> tuple[
     return text, html_body
 
 
+def _ipv4_socket(host: str, port: int, timeout: float):
+    last_error: OSError | None = None
+    for family, socktype, proto, _, sockaddr in socket.getaddrinfo(
+        host, port, socket.AF_INET, socket.SOCK_STREAM
+    ):
+        sock = socket.socket(family, socktype, proto)
+        try:
+            sock.settimeout(timeout)
+            sock.connect(sockaddr)
+            return sock
+        except OSError as exc:
+            last_error = exc
+            sock.close()
+    if last_error:
+        raise last_error
+    raise OSError(f"Нет IPv4-адреса для {host}")
+
+
+class _SMTP_SSL(smtplib.SMTP_SSL):
+    def _get_socket(self, host, port, timeout):
+        sock = _ipv4_socket(host, port, timeout)
+        return self.context.wrap_socket(sock, server_hostname=self._host or host)
+
+
+class _SMTP(smtplib.SMTP):
+    def _get_socket(self, host, port, timeout):
+        return _ipv4_socket(host, port, timeout)
+
+
 def send_email(to_addr: str, subject: str, text_body: str, html_body: str | None = None) -> None:
     settings = smtp_settings()
     if not settings["password"]:
@@ -189,16 +220,19 @@ def send_email(to_addr: str, subject: str, text_body: str, html_body: str | None
     context = ssl.create_default_context()
     port = settings["port"]
     host = settings["host"]
+    timeout = float(os.getenv("SMTP_TIMEOUT") or "10")
+    started = time.monotonic()
     try:
         if port == 465:
-            with smtplib.SMTP_SSL(host, port, timeout=25, context=context) as server:
+            with _SMTP_SSL(host, port, timeout=timeout, context=context) as server:
                 server.login(settings["user"], settings["password"])
                 server.send_message(message)
         else:
-            with smtplib.SMTP(host, port, timeout=25) as server:
+            with _SMTP(host, port, timeout=timeout) as server:
                 server.starttls(context=context)
                 server.login(settings["user"], settings["password"])
                 server.send_message(message)
+        print(f"SMTP sent to {to_addr} in {time.monotonic() - started:.1f}s")
     except smtplib.SMTPAuthenticationError as exc:
         raise RuntimeError(
             "Яндекс отклонил вход в почту. Проверьте SMTP_USER и пароль приложения."

@@ -238,6 +238,7 @@ class ApiClient {
     new_password?: string;
   }) => this.patch<User>('/users/me', data);
   listUsers = () => this.get<User[]>('/users');
+  listExperts = () => this.get<User[]>('/users/experts');
   createUser = (data: {
     email: string;
     password?: string;
@@ -376,10 +377,12 @@ class ApiClient {
   getPublicCompetenceById = (id: number) => this.get<any>(`/competences/public/${id}`);
 
   // Competences — авторизованные операции
-  getCompetences = () => this.get<any[]>('/competences');
+  getCompetences = (mine = false) => this.get<any[]>(mine ? '/competences?mine=true' : '/competences');
   getCompetenceById = (id: number) => this.get<any>(`/competences/${id}`);
   createCompetence = (data: any) => this.post('/competences', data);
   updateCompetence = (id: number, data: any) => this.put(`/competences/${id}`, data);
+  assignReviewers = (id: number, expertIds: number[]) =>
+    this.put<any>(`/competences/${id}/reviewers`, { expert_ids: expertIds });
   deleteCompetence = (id: number) => this.delete(`/competences/${id}`);
   getCompetenceStats = () => this.get<{ total: number; active: number; review: number; archived: number }>('/competences/stats');
 

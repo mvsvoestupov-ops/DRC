@@ -7,6 +7,7 @@ import { Plus, Trash2, Eye } from 'lucide-react';
 import { apiClient } from '@/api/client';
 import type { Competence } from '@/api/types';
 import { PageHeader } from '@/app/components/PageHeader';
+import { useAuth } from '@/context/AuthContext';
 
 const getStatusBadge = (status: string) => {
   const map: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; label: string }> = {
@@ -20,6 +21,8 @@ const getStatusBadge = (status: string) => {
 
 export function MyProjectsPage() {
   const navigate = useNavigate();
+  const { isAdmin } = useAuth();
+  const createHref = isAdmin ? '/strategic-session' : '/new';
   const [projects, setProjects] = useState<Competence[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<{ type: string; text: string }>({ type: '', text: '' });
@@ -27,7 +30,7 @@ export function MyProjectsPage() {
   const loadProjects = () => {
     setLoading(true);
     setMessage({ type: '', text: '' });
-    apiClient.getCompetences()
+    apiClient.getCompetences(true)
       .then(res => {
         setProjects(res);
         setLoading(false);
@@ -59,7 +62,7 @@ export function MyProjectsPage() {
         title="Мои проекты"
         description="Управление компетенциями и проектами"
         actions={
-          <Button onClick={() => navigate('/strategic-session')}>
+          <Button onClick={() => navigate(createHref)}>
             <Plus className="w-4 h-4 mr-2" />
             Создать новый проект
           </Button>
@@ -81,7 +84,7 @@ export function MyProjectsPage() {
           <CardContent className="p-12 text-center">
             <Plus className="w-12 h-12 mx-auto text-muted-foreground/50 mb-3" />
             <p className="text-muted-foreground">Нет проектов</p>
-            <Button variant="outline" className="mt-4" onClick={() => navigate('/strategic-session')}>
+            <Button variant="outline" className="mt-4" onClick={() => navigate(createHref)}>
               Создать проект
             </Button>
           </CardContent>

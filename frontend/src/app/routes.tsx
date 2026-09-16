@@ -1,7 +1,7 @@
 import { createBrowserRouter } from "react-router";
 import { Layout } from "./components/Layout";
 import { PageShell } from "./components/PageShell";
-import { RequireAuth, RequireAdmin, RequireExpert } from "./components/RequireAuth";
+import { RequireAuth, RequireAdmin, RequireStaff } from "./components/RequireAuth";
 import { HomePage } from "./pages/HomePage";
 import { SearchPage } from "./pages/SearchPage";
 import { CompetencyDetailPage } from "./pages/CompetencyDetailPage";
@@ -53,87 +53,87 @@ export const router = createBrowserRouter([
       {
         path: "strategic-session",
         element: (
-          <RequireAuth>
+          <RequireAdmin>
             <StrategicSessionPage />
-          </RequireAuth>
+          </RequireAdmin>
         ),
       },
       {
         path: "standards",
         element: (
-          <RequireExpert>
+          <RequireAdmin>
             <WorkspaceShell>
               <StandardsPage />
             </WorkspaceShell>
-          </RequireExpert>
+          </RequireAdmin>
         ),
       },
       {
         path: "qualifications",
         element: (
-          <RequireExpert>
+          <RequireAdmin>
             <WorkspaceShell>
               <QualificationsListPage />
             </WorkspaceShell>
-          </RequireExpert>
+          </RequireAdmin>
         ),
       },
       {
         path: "qualifications/:id",
         element: (
-          <RequireExpert>
+          <RequireAdmin>
             <WorkspaceShell>
               <QualificationDetailPage />
             </WorkspaceShell>
-          </RequireExpert>
+          </RequireAdmin>
         ),
       },
       {
         path: "assessment-tools",
         element: (
-          <RequireExpert>
+          <RequireAdmin>
             <WorkspaceShell>
               <AssessmentToolsListPage />
             </WorkspaceShell>
-          </RequireExpert>
+          </RequireAdmin>
         ),
       },
       {
         path: "assessment-tools/:id",
         element: (
-          <RequireExpert>
+          <RequireAdmin>
             <WorkspaceShell>
               <AssessmentToolDetailPage />
             </WorkspaceShell>
-          </RequireExpert>
+          </RequireAdmin>
         ),
       },
       {
         path: "fgos",
         element: (
-          <RequireExpert>
+          <RequireAdmin>
             <WorkspaceShell>
               <FgosListPage />
             </WorkspaceShell>
-          </RequireExpert>
+          </RequireAdmin>
         ),
       },
       {
         path: "fgos/:id",
         element: (
-          <RequireExpert>
+          <RequireAdmin>
             <WorkspaceShell>
               <FgosDetailPage />
             </WorkspaceShell>
-          </RequireExpert>
+          </RequireAdmin>
         ),
       },
       {
         path: "admin",
         element: (
-          <RequireExpert>
+          <RequireStaff>
             <AdminPage />
-          </RequireExpert>
+          </RequireStaff>
         ),
       },
       {

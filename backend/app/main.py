@@ -24,7 +24,7 @@ from .db import SessionLocal, Base, engine
 from .db.raw_models import StandardRaw, GeneralizedFunctionRaw, ParticularFunctionRaw
 from .db.qualifications_models import Qualification
 from .db.assessment_tools_models import AssessmentTool
-from .db.competence_models import Competence, CompetenceStatus
+from .db.competence_models import Competence, CompetenceStatus, CompetenceReviewer
 from .db.feedback_models import Feedback
 from .db.user_models import User
 from .db.registration_models import Registration
@@ -68,10 +68,10 @@ from .qualification_links import (
 from .progress import qualifications_fetch_progress, assessment_tools_fetch_progress
 from .auth import (
     create_access_token, get_current_user,
-    get_current_admin, get_current_expert, get_password_hash, oauth2_scheme,
+    get_current_admin, get_current_moderator, get_password_hash, oauth2_scheme,
     get_current_user_or_api_key, get_token_claim, is_user_active,
     is_email_confirmed, user_if_password_ok, UNCONFIRMED_EMAIL_DETAIL,
-    generate_user_password, verify_password, is_staff_role,
+    generate_user_password, verify_password, is_staff_role, is_moderator_role, user_role,
 )
 from .mail import (
     confirmation_link,
@@ -402,7 +402,12 @@ class ResetPasswordRequest(BaseModel):
     password: str
 
 
-USER_ROLES = ("user", "expert", "admin")
+class ReviewerAssign(BaseModel):
+    expert_ids: List[int]
+
+
+USER_ROLES = ("user", "expert", "moderator", "admin")
+MIN_REVIEWERS = 3
 
 
 def _serialize_user(user: User) -> dict:
@@ -436,7 +441,7 @@ def _normalize_person_field(value: Optional[str], *, required: bool, label: str,
 def _normalize_role(role: str) -> str:
     value = (role or "user").strip().lower()
     if value not in USER_ROLES:
-        raise HTTPException(400, "Роль должна быть user, expert или admin")
+        raise HTTPException(400, "Роль должна быть user, expert, moderator или admin")
     return value
 
 
@@ -519,6 +524,16 @@ async def list_users(current_user: User = Depends(get_current_admin)):
         session.close()
 
 
+@app.get("/users/experts")
+async def list_experts(current_user: User = Depends(get_current_moderator)):
+    session = SessionLocal()
+    try:
+        rows = session.query(User).filter(func.lower(User.role) == "expert").order_by(User.id.asc()).all()
+        return [_serialize_user(row) for row in rows if is_user_active(row)]
+    finally:
+        session.close()
+
+
 def _create_user_record(
     session,
     email: str,
@@ -560,13 +575,38 @@ def _create_user_record(
     return user
 
 
-def _deliver_invite(user: User, password: str | None, request: Request) -> None:
+def _send_invite_safe(email: str, password: str | None, confirm_url: str) -> None:
+    try:
+        send_invite_email(email, password, confirm_url)
+    except Exception as exc:
+        print(f"Invite email failed for {email}: {exc}")
+
+
+def _send_reset_safe(email: str, reset_url: str) -> None:
+    try:
+        send_reset_password_email(email, reset_url)
+    except Exception as exc:
+        print(f"Reset email failed for {email}: {exc}")
+
+
+def _queue_invite(
+    background_tasks: BackgroundTasks,
+    user: User,
+    password: str | None,
+    request: Request,
+) -> None:
     raw_token = issue_confirm_token(user)
-    send_invite_email(user.email, password, confirmation_link(frontend_base_url(request), raw_token))
+    confirm_url = confirmation_link(frontend_base_url(request), raw_token)
+    background_tasks.add_task(_send_invite_safe, user.email, password, confirm_url)
 
 
 @app.post("/users")
-async def create_user(data: UserCreate, request: Request, current_user: User = Depends(get_current_admin)):
+async def create_user(
+    data: UserCreate,
+    request: Request,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_admin),
+):
     session = SessionLocal()
     try:
         password = (data.password or "").strip() or generate_user_password()
@@ -582,7 +622,7 @@ async def create_user(data: UserCreate, request: Request, current_user: User = D
             data.middle_name or "",
             data.organization,
         )
-        _deliver_invite(user, password, request)
+        _queue_invite(background_tasks, user, password, request)
         session.commit()
         session.refresh(user)
         return _serialize_user(user)
@@ -591,7 +631,7 @@ async def create_user(data: UserCreate, request: Request, current_user: User = D
         raise
     except Exception as exc:
         session.rollback()
-        raise HTTPException(status_code=502, detail=str(exc) or "Не удалось отправить письмо")
+        raise HTTPException(status_code=500, detail=str(exc) or "Не удалось создать пользователя")
     finally:
         session.close()
 
@@ -599,6 +639,7 @@ async def create_user(data: UserCreate, request: Request, current_user: User = D
 @app.post("/users/register")
 async def register_user(
     request: Request,
+    background_tasks: BackgroundTasks,
     email: str,
     password: str = "",
     role: str = "user",
@@ -615,7 +656,7 @@ async def register_user(
             session, email, password, role, True, False,
             last_name, first_name, middle_name, organization,
         )
-        _deliver_invite(user, password, request)
+        _queue_invite(background_tasks, user, password, request)
         session.commit()
         session.refresh(user)
         return {"message": "User created", "email": user.email, **_serialize_user(user)}
@@ -624,13 +665,13 @@ async def register_user(
         raise
     except Exception as exc:
         session.rollback()
-        raise HTTPException(status_code=502, detail=str(exc) or "Не удалось отправить письмо")
+        raise HTTPException(status_code=500, detail=str(exc) or "Не удалось создать пользователя")
     finally:
         session.close()
 
 
 @app.post("/users/signup")
-async def signup_user(data: UserSignup, request: Request):
+async def signup_user(data: UserSignup, request: Request, background_tasks: BackgroundTasks):
     session = SessionLocal()
     try:
         user = _create_user_record(
@@ -645,7 +686,7 @@ async def signup_user(data: UserSignup, request: Request):
             data.middle_name or "",
             data.organization,
         )
-        _deliver_invite(user, None, request)
+        _queue_invite(background_tasks, user, None, request)
         session.commit()
         return {
             "ok": True,
@@ -657,13 +698,17 @@ async def signup_user(data: UserSignup, request: Request):
         raise
     except Exception as exc:
         session.rollback()
-        raise HTTPException(status_code=502, detail=str(exc) or "Не удалось отправить письмо")
+        raise HTTPException(status_code=500, detail=str(exc) or "Не удалось зарегистрироваться")
     finally:
         session.close()
 
 
 @app.post("/users/forgot-password")
-async def forgot_password(data: ForgotPasswordRequest, request: Request):
+async def forgot_password(
+    data: ForgotPasswordRequest,
+    request: Request,
+    background_tasks: BackgroundTasks,
+):
     message = "Если такой email есть в системе, мы отправили письмо со ссылкой для сброса пароля."
     email_n = _normalize_email(data.email)
     session = SessionLocal()
@@ -671,18 +716,16 @@ async def forgot_password(data: ForgotPasswordRequest, request: Request):
         user = session.query(User).filter(func.lower(User.email) == email_n).first()
         if user and is_user_active(user) and is_email_confirmed(user):
             raw = issue_reset_token(user)
-            send_reset_password_email(
-                user.email,
-                reset_password_link(frontend_base_url(request), raw),
-            )
+            reset_url = reset_password_link(frontend_base_url(request), raw)
             session.commit()
+            background_tasks.add_task(_send_reset_safe, user.email, reset_url)
         return {"ok": True, "message": message}
     except HTTPException:
         session.rollback()
         raise
     except Exception as exc:
         session.rollback()
-        raise HTTPException(status_code=502, detail=str(exc) or "Не удалось отправить письмо")
+        raise HTTPException(status_code=500, detail=str(exc) or "Не удалось обработать запрос")
     finally:
         session.close()
 
@@ -743,7 +786,12 @@ async def confirm_email(token: str = Query(...)):
 
 
 @app.post("/users/{user_id}/resend-invite")
-async def resend_invite(user_id: int, request: Request, current_user: User = Depends(get_current_admin)):
+async def resend_invite(
+    user_id: int,
+    request: Request,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_admin),
+):
     session = SessionLocal()
     try:
         user = session.query(User).filter(User.id == user_id).first()
@@ -751,15 +799,12 @@ async def resend_invite(user_id: int, request: Request, current_user: User = Dep
             raise HTTPException(404, "Пользователь не найден")
         if is_email_confirmed(user):
             raise HTTPException(400, "Email уже подтверждён")
-        _deliver_invite(user, None, request)
+        _queue_invite(background_tasks, user, None, request)
         session.commit()
         return _serialize_user(user)
     except HTTPException:
         session.rollback()
         raise
-    except Exception as exc:
-        session.rollback()
-        raise HTTPException(status_code=502, detail=str(exc) or "Не удалось отправить письмо")
     finally:
         session.close()
 
@@ -2307,7 +2352,7 @@ def serialize_assessment_tool(tool: AssessmentTool, *, detailed: bool = False) -
 
 
 @app.get("/assessment-tools/stats")
-async def assessment_tools_stats(current_user: User = Depends(get_current_expert)):
+async def assessment_tools_stats(current_user: User = Depends(get_current_admin)):
     return get_assessment_tool_stats()
 
 
@@ -2377,7 +2422,7 @@ async def fetch_assessment_tools_status(current_user: User = Depends(get_current
 
 
 @app.get("/assessment-tools")
-async def list_assessment_tools(current_user: User = Depends(get_current_expert)):
+async def list_assessment_tools(current_user: User = Depends(get_current_admin)):
     from sqlalchemy.orm import load_only
 
     session = SessionLocal()
@@ -2410,7 +2455,7 @@ async def list_assessment_tools(current_user: User = Depends(get_current_expert)
 
 
 @app.get("/assessment-tools/{id}")
-async def get_assessment_tool(id: int, current_user: User = Depends(get_current_expert)):
+async def get_assessment_tool(id: int, current_user: User = Depends(get_current_admin)):
     from sqlalchemy.orm import joinedload
 
     session = SessionLocal()
@@ -2432,7 +2477,7 @@ async def get_assessment_tool(id: int, current_user: User = Depends(get_current_
 
 
 @app.get("/qualifications")
-async def list_qualifications(current_user: User = Depends(get_current_expert)):
+async def list_qualifications(current_user: User = Depends(get_current_admin)):
     from sqlalchemy.orm import load_only
 
     session = SessionLocal()
@@ -2469,7 +2514,7 @@ async def list_qualifications(current_user: User = Depends(get_current_expert)):
         session.close()
 
 @app.get("/qualifications/{id}")
-async def get_qualification(id: int, current_user: User = Depends(get_current_expert)):
+async def get_qualification(id: int, current_user: User = Depends(get_current_admin)):
     from sqlalchemy.orm import joinedload
 
     session = SessionLocal()
@@ -2563,7 +2608,7 @@ def serialize_fgos(item: FgosSpo, *, detailed: bool = False) -> dict:
 
 
 @app.get("/fgos/categories")
-async def fgos_categories(current_user: User = Depends(get_current_expert)):
+async def fgos_categories(current_user: User = Depends(get_current_admin)):
     from .fgos_parser import get_fgos_stats_by_category
 
     counts = get_fgos_stats_by_category()
@@ -2580,7 +2625,7 @@ async def fgos_categories(current_user: User = Depends(get_current_expert)):
 @app.get("/fgos/stats")
 async def fgos_stats(
     category: Optional[str] = None,
-    current_user: User = Depends(get_current_expert),
+    current_user: User = Depends(get_current_admin),
 ):
     from .fgos_parser import get_fgos_stats, get_fgos_stats_by_category
 
@@ -2666,7 +2711,7 @@ async def get_fgos_public(item_id: int):
 @app.get("/fgos")
 async def list_fgos(
     category: Optional[str] = None,
-    current_user: User = Depends(get_current_expert),
+    current_user: User = Depends(get_current_admin),
 ):
     session = SessionLocal()
     try:
@@ -2682,7 +2727,7 @@ async def list_fgos(
 
 
 @app.get("/fgos/{item_id}")
-async def get_fgos(item_id: int, current_user: User = Depends(get_current_expert)):
+async def get_fgos(item_id: int, current_user: User = Depends(get_current_admin)):
     session = SessionLocal()
     try:
         item = session.query(FgosSpo).filter(FgosSpo.id == item_id).first()
@@ -2768,7 +2813,59 @@ def _ensure_competence_public_code_column() -> None:
             session.close()
 
 
-def serialize_competence(comp: Competence, include_matrix: bool = False) -> dict:
+def _reviewers_map(session, competence_ids: list[int]) -> dict[int, list]:
+    if not competence_ids:
+        return {}
+    rows = (
+        session.query(CompetenceReviewer, User)
+        .join(User, User.id == CompetenceReviewer.user_id)
+        .filter(CompetenceReviewer.competence_id.in_(competence_ids))
+        .order_by(CompetenceReviewer.assigned_at.asc())
+        .all()
+    )
+    grouped: dict[int, list] = {}
+    for link, user in rows:
+        grouped.setdefault(link.competence_id, []).append(_serialize_user(user))
+    return grouped
+
+
+def _assigned_competence_ids(session, user_id: int) -> list[int]:
+    return [
+        row[0]
+        for row in session.query(CompetenceReviewer.competence_id)
+        .filter(CompetenceReviewer.user_id == user_id)
+        .all()
+    ]
+
+
+def _is_assigned_reviewer(session, competence_id: int, user_id: int) -> bool:
+    return (
+        session.query(CompetenceReviewer)
+        .filter(
+            CompetenceReviewer.competence_id == competence_id,
+            CompetenceReviewer.user_id == user_id,
+        )
+        .first()
+        is not None
+    )
+
+
+def _can_view_competence(session, user, comp: Competence) -> bool:
+    role = user_role(user)
+    if role == "admin":
+        return True
+    if comp.user_id == getattr(user, "id", None):
+        return True
+    if role == "moderator" and comp.status == CompetenceStatus.REVIEW:
+        return True
+    if role == "expert":
+        if comp.status == CompetenceStatus.APPROVED and (comp.is_active or 0) == 1:
+            return True
+        return _is_assigned_reviewer(session, comp.id, user.id)
+    return False
+
+
+def serialize_competence(comp: Competence, include_matrix: bool = False, reviewers: list | None = None) -> dict:
     raw = comp.raw_data or {}
     formation_profile = raw.get("formation_profile") or {}
     status = comp.status.value if comp.status else None
@@ -2798,6 +2895,8 @@ def serialize_competence(comp: Competence, include_matrix: bool = False) -> dict
         "developer": comp.developer,
         "validator": comp.validator,
         "validation_notes": comp.validation_notes,
+        "user_id": comp.user_id,
+        "reviewers": reviewers if reviewers is not None else [],
         "description": raw.get("description", ""),
         "industry": raw.get("industry", ""),
         "hours": raw.get("hours", ""),
@@ -3066,14 +3165,32 @@ async def create_competence(data: CompetenceCreate, current_user: User = Depends
         session.close()
 
 @app.get("/competences")
-async def list_competences(current_user: User = Depends(get_current_user)):
+async def list_competences(mine: bool = False, current_user: User = Depends(get_current_user)):
     session = SessionLocal()
     try:
         query = session.query(Competence).filter(Competence.is_active == 1)
-        if not is_staff_role(current_user):
+        role = user_role(current_user)
+        if mine or role not in ("admin", "moderator", "expert"):
             query = query.filter(Competence.user_id == current_user.id)
-        competences = query.all()
-        return [serialize_competence(c) for c in competences]
+        elif role == "moderator":
+            query = query.filter(
+                or_(
+                    Competence.status == CompetenceStatus.REVIEW,
+                    Competence.user_id == current_user.id,
+                )
+            )
+        elif role == "expert":
+            assigned_ids = _assigned_competence_ids(session, current_user.id)
+            filters = [
+                Competence.status == CompetenceStatus.APPROVED,
+                Competence.user_id == current_user.id,
+            ]
+            if assigned_ids:
+                filters.append(Competence.id.in_(assigned_ids))
+            query = query.filter(or_(*filters))
+        competences = query.order_by(Competence.updated_at.desc()).all()
+        reviewers = _reviewers_map(session, [c.id for c in competences if c.id])
+        return [serialize_competence(c, reviewers=reviewers.get(c.id, [])) for c in competences]
     finally:
         session.close()
 
@@ -3084,6 +3201,14 @@ async def get_competence_stats(current_user: User = Depends(get_current_user)):
         query = session.query(Competence).filter(Competence.is_active == 1)
         if not is_staff_role(current_user):
             query = query.filter(Competence.user_id == current_user.id)
+        elif user_role(current_user) == "moderator":
+            query = query.filter(Competence.status == CompetenceStatus.REVIEW)
+        elif user_role(current_user) == "expert":
+            assigned_ids = _assigned_competence_ids(session, current_user.id)
+            filters = [Competence.status == CompetenceStatus.APPROVED]
+            if assigned_ids:
+                filters.append(Competence.id.in_(assigned_ids))
+            query = query.filter(or_(*filters))
         total = query.count()
         active = query.filter(Competence.status == CompetenceStatus.APPROVED).count()
         review = query.filter(Competence.status == CompetenceStatus.REVIEW).count()
@@ -3102,11 +3227,73 @@ async def get_competence(comp_id: int, current_user: User = Depends(get_current_
         comp = session.query(Competence).filter(Competence.id == comp_id).first()
         if not comp:
             raise HTTPException(404, "Компетенция не найдена")
-        if not is_staff_role(current_user) and comp.user_id != current_user.id:
+        if not _can_view_competence(session, current_user, comp):
             raise HTTPException(403, "Доступ запрещён")
-        return serialize_competence(comp, include_matrix=True)
+        reviewers = _reviewers_map(session, [comp.id]).get(comp.id, [])
+        return serialize_competence(comp, include_matrix=True, reviewers=reviewers)
     finally:
         session.close()
+
+
+@app.put("/competences/{comp_id}/reviewers")
+async def assign_competence_reviewers(
+    comp_id: int,
+    data: ReviewerAssign,
+    current_user: User = Depends(get_current_moderator),
+):
+    session = SessionLocal()
+    try:
+        comp = session.query(Competence).filter(Competence.id == comp_id).first()
+        if not comp:
+            raise HTTPException(404, "Компетенция не найдена")
+        if comp.status != CompetenceStatus.REVIEW:
+            raise HTTPException(400, "Назначить экспертов можно только для компетенции на рассмотрении")
+        expert_ids = []
+        for raw_id in data.expert_ids or []:
+            try:
+                expert_ids.append(int(raw_id))
+            except (TypeError, ValueError):
+                raise HTTPException(400, "Некорректный идентификатор эксперта")
+        unique_ids = list(dict.fromkeys(expert_ids))
+        if len(unique_ids) < MIN_REVIEWERS:
+            raise HTTPException(400, f"Назначьте не менее {MIN_REVIEWERS} экспертов")
+        experts = session.query(User).filter(User.id.in_(unique_ids)).all()
+        by_id = {row.id: row for row in experts}
+        missing = [uid for uid in unique_ids if uid not in by_id]
+        if missing:
+            raise HTTPException(400, "Некоторые выбранные пользователи не найдены")
+        for expert in experts:
+            if user_role(expert) != "expert":
+                raise HTTPException(400, f"{expert.email} не имеет роли эксперта")
+            if not is_user_active(expert):
+                raise HTTPException(400, f"{expert.email} отключён")
+        session.query(CompetenceReviewer).filter(CompetenceReviewer.competence_id == comp.id).delete()
+        names = []
+        for uid in unique_ids:
+            session.add(CompetenceReviewer(competence_id=comp.id, user_id=uid))
+            expert = by_id[uid]
+            names.append(
+                " ".join(
+                    part
+                    for part in (
+                        getattr(expert, "last_name", None),
+                        getattr(expert, "first_name", None),
+                    )
+                    if part
+                )
+                or expert.email
+            )
+        comp.validator = ", ".join(names)
+        session.commit()
+        session.refresh(comp)
+        reviewers = _reviewers_map(session, [comp.id]).get(comp.id, [])
+        return serialize_competence(comp, reviewers=reviewers)
+    except HTTPException:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
 
 @app.put("/competences/{comp_id}")
 async def update_competence(comp_id: int, data: CompetenceUpdate, current_user: User = Depends(get_current_user)):
@@ -3115,10 +3302,34 @@ async def update_competence(comp_id: int, data: CompetenceUpdate, current_user: 
         comp = session.query(Competence).filter(Competence.id == comp_id).first()
         if not comp:
             raise HTTPException(404, "Компетенция не найдена")
-        if not is_staff_role(current_user) and comp.user_id != current_user.id:
+        if not _can_view_competence(session, current_user, comp):
             raise HTTPException(403, "Доступ запрещён")
 
         update_data = data.dict(exclude_unset=True)
+        role = user_role(current_user)
+        assigned = _is_assigned_reviewer(session, comp.id, current_user.id)
+        is_owner = comp.user_id == current_user.id
+        if "status" in update_data and update_data["status"]:
+            try:
+                target_status = CompetenceStatus(update_data["status"])
+            except ValueError:
+                raise HTTPException(400, "Некорректный статус")
+            if role == "admin":
+                pass
+            elif role == "expert":
+                if not assigned:
+                    raise HTTPException(403, "Компетенция не назначена вам на рассмотрение")
+                if target_status not in (CompetenceStatus.APPROVED, CompetenceStatus.DRAFT):
+                    raise HTTPException(403, "Эксперт может утвердить компетенцию или вернуть на доработку")
+            elif role == "moderator":
+                raise HTTPException(403, "Модератор назначает экспертов и не меняет статус экспертизы")
+            else:
+                if not is_owner:
+                    raise HTTPException(403, "Доступ запрещён")
+                if target_status not in (CompetenceStatus.DRAFT, CompetenceStatus.REVIEW):
+                    raise HTTPException(403, "Недостаточно прав для утверждения компетенции")
+        elif role not in ("admin",) and not is_owner and not assigned:
+            raise HTTPException(403, "Доступ запрещён")
         raw_fields: dict[str, Any] = {}
         for key in (
             "description",
@@ -3206,6 +3417,8 @@ async def delete_competence(comp_id: int, current_user: User = Depends(get_curre
             raise HTTPException(404, "Компетенция не найдена")
         if not is_staff_role(current_user) and comp.user_id != current_user.id:
             raise HTTPException(403, "Доступ запрещён")
+        if user_role(current_user) in ("expert", "moderator") and comp.user_id != current_user.id:
+            raise HTTPException(403, "Удалять можно только свои компетенции")
         comp.is_active = 0
         session.commit()
         return {"status": "ok"}

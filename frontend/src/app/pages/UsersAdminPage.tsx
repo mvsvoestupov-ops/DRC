@@ -43,6 +43,7 @@ type AdminUser = {
 
 const ROLE_LABELS: Record<string, string> = {
   admin: "Администратор",
+  moderator: "Модератор",
   expert: "Эксперт",
   user: "Пользователь",
 };
@@ -110,7 +111,7 @@ export function UsersAdminPage() {
       setFormMiddleName("");
       setFormOrganization("");
       setFormRole("user");
-      setNotice(`Письмо с логином, паролем и ссылкой подтверждения отправлено на ${created.email}`);
+      setNotice(`Пользователь создан. Письмо с логином, паролем и ссылкой уходит на ${created.email}`);
       await loadUsers();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Не удалось создать пользователя");
@@ -226,6 +227,7 @@ export function UsersAdminPage() {
                       >
                         <option value="user">{ROLE_LABELS.user}</option>
                         <option value="expert">{ROLE_LABELS.expert}</option>
+                        <option value="moderator">{ROLE_LABELS.moderator}</option>
                         <option value="admin">{ROLE_LABELS.admin}</option>
                       </select>
                     </TableCell>
@@ -366,6 +368,7 @@ export function UsersAdminPage() {
                 >
                   <option value="user">{ROLE_LABELS.user}</option>
                   <option value="expert">{ROLE_LABELS.expert}</option>
+                  <option value="moderator">{ROLE_LABELS.moderator}</option>
                   <option value="admin">{ROLE_LABELS.admin}</option>
                 </select>
               </div>

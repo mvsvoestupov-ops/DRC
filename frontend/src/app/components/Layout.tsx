@@ -27,7 +27,7 @@ export function Layout() {
   const [language, setLanguage] = useState("RU");
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
-  const { isAuthenticated, isAdmin, isExpert, user, logout, isImpersonating, impersonatorEmail, stopImpersonation } = useAuth();
+  const { isAuthenticated, isAdmin, isExpert, isModerator, user, logout, isImpersonating, impersonatorEmail, stopImpersonation } = useAuth();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -159,35 +159,33 @@ export function Layout() {
               <NavLink to="/">Главная</NavLink>
               <NavLink to="/search">Поиск компетенций</NavLink>
               <NavLink to="/new">Предложить компетенцию</NavLink>
-              {isAuthenticated && (
+              {isAuthenticated && isAdmin && (
                 <>
                   <NavLink to="/strategic-session">
                     <Play className="w-3.5 h-3.5" />
                     Стратегическая сессия
                   </NavLink>
-                  {isExpert && (
-                    <>
-                      <NavLink to="/standards">
-                        <BookOpen className="w-3.5 h-3.5" />
-                        Профстандарты
-                      </NavLink>
-                      <NavLink to="/qualifications">
-                        <GraduationCap className="w-3.5 h-3.5" />
-                        Квалификации
-                      </NavLink>
-                      <NavLink to="/assessment-tools">
-                        <ClipboardList className="w-3.5 h-3.5" />
-                        Оценочные средства
-                      </NavLink>
-                      <NavLink to="/fgos">
-                        <ScrollText className="w-3.5 h-3.5" />
-                        ФГОС
-                      </NavLink>
-                    </>
-                  )}
+                  <NavLink to="/standards">
+                    <BookOpen className="w-3.5 h-3.5" />
+                    Профстандарты
+                  </NavLink>
+                  <NavLink to="/qualifications">
+                    <GraduationCap className="w-3.5 h-3.5" />
+                    Квалификации
+                  </NavLink>
+                  <NavLink to="/assessment-tools">
+                    <ClipboardList className="w-3.5 h-3.5" />
+                    Оценочные средства
+                  </NavLink>
+                  <NavLink to="/fgos">
+                    <ScrollText className="w-3.5 h-3.5" />
+                    ФГОС
+                  </NavLink>
                 </>
               )}
-              {isExpert && <NavLink to="/admin">Панель эксперта</NavLink>}
+              {(isModerator || isExpert) && (
+                <NavLink to="/admin">{isModerator ? "Модерация" : "Панель эксперта"}</NavLink>
+              )}
               {isAdmin && !isImpersonating && (
                 <NavLink to="/admin/users">
                   <Users className="w-3.5 h-3.5" />

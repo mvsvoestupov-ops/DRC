@@ -143,14 +143,28 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     return user
 
 
+def user_role(user) -> str:
+    return (getattr(user, "role", None) or "").strip().lower()
+
+
 async def get_current_admin(current_user: User = Depends(get_current_user)):
-    if (current_user.role or "") != "admin":
+    if user_role(current_user) != "admin":
         raise HTTPException(status_code=403, detail="Not enough permissions")
     return current_user
 
 
 def is_staff_role(user) -> bool:
-    return (getattr(user, "role", None) or "") in ("admin", "expert")
+    return user_role(user) in ("admin", "moderator", "expert")
+
+
+def is_moderator_role(user) -> bool:
+    return user_role(user) in ("admin", "moderator")
+
+
+async def get_current_moderator(current_user: User = Depends(get_current_user)):
+    if not is_moderator_role(current_user):
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    return current_user
 
 
 async def get_current_expert(current_user: User = Depends(get_current_user)):

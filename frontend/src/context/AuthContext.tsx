@@ -131,6 +131,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     isAuthenticated: !!token,
     isAdmin: user?.role === 'admin',
     isExpert: user?.role === 'admin' || user?.role === 'expert',
+    isModerator: user?.role === 'admin' || user?.role === 'moderator',
+    isStaff: user?.role === 'admin' || user?.role === 'moderator' || user?.role === 'expert',
     isImpersonating: Boolean(impersonatorEmail),
     impersonatorEmail,
   };
