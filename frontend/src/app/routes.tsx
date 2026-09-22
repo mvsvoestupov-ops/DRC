@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router";
+import { createBrowserRouter, Navigate } from "react-router";
 import { Layout } from "./components/Layout";
 import { PageShell } from "./components/PageShell";
 import { RequireAuth, RequireAdmin, RequireStaff } from "./components/RequireAuth";
@@ -9,6 +9,9 @@ import { NewCompetencyPage } from "./pages/NewCompetencyPage";
 import { AdminPage } from "./pages/AdminPage";
 import { UsersAdminPage } from "./pages/UsersAdminPage";
 import { IntegrationPage } from "./pages/IntegrationPage";
+import { MethodologyPage } from "./pages/MethodologyPage";
+import { AboutPage } from "./pages/AboutPage";
+import { UserGuidePage } from "./pages/UserGuidePage";
 import { LoginPage } from "./pages/LoginPage";
 import { ConfirmEmailPage } from "./pages/ConfirmEmailPage";
 import { RegisterPage } from "./pages/RegisterPage";
@@ -152,6 +155,10 @@ export const router = createBrowserRouter([
           </RequireAuth>
         ),
       },
+      { path: "methodology", Component: MethodologyPage },
+      { path: "about", Component: AboutPage },
+      { path: "user-guide", Component: UserGuidePage },
+      { path: "guide", element: <Navigate to="/user-guide" replace /> },
       { path: "integration", Component: IntegrationPage },
       { path: "login", Component: LoginPage },
       { path: "register", Component: RegisterPage },

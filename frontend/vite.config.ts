@@ -25,8 +25,41 @@ function figmaAssetResolver() {
   }
 }
 
+function spaGuideRoutes() {
+  const rewrite = (url = '') => {
+    const pathname = url.split('?')[0]
+    if (
+      pathname === '/guide' ||
+      pathname === '/user-guide' ||
+      pathname.startsWith('/guidelines')
+    ) {
+      return '/index.html'
+    }
+    return null
+  }
+  return {
+    name: 'spa-guide-routes',
+    configureServer(server) {
+      server.middlewares.use((req, _res, next) => {
+        const nextUrl = rewrite(req.url || '')
+        if (nextUrl) req.url = nextUrl
+        next()
+      })
+    },
+    configurePreviewServer(server) {
+      server.middlewares.use((req, _res, next) => {
+        const nextUrl = rewrite(req.url || '')
+        if (nextUrl) req.url = nextUrl
+        next()
+      })
+    },
+  }
+}
+
 export default defineConfig({
+  appType: 'spa',
   plugins: [
+    spaGuideRoutes(),
     figmaAssetResolver(),
     // The React and Tailwind plugins are both required for Make, even if
     // Tailwind is not being actively used – do not remove them
