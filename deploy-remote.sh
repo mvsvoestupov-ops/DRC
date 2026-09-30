@@ -112,14 +112,16 @@ if [ -f backend/profstandart.db ]; then
   echo "==> keeping existing backend/profstandart.db (not overwritten)"
 fi
 
-echo "==> backend deps"
+echo "==> backend deps (без torch/CUDA)"
 cd "$ROOT/backend"
-if [ -x venv/bin/pip ]; then
-  venv/bin/pip install -r requirements.txt
-else
+if [ ! -x venv/bin/pip ]; then
   echo "ERROR: $ROOT/backend/venv is missing"
   exit 1
 fi
+# sentence-transformers тянет GPU-torch (~1 GB). На VPS это не нужно:
+# enrichment.py работает только если пакет уже установлен.
+grep -viE '^(sentence-transformers|torch)' requirements.txt > /tmp/drc-req-prod.txt
+venv/bin/pip install --disable-pip-version-check -r /tmp/drc-req-prod.txt
 
 echo "==> seed example competences RUS-PK-0019 / RUS-PK-0020"
 venv/bin/python scripts/seed_example_competences.py

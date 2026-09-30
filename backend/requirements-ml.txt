@@ -1,0 +1,3 @@
+# Optional: enrichment.py (local only). Do not install on the VPS —
+# sentence-transformers pulls CUDA torch (~1 GB+).
+sentence-transformers>=2.7.0,<3.0.0
