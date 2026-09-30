@@ -15,6 +15,7 @@ export interface LaborFunctionDetail {
   standard_id?: number;
   standard_reg_number?: string;
   standard_name?: string;
+  okz_codes?: string[];
 }
 
 export type StructureItemOrigin = 'ps' | 'manual';
@@ -52,6 +53,21 @@ export function structureToPayload(structure: StructureABC) {
     B: structure.B.map((item) => item.text.trim()).filter(Boolean),
     C: structure.C.map((item) => item.text.trim()).filter(Boolean),
   };
+}
+
+export function structureFromPayload(raw?: Record<string, string[]> | null): StructureABC {
+  const out = emptyStructure();
+  (["A", "B", "C"] as const).forEach((category) => {
+    out[category] = (raw?.[category] || [])
+      .map((text) => String(text || "").trim())
+      .filter(Boolean)
+      .map((text) => ({
+        id: createStructureItemId(),
+        text,
+        origin: "manual" as const,
+      }));
+  });
+  return out;
 }
 
 export function buildStructureFromLaborFunctions(

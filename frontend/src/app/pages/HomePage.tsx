@@ -9,21 +9,22 @@ import {
   Clock,
   Archive,
   Building2,
-  GraduationCap,
-  Database,
-  Globe,
-  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { apiClient } from "@/api/client";
-import type { Competence, CompetenceStats, PublicQualificationItem, PublicQualificationStats } from "@/api/types";
+import type { Competence, CompetenceInvite, CompetenceStats } from "@/api/types";
 import { useAuth } from "@/context/AuthContext";
+import { useI18n } from "@/context/I18nContext";
+import { translateAreaName } from "@/i18n/helpers";
 import {
   toListItem,
   statusColors,
-  statusLabels,
-  defaultIndustries,
   type CompetenceListItem,
 } from "@/lib/competenceMappers";
+import { PROFESSIONAL_AREAS, areaDisplayCode } from "@/lib/professionalAreas";
+
+const AREAS_PER_PAGE = 12;
 
 type StatCardProps = {
   to: string;
@@ -37,7 +38,7 @@ type StatCardProps = {
   loading?: boolean;
 };
 
-function StatCard({ to, state, icon: Icon, color, bg, value, label, trend, loading }: StatCardProps) {
+function StatCard({ to, state, icon: Icon, color, bg, value, label, trend, loading, intlLocale }: StatCardProps & { intlLocale: string }) {
   return (
     <Link
       to={to}
@@ -51,27 +52,37 @@ function StatCard({ to, state, icon: Icon, color, bg, value, label, trend, loadi
         {trend && <TrendingUp className="w-6 h-6 text-emerald-500" />}
       </div>
       <div className="text-4xl font-bold text-gray-900 mb-2 group-hover:text-primary transition-colors">
-        {loading ? "—" : typeof value === "number" ? value.toLocaleString("ru-RU") : value}
+        {loading ? "—" : typeof value === "number" ? value.toLocaleString(intlLocale) : value}
       </div>
-      <div className="text-sm text-gray-500 font-medium group-hover:text-gray-700 transition-colors">{label}</div>
+      <div className="text-base text-gray-500 font-medium group-hover:text-gray-700 transition-colors">{label}</div>
     </Link>
   );
 }
 
 export function HomePage() {
-  const { isAdmin } = useAuth();
+  const { isAuthenticated } = useAuth();
+  const { t, intlLocale } = useI18n();
   const [recentCompetencies, setRecentCompetencies] = useState<CompetenceListItem[]>([]);
-  const [recentQualifications, setRecentQualifications] = useState<PublicQualificationItem[]>([]);
-  const [industries, setIndustries] = useState<string[]>(defaultIndustries);
   const [stats, setStats] = useState<CompetenceStats>({ total: 0, active: 0, review: 0, archived: 0 });
-  const [qualStats, setQualStats] = useState<PublicQualificationStats>({ local_count: 0, expected: 0, missing: 0 });
+  const [invites, setInvites] = useState<CompetenceInvite[]>([]);
   const [loading, setLoading] = useState(true);
-  const [qualLoading, setQualLoading] = useState(true);
+  const [areaPage, setAreaPage] = useState(0);
 
-  const qualListHref = isAdmin ? "/qualifications" : "/";
-  const qualListState = undefined;
-  const qualDetailHref = (id: number) => (isAdmin ? `/qualifications/${id}` : "/");
-  const qualDetailState = (_id: number) => undefined;
+  const totalAreaPages = Math.ceil(PROFESSIONAL_AREAS.length / AREAS_PER_PAGE);
+  const pageAreas = PROFESSIONAL_AREAS.slice(
+    areaPage * AREAS_PER_PAGE,
+    (areaPage + 1) * AREAS_PER_PAGE,
+  );
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setInvites([]);
+      return;
+    }
+    apiClient.listCompetenceInvites()
+      .then((rows) => setInvites(Array.isArray(rows) ? rows : []))
+      .catch(() => setInvites([]));
+  }, [isAuthenticated]);
 
   useEffect(() => {
     Promise.all([
@@ -82,14 +93,6 @@ export function HomePage() {
         setStats(statsData);
         const items = (competences as Competence[]).slice(0, 3).map(toListItem);
         setRecentCompetencies(items);
-        const fromApi = [...new Set(
-          (competences as Competence[])
-            .map((c) => c.industry || (c as Competence & { raw_data?: { industry?: string } }).raw_data?.industry)
-            .filter(Boolean) as string[]
-        )];
-        if (fromApi.length > 0) {
-          setIndustries([...new Set([...fromApi, ...defaultIndustries])]);
-        }
       })
       .catch(() => {
         setStats({ total: 0, active: 0, review: 0, archived: 0 });
@@ -98,33 +101,16 @@ export function HomePage() {
       .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => {
-    Promise.all([
-      apiClient.getPublicQualificationStats(),
-      apiClient.getPublicQualifications(3),
-    ])
-      .then(([statsData, qualifications]) => {
-        setQualStats(statsData);
-        setRecentQualifications(qualifications);
-      })
-      .catch(() => {
-        setQualStats({ local_count: 0, expected: 0, missing: 0 });
-        setRecentQualifications([]);
-      })
-      .finally(() => setQualLoading(false));
-  }, []);
-
   return (
     <div className="bg-page">
       <div className="bg-gradient-to-br from-[#1E3A8A] via-[#1E40AF] to-[#3B82F6] text-white">
         <div className="max-w-[1440px] mx-auto px-8 py-20">
           <div className="max-w-3xl">
             <h1 className="text-5xl font-bold leading-tight mb-6">
-              Национальный реестр компетенций
+              {t("home.title")}
             </h1>
             <p className="text-xl leading-relaxed opacity-95 mb-10">
-              Единая система управления компетенциями для гармонизации образовательных программ,
-              профессиональных стандартов и требований работодателей
+              {t("home.lead")}
             </p>
             <div className="flex gap-4">
               <Link
@@ -132,14 +118,14 @@ export function HomePage() {
                 className="inline-flex items-center gap-3 px-8 py-4 bg-white text-primary rounded-lg text-base font-semibold shadow-md hover:shadow-lg transition-all"
               >
                 <Search className="w-5 h-5" />
-                Найти компетенцию
+                {t("home.find")}
               </Link>
               <Link
                 to="/new"
                 className="inline-flex items-center gap-3 px-8 py-4 bg-white/10 text-white rounded-lg text-base font-semibold border-2 border-white/30 hover:bg-white/20 transition-all"
               >
                 <Plus className="w-5 h-5" />
-                Предложить компетенцию
+                {t("home.propose")}
               </Link>
             </div>
           </div>
@@ -147,16 +133,34 @@ export function HomePage() {
       </div>
 
       <div className="max-w-[1440px] mx-auto px-8 -mt-12">
-        <div className="grid grid-cols-4 gap-6 mb-10">
+        {invites.length > 0 ? (
+          <Link
+            to="/my-projects"
+            className="block mb-6 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-amber-950 shadow-sm hover:border-amber-300"
+          >
+            <p className="font-semibold">
+              {t("home.invitesTitle", { count: invites.length })}
+            </p>
+            <p className="text-base mt-1">
+              {t("home.invitesText", {
+                suffix: invites[0]?.competence_name
+                  ? t("home.invitesSuffix", { name: invites[0].competence_name })
+                  : "",
+              })}
+            </p>
+          </Link>
+        ) : null}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
           <StatCard
             to="/search"
             icon={FileText}
             color="#3B82F6"
             bg="#EFF6FF"
             value={stats.total}
-            label="Всего компетенций"
+            label={t("home.statsTotal")}
             trend
             loading={loading}
+            intlLocale={intlLocale}
           />
           <StatCard
             to="/search?status=active"
@@ -164,8 +168,9 @@ export function HomePage() {
             color="#10B981"
             bg="#ECFDF5"
             value={stats.active}
-            label="Действующих компетенций"
+            label={t("home.statsActive")}
             loading={loading}
+            intlLocale={intlLocale}
           />
           <StatCard
             to="/search?status=review"
@@ -173,8 +178,9 @@ export function HomePage() {
             color="#F59E0B"
             bg="#FEF3C7"
             value={stats.review}
-            label="На экспертизе"
+            label={t("home.statsReview")}
             loading={loading}
+            intlLocale={intlLocale}
           />
           <StatCard
             to="/search?status=archived"
@@ -182,124 +188,35 @@ export function HomePage() {
             color="#64748B"
             bg="#F1F5F9"
             value={stats.archived}
-            label="Архивных записей"
+            label={t("home.statsArchived")}
             loading={loading}
+            intlLocale={intlLocale}
           />
-        </div>
-
-        <div className="mb-16">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-1">Квалификации НАРК</h2>
-              <p className="text-sm text-gray-500">
-                Сводка по профессиональным квалификациям из реестра НАРК
-              </p>
-            </div>
-            <Link
-              to={qualListHref}
-              state={qualListState}
-              className="text-sm font-semibold text-primary hover:underline"
-            >
-              Смотреть все →
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-3 gap-6 mb-8">
-            <StatCard
-              to={qualListHref}
-              state={qualListState}
-              icon={Database}
-              color="#6366F1"
-              bg="#EEF2FF"
-              value={qualStats.local_count}
-              label="В локальной базе"
-              loading={qualLoading}
-            />
-            <StatCard
-              to={qualListHref}
-              state={qualListState}
-              icon={Globe}
-              color="#0EA5E9"
-              bg="#E0F2FE"
-              value={qualStats.expected}
-              label="На сайте НАРК"
-              loading={qualLoading}
-            />
-            <StatCard
-              to={qualListHref}
-              state={qualListState}
-              icon={AlertCircle}
-              color="#F97316"
-              bg="#FFF7ED"
-              value={qualStats.missing}
-              label="Требуют загрузки"
-              loading={qualLoading}
-            />
-          </div>
-
-          {qualLoading ? (
-            <div className="text-center py-8 text-gray-500">Загрузка квалификаций...</div>
-          ) : recentQualifications.length === 0 ? (
-            <div className="surface p-8 text-center text-gray-500">
-              Квалификации пока не загружены в базу
-            </div>
-          ) : (
-            <div className="grid grid-cols-3 gap-6">
-              {recentQualifications.map((qual) => (
-                <Link
-                  key={qual.id}
-                  to={qualDetailHref(qual.id)}
-                  state={qualDetailState(qual.id)}
-                  className="block surface p-6 hover:shadow-lg hover:border-primary/40 transition-all"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <span className="text-sm font-mono text-primary font-semibold">
-                      {qual.code || `ID ${qual.id}`}
-                    </span>
-                    {qual.level && (
-                      <span className="status-pill bg-indigo-50 text-indigo-700 border-indigo-200">
-                        Ур. {qual.level}
-                      </span>
-                    )}
-                  </div>
-                  <h3 className="text-base font-semibold text-gray-900 mb-3 leading-relaxed line-clamp-2">
-                    {qual.name}
-                  </h3>
-                  {qual.activity_area && (
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <GraduationCap className="w-4 h-4 flex-shrink-0" />
-                      <span className="line-clamp-1">{qual.activity_area}</span>
-                    </div>
-                  )}
-                </Link>
-              ))}
-            </div>
-          )}
         </div>
 
         <div className="mb-16">
           <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                Последние добавленные компетенции
+                {t("home.recentTitle")}
               </h2>
-              <p className="text-sm text-gray-500">
-                Недавно утверждённые и добавленные в реестр
+              <p className="text-base text-gray-500">
+                {t("home.recentLead")}
               </p>
             </div>
-            <Link to="/search" className="text-sm font-semibold text-primary hover:underline">
-              Смотреть все →
+            <Link to="/search" className="text-base font-semibold text-primary hover:underline">
+              {t("home.viewAll")}
             </Link>
           </div>
 
           {loading ? (
-            <div className="text-center py-12 text-gray-500">Загрузка...</div>
+            <div className="text-center py-12 text-gray-500">{t("home.loading")}</div>
           ) : recentCompetencies.length === 0 ? (
             <div className="surface p-12 text-center text-gray-500">
-              Компетенции пока не добавлены в реестр
+              {t("home.empty")}
             </div>
           ) : (
-            <div className="grid grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {recentCompetencies.map((competency) => (
                 <Link
                   key={competency.id}
@@ -307,17 +224,17 @@ export function HomePage() {
                   className="block surface p-6 hover:shadow-lg hover:border-primary/40 transition-all"
                 >
                   <div className="flex items-start justify-between mb-4">
-                    <span className="text-sm font-mono text-primary font-semibold">
+                    <span className="text-base font-mono text-primary font-semibold">
                       {competency.displayId}
                     </span>
                     <span className={`status-pill ${statusColors[competency.status]}`}>
-                      {statusLabels[competency.status]}
+                      {t(`status.${competency.status}`)}
                     </span>
                   </div>
-                  <h3 className="text-base font-semibold text-gray-900 mb-3 leading-relaxed line-clamp-2">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3 leading-relaxed line-clamp-2">
                     {competency.title}
                   </h3>
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <div className="flex items-center gap-2 text-base text-gray-500">
                     <Building2 className="w-4 h-4" />
                     {competency.industry}
                   </div>
@@ -328,21 +245,74 @@ export function HomePage() {
         </div>
 
         <div className="pb-16">
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Популярные отрасли</h2>
-            <p className="text-sm text-gray-500">Найдите компетенции по отраслям экономики</p>
+          <div className="flex items-end justify-between gap-6 mb-8">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                {t("home.areasTitle")}
+              </h2>
+              <p className="text-base text-gray-500">
+                {t("home.areasLead")}
+              </p>
+            </div>
+            <div className="text-base text-gray-500 whitespace-nowrap">
+              {areaPage + 1} / {totalAreaPages}
+            </div>
           </div>
-          <div className="grid grid-cols-4 gap-4">
-            {industries.map((industry) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {pageAreas.map((area) => (
               <Link
-                key={industry}
-                to={`/search?industry=${encodeURIComponent(industry)}`}
-                className="block surface p-5 rounded-xl text-center text-sm font-medium text-gray-700 hover:shadow-md hover:border-primary/40 hover:text-primary transition-all"
+                key={area.code}
+                to={`/search?area=${encodeURIComponent(area.code)}`}
+                className="block surface p-5 rounded-xl min-h-[148px] text-left hover:shadow-md hover:border-primary/40 transition-all group"
               >
-                {industry}
+                <div className="text-sm font-mono font-semibold text-primary mb-2">
+                  {areaDisplayCode(area)}
+                </div>
+                <div className="text-base font-medium text-gray-700 leading-snug group-hover:text-primary">
+                  {translateAreaName(t, area.code, area.name)}
+                </div>
               </Link>
             ))}
           </div>
+          {totalAreaPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-6">
+              <button
+                type="button"
+                onClick={() => setAreaPage((page) => Math.max(0, page - 1))}
+                disabled={areaPage === 0}
+                className="inline-flex items-center justify-center w-10 h-10 rounded-lg border border-gray-200 bg-white text-gray-700 hover:border-primary/40 hover:text-primary disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:text-gray-700"
+                aria-label={t("home.prevPage")}
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              {Array.from({ length: totalAreaPages }, (_, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => setAreaPage(index)}
+                  className="w-10 h-10 rounded-lg text-base font-semibold border transition-all"
+                  style={
+                    index === areaPage
+                      ? { backgroundColor: "#1E40AF", color: "#fff", borderColor: "#1E40AF" }
+                      : { backgroundColor: "#fff", color: "#374151", borderColor: "#e5e7eb" }
+                  }
+                  aria-label={t("home.page", { n: index + 1 })}
+                  aria-current={index === areaPage ? "page" : undefined}
+                >
+                  {index + 1}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setAreaPage((page) => Math.min(totalAreaPages - 1, page + 1))}
+                disabled={areaPage >= totalAreaPages - 1}
+                className="inline-flex items-center justify-center w-10 h-10 rounded-lg border border-gray-200 bg-white text-gray-700 hover:border-primary/40 hover:text-primary disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:text-gray-700"
+                aria-label={t("home.nextPage")}
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

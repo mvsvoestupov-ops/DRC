@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Link, useNavigate } from "react-router";
-import { ArrowLeft, ArrowRight, Award, ChevronDown, ChevronRight, FileDown, Loader2, Save, Send, X } from "lucide-react";
-import { defaultIndustries, DESCRIPTOR_CATEGORIES, DESCRIPTOR_CATEGORY_LABELS, FORMATION_LEVELS, FORMATION_LEVEL_LABELS } from "@/lib/competenceMappers";
+import { Link, useNavigate, useParams } from "react-router";
+import { ArrowLeft, ArrowRight, Award, ChevronDown, ChevronRight, FileDown, Loader2, Plus, Save, Send, X } from "lucide-react";
+import { DESCRIPTOR_CATEGORIES, FORMATION_LEVELS } from "@/lib/competenceMappers";
+import { PROFESSIONAL_AREAS, areaDisplayCode, findProfessionalArea, formatProfessionalAreaLabel } from "@/lib/professionalAreas";
 import {
   buildStructureFromLaborFunctions,
   emptyStructure,
+  structureFromPayload,
   structureToPayload,
   type LaborFunctionDetail,
   type StructureABC,
@@ -12,8 +14,18 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { apiClient } from "@/api/client";
-import type { FormationLevel, MatrixContext, QualificationLevelRef } from "@/api/types";
+import type { Competence, MatrixContext, QualificationLevelRef } from "@/api/types";
 import { useAuth } from "@/context/AuthContext";
+import { useI18n } from "@/context/I18nContext";
+import {
+  translateKeyed,
+  translateAreaName,
+  EDUCATION_KIND_I18N_KEYS,
+  EDUCATION_LEVEL_I18N_KEYS,
+  DESCRIPTOR_I18N_KEYS,
+  FORMATION_I18N_KEYS,
+} from "@/i18n/helpers";
+import { WorkingGroupPanel } from "@/app/components/WorkingGroupPanel";
 import { PageHeader } from "@/app/components/PageHeader";
 import { PageShell } from "@/app/components/PageShell";
 import { StructureABCEditor } from "@/app/components/StructureABCEditor";
@@ -45,6 +57,44 @@ import {
   normalizeDescriptorMap,
   type DescriptorMap,
 } from "@/app/components/DescriptorEditor";
+import {
+  DisciplineMappingEditor,
+  flattenDisciplineMapping,
+  formatScaleScore,
+  groupDisciplineMapping,
+  syncDisciplineMapping,
+  type DisciplineMappingRow,
+} from "@/app/components/DisciplineMappingEditor";
+import { AssessmentConstructor } from "@/app/components/AssessmentConstructor";
+import { ExpertiseChecklistForm } from "@/app/components/ExpertiseChecklist";
+import {
+  InternationalMappingPreview,
+  InternationalMappingStep,
+} from "@/app/components/InternationalMappingStep";
+import {
+  analyzeInternationalMapping,
+  emptyInternationalMapping,
+  normalizeInternationalMapping,
+  type InternationalMapping,
+} from "@/lib/internationalMapping";
+import {
+  EXPERTISE_CRITERIA,
+  criterionKey,
+  type ExpertiseChecklist,
+} from "@/lib/expertiseCriteria";
+import {
+  assessmentMethodLabel,
+  assessmentToolsToByLevel,
+  assessmentWizardErrorMessage,
+  emptyAssessmentByLevel,
+  flattenAssessmentTools,
+  getAssessmentCoverage,
+  isAssessmentTaskComplete,
+  listStructureComponents,
+  normalizeAssessmentByLevel,
+  syncAssessmentByLevel,
+  uniqueAssessmentMethodLabels,
+} from "@/lib/assessmentConstructor";
 
 type CompetenceKind = "professional" | "general" | "universal";
 
@@ -56,23 +106,20 @@ const EDUCATION_KINDS = [
 
 type EducationKind = (typeof EDUCATION_KINDS)[number] | "";
 
+const DISCIPLINE_CONTROL_I18N_KEYS: Record<string, string> = {
+  "зачёт": "discipline.credit",
+  "экзамен": "discipline.exam",
+  "защита проекта": "discipline.project",
+  "курсовая работа": "discipline.coursework",
+  "отчёт по практике": "discipline.practiceReport",
+};
+
 const PROFESSIONAL_EDUCATION_LEVELS = [
   "среднее профессиональное образование",
   "высшее образование - бакалавриат",
   "высшее образование - специалитет, магистратура",
   "высшее образование - подготовка кадров высшей квалификации",
 ] as const;
-
-type AssessmentByLevel = Record<
-  FormationLevel,
-  { methods: string[]; criteria: string }
->;
-
-const emptyAssessmentByLevel = (): AssessmentByLevel => ({
-  базовый: { methods: [], criteria: "" },
-  продвинутый: { methods: [], criteria: "" },
-  экспертный: { methods: [], criteria: "" },
-});
 
 function tfDetails(lf: LaborFunctionDetail) {
   const tds: string[] = [];
@@ -104,15 +151,19 @@ function tfDetails(lf: LaborFunctionDetail) {
 function PreviewField({ label, value }: { label: string; value?: string | null }) {
   return (
     <div>
-      <h4 className="text-xs font-medium text-gray-500 mb-1">{label}</h4>
-      <p className="text-sm text-gray-900">{value?.trim() || "—"}</p>
+      <h4 className="text-sm font-medium text-gray-500 mb-1">{label}</h4>
+      <p className="text-base text-gray-900 leading-relaxed">{value?.trim() || "—"}</p>
     </div>
   );
 }
 
 export function NewCompetencyPage() {
   const navigate = useNavigate();
+  const { id: editIdParam } = useParams<{ id?: string }>();
+  const editId = editIdParam ? Number(editIdParam) : null;
+  const isEdit = Boolean(editId);
   const { isAuthenticated, user } = useAuth();
+  const { t } = useI18n();
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedStandards, setSelectedStandards] = useState<ProfStandardSearchItem[]>([]);
   const [selectedTrainingProfession, setSelectedTrainingProfession] =
@@ -129,10 +180,13 @@ export function NewCompetencyPage() {
   const [applyingMatrix, setApplyingMatrix] = useState(false);
   const [downloadingDocx, setDownloadingDocx] = useState(false);
   const [error, setError] = useState("");
+  const [canSubmitToReview, setCanSubmitToReview] = useState(true);
+  const [hydrating, setHydrating] = useState(Boolean(editId));
+  const [workingCompetence, setWorkingCompetence] = useState<Competence | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    industry: "",
+    professionalAreaCode: "",
     educationLevel: "",
     educationKind: EDUCATION_KINDS[0] as EducationKind,
     trainingProfessionId: null as number | null,
@@ -152,17 +206,25 @@ export function NewCompetencyPage() {
     descriptors: createEmptyDescriptors(),
     matrixContext: null as MatrixContext | null,
     assessmentByLevel: emptyAssessmentByLevel(),
-    files: [] as string[],
+    disciplineMapping: [] as DisciplineMappingRow[],
+    resources: [] as string[],
+    expertise: {} as ExpertiseChecklist,
+    internationalMapping: emptyInternationalMapping() as InternationalMapping,
   });
 
   const steps = [
-    { number: 1, name: "Общая информация" },
-    { number: 2, name: "Профстандарт и уровень" },
-    { number: 3, name: "Структура A/B/C" },
-    { number: 4, name: "Дескрипторы" },
-    { number: 5, name: "Оценочные средства" },
-    { number: 6, name: "Предпросмотр" },
+    { number: 1, name: t("wizard.step1") },
+    { number: 2, name: t("wizard.step2") },
+    { number: 3, name: t("wizard.step3") },
+    { number: 4, name: t("wizard.step4") },
+    { number: 5, name: t("wizard.step5") },
+    { number: 6, name: t("wizard.step6") },
+    { number: 7, name: t("wizard.step7") },
+    { number: 8, name: t("wizard.step8") },
+    { number: 9, name: t("wizard.step9") },
+    { number: 10, name: t("wizard.step10") },
   ];
+  const lastStep = steps.length;
 
   const educationLevels = [...PROFESSIONAL_EDUCATION_LEVELS];
   const needsFgosSearch =
@@ -194,17 +256,10 @@ export function NewCompetencyPage() {
     });
   }, [qualificationLevels, tfLevelRange]);
 
-  const assessmentMethods = [
-    "Кейс-метод",
-    "Деловая игра",
-    "Практические задания",
-    "Тестирование",
-    "Проектная работа",
-  ];
   const competenceKinds: { value: CompetenceKind; label: string }[] = [
-    { value: "professional", label: "Профессиональная" },
-    { value: "general", label: "Общепрофессиональная" },
-    { value: "universal", label: "Универсальная" },
+    { value: "professional", label: t("competenceKind.professional") },
+    { value: "general", label: t("competenceKind.general") },
+    { value: "universal", label: t("competenceKind.universal") },
   ];
 
   const structurePayload = structureToPayload(formData.structure);
@@ -214,11 +269,34 @@ export function NewCompetencyPage() {
     [laborFunctions, formData.selectedLaborFunctionIds],
   );
 
+  const runInternationalMapping = useCallback(() => {
+    setFormData((prev) => ({
+      ...prev,
+      internationalMapping: analyzeInternationalMapping({
+        competenceKind: prev.competenceKind,
+        title: prev.title,
+        qualificationLevel: prev.qualificationLevel,
+        educationKind: prev.educationKind,
+        educationLevel: prev.educationLevel,
+        professionalAreaCode: prev.professionalAreaCode,
+        fgosCode: prev.fgosCode,
+        laborFunctions: laborFunctions.filter((lf) => prev.selectedLaborFunctionIds.includes(lf.id)),
+        structure: prev.structure,
+      }),
+    }));
+  }, [laborFunctions]);
+
+  useEffect(() => {
+    if (currentStep !== 9) return;
+    if (formData.internationalMapping.analyzedAt) return;
+    runInternationalMapping();
+  }, [currentStep, formData.internationalMapping.analyzedAt, runInternationalMapping]);
+
   const selectedTfKey = formData.selectedLaborFunctionIds.slice().sort((a, b) => a - b).join(",");
 
   const applyMatrixProfile = useCallback(async () => {
     if (!formData.qualificationLevel) {
-      setError("Сначала выберите уровень квалификации (1–9)");
+      setError(t("wizard.selectQlFirst"));
       return;
     }
     setApplyingMatrix(true);
@@ -235,11 +313,11 @@ export function NewCompetencyPage() {
         matrixContext: result.matrix_context,
       }));
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Не удалось загрузить профиль из матрицы");
+      setError(err instanceof Error ? err.message : t("wizard.matrixError"));
     } finally {
       setApplyingMatrix(false);
     }
-  }, [formData.qualificationLevel, formData.competenceKind, formData.structure]);
+  }, [formData.qualificationLevel, formData.competenceKind, formData.structure, t]);
 
   const toggleLaborFunction = (id: number) => {
     const target = laborFunctions.find((lf) => lf.id === id);
@@ -263,32 +341,11 @@ export function NewCompetencyPage() {
   };
 
   const updateStructure = (structure: StructureABC) => {
-    setFormData((prev) => ({ ...prev, structure }));
-  };
-
-  const toggleAssessmentMethod = (level: FormationLevel, method: string) => {
-    setFormData((prev) => {
-      const current = prev.assessmentByLevel[level].methods;
-      const methods = current.includes(method)
-        ? current.filter((m) => m !== method)
-        : [...current, method];
-      return {
-        ...prev,
-        assessmentByLevel: {
-          ...prev.assessmentByLevel,
-          [level]: { ...prev.assessmentByLevel[level], methods },
-        },
-      };
-    });
-  };
-
-  const updateAssessmentCriteria = (level: FormationLevel, criteria: string) => {
     setFormData((prev) => ({
       ...prev,
-      assessmentByLevel: {
-        ...prev.assessmentByLevel,
-        [level]: { ...prev.assessmentByLevel[level], criteria },
-      },
+      structure,
+      disciplineMapping: syncDisciplineMapping(structure, prev.disciplineMapping),
+      assessmentByLevel: syncAssessmentByLevel(structure, prev.assessmentByLevel),
     }));
   };
 
@@ -298,6 +355,114 @@ export function NewCompetencyPage() {
       .then(setQualificationLevels)
       .catch(() => setQualificationLevels([]));
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !editId) {
+      setHydrating(false);
+      return;
+    }
+    let cancelled = false;
+    setHydrating(true);
+    apiClient.getCompetenceById(editId)
+      .then(async (comp) => {
+        if (cancelled) return;
+        if (!comp?.can_edit) {
+          setError(t("wizard.noCollabRights"));
+          setHydrating(false);
+          return;
+        }
+        setWorkingCompetence(comp);
+        setCanSubmitToReview(comp.collaboration_role !== "member");
+        const structure = structureFromPayload(comp.structure || {});
+        const grouped = groupDisciplineMapping(comp.discipline_mapping || []);
+        const disciplineMapping = syncDisciplineMapping(structure, []).map((row) => {
+          const group = grouped.find((item) => item.text === row.text) || grouped.find((item) => item.component === row.component);
+          if (!group) return row;
+          return {
+            ...row,
+            importance: group.importance,
+            volume: group.volume,
+            bindings: group.bindings.length
+              ? group.bindings.map((binding) => ({ discipline: binding.discipline, control: binding.control }))
+              : row.bindings,
+          };
+        });
+        const assessmentByLevel = assessmentToolsToByLevel(comp.assessment_tools, structure);
+        setFormData((prev) => ({
+          ...prev,
+          title: comp.name || "",
+          description: comp.description || "",
+          professionalAreaCode: comp.professional_area_code || "",
+          educationLevel: comp.education_level || "",
+          educationKind: (comp.education_kind as EducationKind) || prev.educationKind,
+          trainingProfessionId: comp.education_training_profession_id ?? null,
+          trainingProfessionName: comp.education_training_profession || "",
+          fgosId: comp.fgos_id ?? null,
+          fgosCode: comp.fgos_code || "",
+          fgosName: comp.fgos_name || "",
+          fgosCategory: comp.fgos_category || "",
+          workload: String(comp.hours || ""),
+          developer: comp.developer || "",
+          structure,
+          profStandardId: comp.prof_standard_id ?? null,
+          qualificationLevel: String(comp.qualification_level || ""),
+          competenceKind: (comp.competence_kind as CompetenceKind) || "professional",
+          descriptors: normalizeDescriptorMap(comp.descriptors),
+          matrixContext: comp.matrix_context || null,
+          assessmentByLevel,
+          disciplineMapping,
+          resources: Array.isArray(comp.resources) ? comp.resources : [],
+          expertise: (comp.expertise || {}) as ExpertiseChecklist,
+          internationalMapping: normalizeInternationalMapping(comp.international_mapping),
+        }));
+        if (comp.fgos_id) {
+          setSelectedFgos({
+            id: comp.fgos_id,
+            code: comp.fgos_code || "",
+            name: comp.fgos_name || "",
+            category: comp.fgos_category || "",
+          } as FgosSearchItem);
+        }
+        const lfList = Array.isArray(comp.labor_functions) ? comp.labor_functions : [];
+        const standardId = comp.prof_standard_id || lfList[0]?.standard_id;
+        if (standardId) {
+          const first = lfList[0] || {};
+          setSelectedStandards([{
+            id: Number(standardId),
+            name: first.standard_name || "Профессиональный стандарт",
+            reg_number: first.standard_reg_number || "",
+          }]);
+          try {
+            const data = await apiClient.getLaborFunctions(Number(standardId));
+            if (cancelled) return;
+            const tagged: LaborFunctionDetail[] = (Array.isArray(data) ? data : []).map((lf) => ({
+              ...lf,
+              standard_id: lf.standard_id ?? Number(standardId),
+              standard_reg_number: lf.standard_reg_number ?? first.standard_reg_number,
+              standard_name: lf.standard_name ?? first.standard_name,
+              otf_level: formatTfLevel(lf.otf_level) ?? "",
+            }));
+            setLaborFunctions(tagged);
+            const selectedCodes = new Set(lfList.map((item: { code?: string }) => item.code).filter(Boolean));
+            setFormData((prev) => ({
+              ...prev,
+              selectedLaborFunctionIds: tagged.filter((item) => selectedCodes.has(item.code)).map((item) => item.id),
+            }));
+          } catch {
+            /* структура уже загружена из паспорта */
+          }
+        }
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : t("wizard.openError"));
+      })
+      .finally(() => {
+        if (!cancelled) setHydrating(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, editId, t]);
 
   const handleAddStandard = (standard: ProfStandardSearchItem | null) => {
     if (!standard) return;
@@ -386,6 +551,7 @@ export function NewCompetencyPage() {
   }, [isAuthenticated, formData.fgosCode, formData.trainingProfessionOkpdtr]);
 
   useEffect(() => {
+    if (hydrating) return;
     const range = allowedTfLevelRange(formData.educationKind, formData.educationLevel);
     setFormData((prev) => {
       if (prev.selectedLaborFunctionIds.length > 0 && laborFunctions.length === 0) return prev;
@@ -415,32 +581,26 @@ export function NewCompetencyPage() {
         qualificationLevel: firstLevel != null ? String(firstLevel) : nextLevel,
       };
     });
-  }, [formData.educationKind, formData.educationLevel, laborFunctions]);
+  }, [formData.educationKind, formData.educationLevel, laborFunctions, hydrating]);
 
   useEffect(() => {
+    if (hydrating) return;
     if (formData.competenceKind !== "professional" || !selectedTfKey) return;
     const selected = laborFunctions.filter((lf) => formData.selectedLaborFunctionIds.includes(lf.id));
     if (selected.length === 0) return;
-    setFormData((prev) => ({
-      ...prev,
-      structure: buildStructureFromLaborFunctions(selected, prev.structure),
-    }));
-  }, [selectedTfKey, laborFunctions, formData.competenceKind, formData.selectedLaborFunctionIds]);
+    setFormData((prev) => {
+      const structure = buildStructureFromLaborFunctions(selected, prev.structure);
+      return {
+        ...prev,
+        structure,
+        disciplineMapping: syncDisciplineMapping(structure, prev.disciplineMapping),
+        assessmentByLevel: syncAssessmentByLevel(structure, prev.assessmentByLevel),
+      };
+    });
+  }, [selectedTfKey, laborFunctions, formData.competenceKind, formData.selectedLaborFunctionIds, hydrating]);
 
-  const buildAssessmentTools = () => {
-    const tools: Array<{ level: FormationLevel; tool: string; criteria: string }> = [];
-    for (const level of FORMATION_LEVELS) {
-      const block = formData.assessmentByLevel[level];
-      for (const method of block.methods) {
-        tools.push({
-          level,
-          tool: method,
-          criteria: block.criteria,
-        });
-      }
-    }
-    return tools;
-  };
+  const buildAssessmentTools = () =>
+    flattenAssessmentTools(formData.assessmentByLevel, formData.structure);
 
   const buildPayload = (status: string) => ({
     name: formData.title,
@@ -452,21 +612,26 @@ export function NewCompetencyPage() {
       code: lf.code,
       name: lf.name,
       otf_level: lf.otf_level,
+      otf_code: lf.otf_code,
       standard_id: lf.standard_id,
       standard_reg_number: lf.standard_reg_number,
       standard_name: lf.standard_name,
+      okz_codes: lf.okz_codes || [],
     })),
     structure: structurePayload,
     descriptors: formData.descriptors,
+    discipline_mapping: flattenDisciplineMapping(formData.disciplineMapping),
     assessment_tools: buildAssessmentTools(),
-    ed_technologies: Array.from(
-      new Set(FORMATION_LEVELS.flatMap((level) => formData.assessmentByLevel[level].methods)),
-    ),
+    ed_technologies: uniqueAssessmentMethodLabels(formData.assessmentByLevel),
+    resources: formData.resources.map((item) => item.trim()).filter(Boolean),
+    expertise: formData.expertise,
+    international_mapping: formData.internationalMapping,
     universal_skills: formData.matrixContext?.universal_skills,
     status,
-    developer: formData.developer || user?.email || "Не указан",
+    developer: formData.developer || user?.email || t("wizard.notSpecified"),
     description: formData.description,
-    industry: formData.industry,
+    professional_area_code: formData.professionalAreaCode,
+    industry: findProfessionalArea(formData.professionalAreaCode)?.name || "",
     hours: formData.workload,
     education_level: formData.educationLevel,
     education_kind: formData.educationKind,
@@ -481,20 +646,20 @@ export function NewCompetencyPage() {
   const validateStep = (step: number): string | null => {
     switch (step) {
       case 1:
-        if (!formData.title.trim()) return "Укажите название компетенции";
-        if (!formData.description.trim()) return "Укажите описание компетенции";
-        if (!formData.educationKind) return "Выберите вид профессионального образования";
+        if (!formData.title.trim()) return t("wizard.needTitle");
+        if (!formData.description.trim()) return t("wizard.needDescription");
+        if (!formData.educationKind) return t("wizard.needEducationKind");
         if (
           formData.educationKind === "профессиональное образование" &&
           !formData.educationLevel
         ) {
-          return "Выберите уровень образования";
+          return t("wizard.needEducationLevel");
         }
         if (
           formData.educationKind === "профессиональное обучение" &&
           !formData.trainingProfessionId
         ) {
-          return "Выберите профессию рабочего или должность служащего";
+          return t("wizard.needProfession");
         }
         if (
           (formData.educationKind === "профессиональное образование" ||
@@ -502,16 +667,16 @@ export function NewCompetencyPage() {
           (formData.educationKind === "дополнительное образование" || formData.educationLevel) &&
           !formData.fgosId
         ) {
-          return "Выберите ФГОС";
+          return t("wizard.needFgos");
         }
-        if (!formData.industry) return "Выберите отрасль";
+        if (!formData.professionalAreaCode) return t("wizard.needArea");
         return null;
       case 2:
         if (!formData.qualificationLevel) {
-          return "Укажите уровень квалификации по приказу №148н (1–9)";
+          return t("wizard.needQl");
         }
         if (formData.competenceKind === "professional" && selectedStandards.length === 0) {
-          return "Выберите хотя бы один профессиональный стандарт";
+          return t("wizard.needPs");
         }
         if (formData.qualificationLevel && tfLevelRange) {
           const n = Number(formData.qualificationLevel);
@@ -522,10 +687,20 @@ export function NewCompetencyPage() {
         return null;
       case 3:
         if (!formData.structure.A.some((item) => item.text.trim())) {
-          return "Добавьте хотя бы одно знание (A)";
+          return t("wizard.needA");
         }
         if (!formData.structure.B.some((item) => item.text.trim())) {
-          return "Добавьте хотя бы одно умение (B)";
+          return t("wizard.needB");
+        }
+        return null;
+      case 7:
+        if (formData.resources.map((item) => item.trim()).filter(Boolean).length < 3) {
+          return t("wizard.needResources");
+        }
+        return null;
+      case 8:
+        if (EXPERTISE_CRITERIA.some((_, index) => !formData.expertise[criterionKey(index)]?.value)) {
+          return t("wizard.needValidation");
         }
         return null;
       default:
@@ -543,22 +718,24 @@ export function NewCompetencyPage() {
 
   const validateForm = (status: string) => {
     if (status === "проект") {
-      if (!formData.title.trim()) return "Укажите название компетенции";
+      if (!formData.title.trim()) return t("wizard.needTitle");
       return null;
     }
 
-    const stepError = validateStepsUpTo(6);
+    const stepError = validateStepsUpTo(lastStep);
     if (stepError) return stepError;
     if (status === "на экспертизе") {
       const missingDescriptor = (["A", "B", "C"] as const).some((cat) =>
         FORMATION_LEVELS.some((level) => !formData.descriptors[cat][level]?.trim()),
       );
       if (missingDescriptor) {
-        return "Заполните все дескрипторы (A/B/C × базовый/продвинутый/экспертный) перед отправкой на экспертизу";
+        return t("wizard.needDescriptors");
       }
-      if (buildAssessmentTools().length === 0) {
-        return "Добавьте оценочные средства хотя бы для одного уровня сформированности";
-      }
+      const assessmentError = assessmentWizardErrorMessage(
+        formData.structure,
+        formData.assessmentByLevel,
+      );
+      if (assessmentError) return assessmentError;
     }
     return null;
   };
@@ -572,10 +749,18 @@ export function NewCompetencyPage() {
     setSubmitting(true);
     setError("");
     try {
-      const created = await apiClient.createCompetence(buildPayload(status));
-      navigate(`/competency/${created.id}`);
+      const payload = buildPayload(status);
+      const saved = isEdit && editId
+        ? await apiClient.updateCompetence(editId, payload)
+        : await apiClient.createCompetence(payload);
+      if (saved?.id) setWorkingCompetence(saved);
+      if (status === "на экспертизе") {
+        navigate(`/competency/${saved.id}`);
+      } else if (!isEdit && saved?.id) {
+        navigate(`/competency/${saved.id}/edit`, { replace: true });
+      }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Ошибка сохранения");
+      setError(err instanceof Error ? err.message : t("wizard.saveError"));
     } finally {
       setSubmitting(false);
     }
@@ -583,7 +768,7 @@ export function NewCompetencyPage() {
 
   const handleDownloadDocx = async () => {
     if (!formData.title.trim()) {
-      setError("Укажите название компетенции перед выгрузкой DOCX");
+      setError(t("wizard.docxNeedTitle"));
       return;
     }
     setDownloadingDocx(true);
@@ -609,7 +794,7 @@ export function NewCompetencyPage() {
       a.click();
       URL.revokeObjectURL(url);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Не удалось сформировать DOCX");
+      setError(err instanceof Error ? err.message : t("wizard.docxError"));
     } finally {
       setDownloadingDocx(false);
     }
@@ -623,7 +808,7 @@ export function NewCompetencyPage() {
 
   const goNext = () => {
     setError("");
-    setCurrentStep((prev) => Math.min(6, prev + 1));
+    setCurrentStep((prev) => Math.min(lastStep, prev + 1));
   };
 
   const selectedQl = qualificationLevels.find(
@@ -633,11 +818,19 @@ export function NewCompetencyPage() {
   if (!isAuthenticated) {
     return (
       <PageShell className="text-center py-20">
-        <h2 className="text-xl font-semibold text-gray-900 mb-3">Требуется авторизация</h2>
-        <p className="text-gray-600 mb-6">Войдите в систему, чтобы предложить новую компетенцию</p>
-        <Link to="/login" state={{ from: "/new" }}>
-          <Button>Войти</Button>
+        <h2 className="text-xl font-semibold text-gray-900 mb-3">{t("wizard.needAuth")}</h2>
+        <p className="text-gray-600 mb-6">{t("wizard.needAuthLead")}</p>
+        <Link to="/login" state={{ from: isEdit ? `/competency/${editId}/edit` : "/new" }}>
+          <Button>{t("common.login")}</Button>
         </Link>
+      </PageShell>
+    );
+  }
+
+  if (hydrating) {
+    return (
+      <PageShell className="text-center py-20">
+        <p className="text-gray-600">{t("wizard.loading")}</p>
       </PageShell>
     );
   }
@@ -646,18 +839,57 @@ export function NewCompetencyPage() {
     <PageShell>
       <Link
         to="/"
-        className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-4"
+        className="inline-flex items-center gap-2 text-base text-gray-600 hover:text-gray-900 mb-4"
       >
         <ArrowLeft className="w-4 h-4" />
-        Вернуться на главную
+        {t("wizard.backHome")}
       </Link>
 
-      <PageHeader title="Предложить новую компетенцию" />
+      <PageHeader title={isEdit ? t("wizard.titleEdit") : t("wizard.titleNew")} />
       {error && (
         <p className="mb-6 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-2">{error}</p>
       )}
+      {!canSubmitToReview ? (
+        <p className="mb-6 text-sm text-amber-950 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2">
+          {t("wizard.memberNotice")}
+        </p>
+      ) : null}
+      <WorkingGroupPanel
+        competence={
+          workingCompetence || {
+            id: 0,
+            name: formData.title.trim() || t("wizard.newName"),
+            status: "проект",
+            can_invite: canSubmitToReview,
+            can_edit: true,
+            collaboration_role: canSubmitToReview ? "leader" : "member",
+            collaborators: [
+              {
+                role: "leader",
+                status: "accepted",
+                user_id: user?.id,
+                user: user,
+              },
+            ],
+          }
+        }
+        onUpdated={(next) => {
+          setWorkingCompetence(next);
+          if (!isEdit && next.id) {
+            navigate(`/competency/${next.id}/edit`, { replace: true });
+          }
+        }}
+        ensureCompetence={async () => {
+          if (workingCompetence?.id) return workingCompetence;
+          const validationError = validateForm("проект");
+          if (validationError) throw new Error(validationError);
+          const saved = await apiClient.createCompetence(buildPayload("проект"));
+          setWorkingCompetence(saved);
+          return saved;
+        }}
+      />
 
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-8 w-full">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8 w-full">
         {steps.map((step) => (
           <div key={step.number} className="flex items-center min-w-0">
             <button
@@ -677,7 +909,7 @@ export function NewCompetencyPage() {
             <button
               type="button"
               onClick={() => goToStep(step.number)}
-              className={`ml-2 text-sm font-medium text-left cursor-pointer hover:text-gray-900 truncate ${
+              className={`ml-2 text-base font-medium text-left cursor-pointer hover:text-gray-900 truncate ${
                 currentStep === step.number ? "text-gray-900" : "text-gray-500"
               }`}
             >
@@ -698,7 +930,7 @@ export function NewCompetencyPage() {
                   className="gap-2 text-gray-700 border-gray-300 hover:bg-gray-50 disabled:opacity-50"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  Назад
+                  {t("common.back")}
                 </Button>
 
                 <div className="flex gap-2">
@@ -709,10 +941,10 @@ export function NewCompetencyPage() {
                     onClick={() => handleSubmit("проект")}
                   >
                     <Save className="w-4 h-4" />
-                    Сохранить черновик
+                    {t("wizard.saveDraft")}
                   </Button>
 
-                  {currentStep === 6 && (
+                  {currentStep === lastStep && (
                     <Button
                       variant="outline"
                       className="gap-2 text-gray-700 border-gray-300 hover:bg-gray-50"
@@ -720,62 +952,82 @@ export function NewCompetencyPage() {
                       onClick={() => void handleDownloadDocx()}
                     >
                       <FileDown className="w-4 h-4" />
-                      {downloadingDocx ? "DOCX..." : "Скачать DOCX"}
+                      {downloadingDocx ? t("common.docxBusy") : t("common.downloadDocx")}
                     </Button>
                   )}
 
-                  {currentStep < 6 ? (
+                  {currentStep < lastStep ? (
                     <Button onClick={goNext} className="gap-2">
-                      Далее
+                      {t("common.next")}
                       <ArrowRight className="w-4 h-4" />
                     </Button>
-                  ) : (
+                  ) : canSubmitToReview ? (
                     <Button
                       className="gap-2 bg-green-600 hover:bg-green-700 text-white"
                       disabled={submitting}
                       onClick={() => handleSubmit("на экспертизе")}
                     >
                       <Send className="w-4 h-4" />
-                      {submitting ? "Отправка..." : "Отправить на экспертизу"}
+                      {submitting ? t("wizard.submitting") : t("wizard.submitReview")}
                     </Button>
-                  )}
+                  ) : null}
                 </div>
               </div>
               {currentStep === 1 && (
                 <div className="space-y-6">
                   <h2 className="text-xl font-semibold text-gray-900 mb-6">
-                    Общая информация о компетенции
+                    {t("wizard.step1Title")}
                   </h2>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Название компетенции <span className="text-red-500">*</span>
+                      {t("wizard.name")} <span className="text-red-500">{t("common.required")}</span>
                     </label>
                     <Input
                       type="text"
                       value={formData.title}
                       onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      placeholder="Например: Способен применять..."
+                      placeholder={t("wizard.namePlaceholder")}
                       className="w-full"
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Описание компетенции <span className="text-red-500">*</span>
+                      {t("wizard.description")} <span className="text-red-500">{t("common.required")}</span>
                     </label>
                     <textarea
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       rows={4}
                       className="form-control"
-                      placeholder="Подробное описание компетенции..."
+                      placeholder={t("wizard.descriptionPlaceholder")}
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Выбор вида профессионального образования <span className="text-red-500">*</span>
+                      {t("wizard.area")} <span className="text-red-500">{t("common.required")}</span>
+                    </label>
+                    <select
+                      value={formData.professionalAreaCode}
+                      onChange={(e) =>
+                        setFormData({ ...formData, professionalAreaCode: e.target.value })
+                      }
+                      className="form-control"
+                    >
+                      <option value="">{t("wizard.selectArea")}</option>
+                      {PROFESSIONAL_AREAS.map((area) => (
+                        <option key={area.code} value={area.code}>
+                          {areaDisplayCode(area)} — {translateAreaName(t, area.code, area.name)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {t("wizard.educationKind")} <span className="text-red-500">{t("common.required")}</span>
                     </label>
                     <select
                       value={formData.educationKind}
@@ -811,7 +1063,7 @@ export function NewCompetencyPage() {
                     >
                       {EDUCATION_KINDS.map((kind) => (
                         <option key={kind} value={kind}>
-                          {kind}
+                          {translateKeyed(t, EDUCATION_KIND_I18N_KEYS, kind)}
                         </option>
                       ))}
                     </select>
@@ -821,9 +1073,9 @@ export function NewCompetencyPage() {
                     formData.educationKind === "дополнительное образование") && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Уровень образования
+                        {t("wizard.educationLevel")}
                         {formData.educationKind === "профессиональное образование" && (
-                          <span className="text-red-500"> *</span>
+                          <span className="text-red-500"> {t("common.required")}</span>
                         )}
                       </label>
                       <select
@@ -842,10 +1094,10 @@ export function NewCompetencyPage() {
                         className="form-control"
                         required={formData.educationKind === "профессиональное образование"}
                       >
-                        <option value="">Выберите уровень</option>
+                        <option value="">{t("wizard.selectLevel")}</option>
                         {educationLevels.map((level) => (
                           <option key={level} value={level}>
-                            {level}
+                            {translateKeyed(t, EDUCATION_LEVEL_I18N_KEYS, level)}
                           </option>
                         ))}
                       </select>
@@ -855,7 +1107,7 @@ export function NewCompetencyPage() {
                   {showFgosPicker && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        ФГОС <span className="text-red-500">*</span>
+                        {t("wizard.fgos")} <span className="text-red-500">{t("common.required")}</span>
                       </label>
                       <FgosSearchPicker
                         selectedId={formData.fgosId}
@@ -882,8 +1134,8 @@ export function NewCompetencyPage() {
                   {formData.educationKind === "профессиональное обучение" && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Профессия рабочего / должность служащего{" "}
-                        <span className="text-red-500">*</span>
+                        {t("wizard.profession")}{" "}
+                        <span className="text-red-500">{t("common.required")}</span>
                       </label>
                       <ProfTrainingProfessionPicker
                         selectedId={formData.trainingProfessionId}
@@ -902,26 +1154,8 @@ export function NewCompetencyPage() {
                   )}
 
                   <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Отрасль <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        value={formData.industry}
-                        onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
-                        className="form-control"
-                      >
-                        <option value="">Выберите отрасль</option>
-                        {defaultIndustries.map((industry) => (
-                          <option key={industry} value={industry}>
-                            {industry}
-                          </option>
-                        ))}
-                      </select>
-                  </div>
-
-                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Тип компетенции
+                      {t("wizard.competenceType")}
                     </label>
                     <select
                       value={formData.competenceKind}
@@ -940,13 +1174,13 @@ export function NewCompetencyPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Разработчик (организация)
+                      {t("wizard.developer")}
                     </label>
                     <Input
                       type="text"
                       value={formData.developer}
                       onChange={(e) => setFormData({ ...formData, developer: e.target.value })}
-                      placeholder="Название организации"
+                      placeholder={t("wizard.developerPlaceholder")}
                       className="w-full"
                     />
                   </div>
@@ -956,47 +1190,45 @@ export function NewCompetencyPage() {
               {currentStep === 2 && (
                 <div className="space-y-6">
                   <h2 className="text-xl font-semibold text-gray-900 mb-6">
-                    Профстандарт, трудовая функция и уровень квалификации
+                    {t("wizard.step2Title")}
                   </h2>
 
                   {formData.competenceKind === "professional" && (
                     <>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Профессиональный стандарт <span className="text-red-500">*</span>
+                          {t("wizard.profStandard")} <span className="text-red-500">{t("common.required")}</span>
                         </label>
                         {showRecommended && (
                           <div className="mb-4">
                             <p className="text-sm font-medium text-gray-800 mb-1">
                               {showOksoRecommended
-                                ? `Рекомендованные профстандарты по ОКСО ${formData.fgosCode}`
+                                ? t("wizard.recommendedOkso", { code: formData.fgosCode })
                                 : recommendedOkpdtr
-                                  ? `Рекомендованные профстандарты по ОКПДТР ${recommendedOkpdtr}`
-                                  : "Рекомендованные профстандарты по ОКПДТР"}
+                                  ? `${t("wizard.recommendedOkpdtr")} ${recommendedOkpdtr}`
+                                  : t("wizard.recommendedOkpdtr")}
                             </p>
                             <p className="text-xs text-gray-500 mb-3">
                               {showOksoRecommended
-                                ? "В список включены ПС, у которых в разделе ОКСО указан код выбранного ФГОС."
-                                : "В список включены ПС, у которых в разделе ОКПДТР указан код выбранной профессии."}
+                                ? t("wizard.recommendedOksoHelp")
+                                : t("wizard.recommendedOkpdtrHelp")}
                             </p>
                             {showOkpdtrRecommended && !recommendedOkpdtr ? (
                               <p className="text-sm text-gray-500 rounded-xl border border-gray-200 px-4 py-3">
-                                У выбранной профессии нет кода ОКПДТР. Воспользуйтесь поиском ниже.
+                                {t("wizard.noOkpdtr")}
                               </p>
                             ) : recommendedLoading ? (
                               <div className="flex items-center gap-2 text-sm text-gray-500 rounded-xl border border-gray-200 px-4 py-6">
                                 <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                                 <span>
                                   {showOksoRecommended
-                                    ? "Подбор профстандартов по коду ФГОС…"
-                                    : "Подбор профстандартов по коду ОКПДТР…"}
+                                    ? t("wizard.pickingFgos")
+                                    : t("wizard.pickingOkpdtr")}
                                 </span>
                               </div>
                             ) : recommendedStandards.length === 0 ? (
                               <p className="text-sm text-gray-500 rounded-xl border border-gray-200 px-4 py-3">
-                                {showOksoRecommended
-                                  ? `Совпадений по коду ${formData.fgosCode} в разделе ОКСО нет. Воспользуйтесь поиском ниже.`
-                                  : `Совпадений по коду ${recommendedOkpdtr} в разделе ОКПДТР нет. Воспользуйтесь поиском ниже.`}
+                                {t("wizard.noCodeMatch")}
                               </p>
                             ) : (
                               <ul className="divide-y divide-gray-100 rounded-xl border border-primary/20 bg-primary/5 max-h-72 overflow-y-auto">
@@ -1043,11 +1275,11 @@ export function NewCompetencyPage() {
                             )}
                             {!recommendedLoading && recommendedStandards.length > 0 && (
                               <p className="text-xs text-gray-500 mt-2">
-                                Найдено: {recommendedStandards.length}
+                                {t("wizard.foundN", { n: recommendedStandards.length })}
                               </p>
                             )}
                             <p className="text-xs text-gray-500 mt-3 mb-2">
-                              Добавьте профстандарт — трудовые функции можно выбрать из нескольких ПС:
+                              {t("wizard.addPs")}
                             </p>
                           </div>
                         )}
@@ -1061,8 +1293,7 @@ export function NewCompetencyPage() {
                         {selectedStandards.length > 0 && (
                           <div className="mt-4 space-y-3">
                             <p className="text-xs text-gray-500">
-                              {tfLevelRangeHint(tfLevelRange)} Нажмите на профстандарт, чтобы открыть его трудовые функции.
-                              У ТФ кнопка «вниз» показывает трудовые действия и знания/умения.
+                              {tfLevelRangeHint(tfLevelRange)} {t("wizard.clickPs")} {t("wizard.tfDown")}
                             </p>
                             {selectedStandards.map((item) => {
                               const items = laborFunctions.filter((lf) => lf.standard_id === item.id);
@@ -1096,7 +1327,7 @@ export function NewCompetencyPage() {
                                         <p className="text-xs font-semibold text-primary">
                                           {item.reg_number}
                                           {item.ps_code ? ` · ${item.ps_code}` : ""}
-                                          {selectedCount > 0 ? ` · выбрано ТФ: ${selectedCount}` : ""}
+                                          {selectedCount > 0 ? ` · ${t("wizard.selectedTf", { n: selectedCount })}` : ""}
                                         </p>
                                         <p className="text-sm text-gray-800 leading-snug">{item.name}</p>
                                       </div>
@@ -1107,7 +1338,7 @@ export function NewCompetencyPage() {
                                         variant="outline"
                                         size="sm"
                                         onClick={() => handleRemoveStandard(item.id)}
-                                        aria-label="Убрать профстандарт"
+                                        aria-label={t("wizard.removePs")}
                                       >
                                         <X className="w-4 h-4" />
                                       </Button>
@@ -1118,10 +1349,10 @@ export function NewCompetencyPage() {
                                       {laborFunctionsLoading && items.length === 0 ? (
                                         <div className="flex items-center gap-2 text-sm text-gray-500 py-2">
                                           <Loader2 className="h-4 w-4 animate-spin shrink-0" />
-                                          <span>Идет загрузка трудовых функций</span>
+                                          <span>{t("wizard.loadingTf")}</span>
                                         </div>
                                       ) : items.length === 0 ? (
-                                        <p className="text-sm text-gray-500 py-1">Трудовые функции не найдены</p>
+                                        <p className="text-sm text-gray-500 py-1">{t("wizard.tfNotFound")}</p>
                                       ) : (
                                         items.map((lf) => {
                                           const levelLabel = formatTfLevel(lf.otf_level);
@@ -1154,7 +1385,7 @@ export function NewCompetencyPage() {
                                                     {" — "}
                                                     {lf.name}
                                                     {levelLabel ? (
-                                                      <span className="text-gray-500"> (ур. {levelLabel})</span>
+                                                      <span className="text-gray-500"> {t("wizard.tfLevel", { n: levelLabel })}</span>
                                                     ) : null}
                                                   </p>
                                                   {reason ? (
@@ -1171,8 +1402,8 @@ export function NewCompetencyPage() {
                                                     )
                                                   }
                                                   className="shrink-0 p-1 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-800"
-                                                  aria-label={tfOpen ? "Скрыть ТД и З/У" : "Показать ТД и З/У"}
-                                                  title="Трудовые действия, знания и умения"
+                                                  aria-label={tfOpen ? t("wizard.hideTf") : t("wizard.showTf")}
+                                                  title={t("wizard.tdZuTitle")}
                                                 >
                                                   <ChevronDown
                                                     className={`w-4 h-4 transition-transform ${tfOpen ? "rotate-180" : ""}`}
@@ -1183,7 +1414,7 @@ export function NewCompetencyPage() {
                                                 <div className="border-t border-gray-100 px-3 py-3 space-y-3 text-sm">
                                                   <div>
                                                     <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">
-                                                      Трудовые действия
+                                                      {t("wizard.laborActions")}
                                                     </p>
                                                     {details.tds.length ? (
                                                       <ul className="list-disc list-inside space-y-1 text-gray-700">
@@ -1192,12 +1423,12 @@ export function NewCompetencyPage() {
                                                         ))}
                                                       </ul>
                                                     ) : (
-                                                      <p className="text-gray-400">Нет данных</p>
+                                                      <p className="text-gray-400">{t("common.noData")}</p>
                                                     )}
                                                   </div>
                                                   <div>
                                                     <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">
-                                                      Знания
+                                                      {t("wizard.knowledge")}
                                                     </p>
                                                     {details.knowledges.length ? (
                                                       <ul className="list-disc list-inside space-y-1 text-gray-700">
@@ -1206,12 +1437,12 @@ export function NewCompetencyPage() {
                                                         ))}
                                                       </ul>
                                                     ) : (
-                                                      <p className="text-gray-400">Нет данных</p>
+                                                      <p className="text-gray-400">{t("common.noData")}</p>
                                                     )}
                                                   </div>
                                                   <div>
                                                     <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">
-                                                      Умения
+                                                      {t("wizard.skills")}
                                                     </p>
                                                     {details.skills.length ? (
                                                       <ul className="list-disc list-inside space-y-1 text-gray-700">
@@ -1220,7 +1451,7 @@ export function NewCompetencyPage() {
                                                         ))}
                                                       </ul>
                                                     ) : (
-                                                      <p className="text-gray-400">Нет данных</p>
+                                                      <p className="text-gray-400">{t("common.noData")}</p>
                                                     )}
                                                   </div>
                                                 </div>
@@ -1236,8 +1467,8 @@ export function NewCompetencyPage() {
                             })}
                             {formData.selectedLaborFunctionIds.length > 0 && (
                               <p className="text-sm text-primary">
-                                Выбрано ТФ: {formData.selectedLaborFunctionIds.length}
-                                {lockedTfLevel != null ? ` · уровень ${lockedTfLevel}` : ""}.
+                                {t("wizard.selectedTf", { n: formData.selectedLaborFunctionIds.length })}
+                                {lockedTfLevel != null ? ` · ${t("wizard.levelN", { n: lockedTfLevel })}` : ""}.
                               </p>
                             )}
                           </div>
@@ -1248,7 +1479,7 @@ export function NewCompetencyPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Уровень квалификации по приказу №148н <span className="text-red-500">*</span>
+                      {t("wizard.qlLabel")} <span className="text-red-500">{t("common.required")}</span>
                     </label>
                     <select
                       value={formData.qualificationLevel}
@@ -1258,17 +1489,16 @@ export function NewCompetencyPage() {
                       className="form-control"
                       disabled={lockedTfLevel != null}
                     >
-                      <option value="">Выберите уровень (1–9)...</option>
+                      <option value="">{t("wizard.selectQl")}</option>
                       {allowedQualificationLevels.map((level) => (
                         <option key={level.qualification_level} value={String(level.qualification_level)}>
-                          {level.qualification_level_label || `${level.qualification_level}-й уровень`}
+                          {level.qualification_level_label || t("wizard.nthLevel", { n: level.qualification_level })}
                         </option>
                       ))}
                     </select>
                     {lockedTfLevel != null && (
                       <p className="text-xs text-gray-500 mt-2">
-                        Уровень зафиксирован выбранными трудовыми функциями ({lockedTfLevel}).
-                        Чтобы сменить уровень, снимите выбор ТФ.
+                        {t("wizard.qlLocked", { n: lockedTfLevel })}
                       </p>
                     )}
                     {tfLevelRange && lockedTfLevel == null && (
@@ -1290,7 +1520,7 @@ export function NewCompetencyPage() {
                   {formData.competenceKind !== "professional" && (
                     <div className="bg-secondary border border-primary/20 rounded-xl p-4">
                       <p className="text-sm text-primary">
-                        Для общепрофессиональных и универсальных компетенций связь с профстандартом необязательна.
+                        {t("wizard.optionalPs")}
                       </p>
                     </div>
                   )}
@@ -1301,13 +1531,13 @@ export function NewCompetencyPage() {
                 <div className="space-y-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Рекомендуемая трудоёмкость
+                      {t("wizard.workload")}
                     </label>
                     <Input
                       type="text"
                       value={formData.workload}
                       onChange={(e) => setFormData({ ...formData, workload: e.target.value })}
-                      placeholder="Например: 180 часов"
+                      placeholder={t("wizard.workloadPlaceholder")}
                       className="w-full"
                     />
                   </div>
@@ -1325,7 +1555,7 @@ export function NewCompetencyPage() {
                   matrixContext={formData.matrixContext}
                   qualificationLevelLabel={
                     selectedQl?.qualification_level_label ||
-                    (formData.qualificationLevel ? `${formData.qualificationLevel}-й уровень` : '')
+                    (formData.qualificationLevel ? t("wizard.nthLevel", { n: formData.qualificationLevel }) : '')
                   }
                   order148nIndicators={selectedQl?.order_148n_indicators || ''}
                   onChange={(next: DescriptorMap) =>
@@ -1337,96 +1567,176 @@ export function NewCompetencyPage() {
               )}
 
               {currentStep === 5 && (
-                <div className="space-y-8">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                    Оценочные средства по уровням сформированности
-                  </h2>
-                  <p className="text-sm text-gray-500 mb-4">
-                    Укажите методы и критерии отдельно для базового, продвинутого и экспертного уровней.
-                  </p>
-
-                  {FORMATION_LEVELS.map((level) => (
-                    <div key={level} className="rounded-xl border border-gray-200 p-5 space-y-4">
-                      <h3 className="font-semibold text-primary">{FORMATION_LEVEL_LABELS[level]}</h3>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Методы оценки
-                        </label>
-                        <div className="space-y-2">
-                          {assessmentMethods.map((method) => (
-                            <label key={method} className="flex items-center gap-2 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={formData.assessmentByLevel[level].methods.includes(method)}
-                                onChange={() => toggleAssessmentMethod(level, method)}
-                                className="rounded border-gray-300 text-primary focus:ring-primary"
-                              />
-                              <span className="text-sm text-gray-700">{method}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Критерии и типовые задания
-                        </label>
-                        <textarea
-                          value={formData.assessmentByLevel[level].criteria}
-                          onChange={(e) => updateAssessmentCriteria(level, e.target.value)}
-                          rows={3}
-                          className="form-control"
-                          placeholder={`Опишите задания и критерии для ${FORMATION_LEVEL_LABELS[level].toLowerCase()} уровня…`}
-                        />
-                      </div>
-                    </div>
-                  ))}
+                <div className="space-y-4">
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                      {t("wizard.step5Title")}
+                    </h2>
+                    <p className="text-sm text-gray-500">
+                      {t("wizard.step5Help")}{" "}
+                      <Link to="/methodology/scoring" className="text-primary hover:underline font-medium">
+                        {t("wizard.scoringLink")}
+                      </Link>
+                    </p>
+                  </div>
+                  <DisciplineMappingEditor
+                    rows={formData.disciplineMapping}
+                    educationKind={formData.educationKind}
+                    educationLevel={formData.educationLevel}
+                    onChange={(disciplineMapping) =>
+                      setFormData((prev) => ({ ...prev, disciplineMapping }))
+                    }
+                  />
                 </div>
               )}
 
               {currentStep === 6 && (
+                <AssessmentConstructor
+                  structure={formData.structure}
+                  value={formData.assessmentByLevel}
+                  onChange={(next) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      assessmentByLevel:
+                        typeof next === "function" ? next(prev.assessmentByLevel) : next,
+                    }))
+                  }
+                />
+              )}
+
+              {currentStep === 7 && (
                 <div className="space-y-6">
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-900">Предпросмотр компетенции</h2>
+                    <h2 className="text-xl font-semibold text-gray-900">{t("wizard.step7Title")}</h2>
+                    <p className="text-sm text-gray-500 mt-1">{t("wizard.step7Lead")}</p>
+                  </div>
+                  <div className="space-y-3">
+                    {formData.resources.map((item, index) => (
+                      <div key={index} className="flex gap-2">
+                        <Input
+                          value={item}
+                          placeholder={t("wizard.resourcePlaceholder")}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              resources: prev.resources.map((row, i) =>
+                                i === index ? e.target.value : row,
+                              ),
+                            }))
+                          }
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="shrink-0 text-red-600 border-gray-300 hover:bg-red-50"
+                          onClick={() =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              resources: prev.resources.filter((_, i) => i !== index),
+                            }))
+                          }
+                        >
+                          {t("wizard.removeResource")}
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="gap-2 border-dashed"
+                      onClick={() =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          resources: [...prev.resources, ""],
+                        }))
+                      }
+                    >
+                      <Plus className="w-4 h-4" />
+                      {t("wizard.addResource")}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {currentStep === 8 && (
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-900">{t("wizard.step8Title")}</h2>
+                    <p className="text-sm text-gray-500 mt-1">{t("wizard.step8Lead")}</p>
+                  </div>
+                  <ExpertiseChecklistForm
+                    value={formData.expertise}
+                    onChange={(expertise) =>
+                      setFormData((prev) => ({ ...prev, expertise }))
+                    }
+                  />
+                </div>
+              )}
+
+              {currentStep === 9 && (
+                <InternationalMappingStep
+                  value={formData.internationalMapping}
+                  onChange={(internationalMapping) =>
+                    setFormData((prev) => ({ ...prev, internationalMapping }))
+                  }
+                  onRecalculate={runInternationalMapping}
+                />
+              )}
+
+              {currentStep === lastStep && (
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-900">{t("wizard.previewTitle")}</h2>
                     <p className="text-sm text-gray-500 mt-1">
-                      Полная картина заполненных полей перед сохранением или отправкой на экспертизу
+                      {t("wizard.previewLead")}
                     </p>
                   </div>
 
                   {/* 1. Общая информация */}
                   <section className="rounded-xl border border-gray-200 bg-white p-5 space-y-4">
                     <h3 className="text-sm font-semibold uppercase tracking-wide text-primary">
-                      1. Общая информация
+                      {t("wizard.section1")}
                     </h3>
                     <div>
-                      <h4 className="text-xs font-medium text-gray-500 mb-1">Название</h4>
+                      <h4 className="text-xs font-medium text-gray-500 mb-1">{t("wizard.name")}</h4>
                       <p className="text-base font-medium text-gray-900">{formData.title || "—"}</p>
                     </div>
                     <div>
-                      <h4 className="text-xs font-medium text-gray-500 mb-1">Описание</h4>
+                      <h4 className="text-xs font-medium text-gray-500 mb-1">{t("wizard.description")}</h4>
                       <p className="text-sm text-gray-800 whitespace-pre-line leading-relaxed">
                         {formData.description || "—"}
                       </p>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <PreviewField
-                        label="Вид профессионального образования"
-                        value={formData.educationKind}
+                        label={t("wizard.area")}
+                        value={formatProfessionalAreaLabel(formData.professionalAreaCode, null, t)}
+                      />
+                      <PreviewField
+                        label={t("wizard.educationKindShort")}
+                        value={translateKeyed(t, EDUCATION_KIND_I18N_KEYS, formData.educationKind)}
                       />
                       {formData.educationKind === "профессиональное образование" && (
-                        <PreviewField label="Уровень образования" value={formData.educationLevel} />
+                        <PreviewField
+                          label={t("wizard.educationLevel")}
+                          value={translateKeyed(t, EDUCATION_LEVEL_I18N_KEYS, formData.educationLevel)}
+                        />
                       )}
                       {formData.educationKind === "дополнительное образование" && formData.educationLevel && (
-                        <PreviewField label="Уровень образования" value={formData.educationLevel} />
+                        <PreviewField
+                          label={t("wizard.educationLevel")}
+                          value={translateKeyed(t, EDUCATION_LEVEL_I18N_KEYS, formData.educationLevel)}
+                        />
                       )}
                       {formData.fgosCode && (
                         <PreviewField
-                          label="ФГОС"
+                          label={t("wizard.fgos")}
                           value={`${formData.fgosCode} — ${formData.fgosName}`}
                         />
                       )}
                       {formData.educationKind === "профессиональное обучение" && (
                         <PreviewField
-                          label="Профессия / должность"
+                          label={t("wizard.professionShort")}
                           value={
                             formData.trainingProfessionOkpdtr
                               ? `${formData.trainingProfessionName} (ОКПДТР ${formData.trainingProfessionOkpdtr})`
@@ -1434,16 +1744,15 @@ export function NewCompetencyPage() {
                           }
                         />
                       )}
-                      <PreviewField label="Отрасль" value={formData.industry} />
                       <PreviewField
-                        label="Тип компетенции"
+                        label={t("wizard.competenceType")}
                         value={
                           competenceKinds.find((k) => k.value === formData.competenceKind)?.label
                         }
                       />
-                      <PreviewField label="Трудоёмкость" value={formData.workload} />
+                      <PreviewField label={t("detail.workload")} value={formData.workload} />
                       <PreviewField
-                        label="Разработчик"
+                        label={t("detail.developer")}
                         value={formData.developer || user?.email}
                       />
                     </div>
@@ -1452,11 +1761,11 @@ export function NewCompetencyPage() {
                   {/* 2. Профстандарт и уровень */}
                   <section className="rounded-xl border border-gray-200 bg-white p-5 space-y-4">
                     <h3 className="text-sm font-semibold uppercase tracking-wide text-primary">
-                      2. Профстандарт и уровень квалификации
+                      2. {t("wizard.step2")}
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <PreviewField
-                        label="Профстандарт"
+                        label={t("wizard.profStandard")}
                         value={
                           selectedStandards.length
                             ? selectedStandards
@@ -1466,16 +1775,16 @@ export function NewCompetencyPage() {
                                 )
                                 .join("; ")
                             : formData.competenceKind === "professional"
-                              ? "Не выбран"
-                              : "Не требуется"
+                              ? t("wizard.notSelected")
+                              : t("wizard.notRequired")
                         }
                       />
                       <PreviewField
-                        label="Уровень квалификации (№148н)"
+                        label={t("wizard.ql148")}
                         value={
                           selectedQl?.qualification_level_label ||
                           (formData.qualificationLevel
-                            ? `${formData.qualificationLevel}-й уровень`
+                            ? t("wizard.nthLevel", { n: formData.qualificationLevel })
                             : "")
                         }
                       />
@@ -1495,7 +1804,7 @@ export function NewCompetencyPage() {
                     {selectedLaborFunctions.length > 0 && (
                       <div>
                         <h4 className="text-xs font-medium text-gray-500 mb-2">
-                          Трудовые функции ({selectedLaborFunctions.length})
+                          {t("wizard.laborFunctionsN", { n: selectedLaborFunctions.length })}
                         </h4>
                         <ul className="space-y-2">
                           {selectedLaborFunctions.map((lf) => (
@@ -1506,7 +1815,7 @@ export function NewCompetencyPage() {
                               <span className="font-medium text-primary">{lf.code}</span>
                               {" — "}
                               {lf.name}
-                              {lf.otf_level ? ` (ур. ${lf.otf_level})` : ""}
+                              {lf.otf_level ? ` ${t("wizard.tfLevel", { n: lf.otf_level })}` : ""}
                               {lf.standard_reg_number ? ` · ПС ${lf.standard_reg_number}` : ""}
                             </li>
                           ))}
@@ -1518,14 +1827,14 @@ export function NewCompetencyPage() {
                   {/* 3. Структура A/B/C */}
                   <section className="rounded-xl border border-gray-200 bg-white p-5 space-y-5">
                     <h3 className="text-sm font-semibold uppercase tracking-wide text-primary">
-                      3. Структура A / B / C
+                      3. {t("wizard.step3")}
                     </h3>
                     {(["A", "B", "C"] as const).map((cat) => {
                       const items = formData.structure[cat].filter((item) => item.text.trim());
                       return (
                         <div key={cat}>
                           <h4 className="text-sm font-semibold text-gray-900 mb-2">
-                            {cat}. {DESCRIPTOR_CATEGORY_LABELS[cat]}
+                            {cat}. {translateKeyed(t, DESCRIPTOR_I18N_KEYS, cat)}
                             <span className="ml-2 text-xs font-normal text-gray-500">
                               ({items.length})
                             </span>
@@ -1539,7 +1848,7 @@ export function NewCompetencyPage() {
                               ))}
                             </ol>
                           ) : (
-                            <p className="text-sm text-gray-400">Не заполнено</p>
+                            <p className="text-sm text-gray-400">{t("wizard.empty")}</p>
                           )}
                         </div>
                       );
@@ -1549,12 +1858,12 @@ export function NewCompetencyPage() {
                   {/* 4. Дескрипторы */}
                   <section className="rounded-xl border border-gray-200 bg-white p-5 space-y-5">
                     <h3 className="text-sm font-semibold uppercase tracking-wide text-primary">
-                      4. Дескрипторы уровней сформированности
+                      4. {t("wizard.step4")}
                     </h3>
                     {DESCRIPTOR_CATEGORIES.map((cat) => (
                       <div key={cat} className="space-y-3">
                         <h4 className="text-sm font-semibold text-gray-900">
-                          Категория {cat} ({DESCRIPTOR_CATEGORY_LABELS[cat]})
+                          {t("detail.category", { cat })} ({translateKeyed(t, DESCRIPTOR_I18N_KEYS, cat)})
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                           {FORMATION_LEVELS.map((level) => {
@@ -1565,7 +1874,7 @@ export function NewCompetencyPage() {
                                 className="rounded-lg border border-gray-100 bg-gray-50 p-3"
                               >
                                 <div className="text-xs font-medium text-primary mb-1.5">
-                                  {FORMATION_LEVEL_LABELS[level]}
+                                  {translateKeyed(t, FORMATION_I18N_KEYS, level)}
                                 </div>
                                 <p className="text-sm text-gray-800 leading-snug whitespace-pre-line">
                                   {text || "—"}
@@ -1578,49 +1887,205 @@ export function NewCompetencyPage() {
                     ))}
                   </section>
 
-                  {/* 5. Оценочные средства */}
+                  {/* 5. Привязка к дисциплинам */}
+                  <section className="rounded-xl border border-gray-200 bg-white p-5 space-y-4">
+                    <h3 className="text-sm font-semibold uppercase tracking-wide text-primary">
+                      5. {t("wizard.step5")}
+                    </h3>
+                    {formData.disciplineMapping.length ? (
+                      <div className="overflow-x-auto">
+                        <table className="data-table">
+                          <thead>
+                            <tr>
+                              <th>{t("wizard.step3")}</th>
+                              <th>{t("discipline.importance")}</th>
+                              <th>{t("discipline.volume")}</th>
+                              <th>{t("wizard.step5")}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {formData.disciplineMapping.map((row) => {
+                              const filled = (row.bindings || []).filter((binding) => binding.discipline.trim());
+                              return (
+                                <tr key={row.id}>
+                                  <td>
+                                    <div className="text-xs font-semibold text-primary">{row.component}</div>
+                                    <div className="text-sm text-gray-800 leading-snug">{row.text}</div>
+                                  </td>
+                                  <td className="text-sm text-gray-800 whitespace-nowrap">
+                                    {formatScaleScore(row.importance)}
+                                  </td>
+                                  <td className="text-sm text-gray-800 whitespace-nowrap">
+                                    {formatScaleScore(row.volume)}
+                                  </td>
+                                  <td>
+                                    {filled.length ? (
+                                      <ul className="space-y-1">
+                                        {filled.map((binding, idx) => (
+                                          <li key={`${row.id}-${idx}`} className="text-sm text-gray-800">
+                                            {binding.discipline}
+                                            {binding.control ? (
+                                              <span className="text-gray-500">
+                                                {" "}
+                                                · {translateKeyed(t, DISCIPLINE_CONTROL_I18N_KEYS, binding.control)}
+                                              </span>
+                                            ) : null}
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    ) : (
+                                      <span className="text-sm text-gray-400">—</span>
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-400">{t("wizard.empty")}</p>
+                    )}
+                  </section>
+
+                  {/* 6. Оценочные средства */}
                   <section className="rounded-xl border border-gray-200 bg-white p-5 space-y-5">
                     <h3 className="text-sm font-semibold uppercase tracking-wide text-primary">
-                      5. Оценочные средства
+                      6. {t("wizard.step6")}
                     </h3>
-                    {FORMATION_LEVELS.map((level) => {
-                      const block = formData.assessmentByLevel[level];
-                      const hasContent = block.methods.length > 0 || block.criteria.trim();
+                    {(() => {
+                      const assessmentByLevel = normalizeAssessmentByLevel(formData.assessmentByLevel);
+                      const coverage = getAssessmentCoverage(formData.structure, assessmentByLevel);
+                      const byId = new Map(listStructureComponents(formData.structure).map((item) => [item.id, item]));
                       return (
-                        <div key={level} className="rounded-lg border border-gray-100 bg-gray-50 p-4 space-y-2">
-                          <h4 className="text-sm font-semibold text-gray-900">
-                            {FORMATION_LEVEL_LABELS[level]}
-                          </h4>
-                          {hasContent ? (
-                            <>
-                              <div>
-                                <span className="text-xs font-medium text-gray-500">Методы: </span>
-                                <span className="text-sm text-gray-800">
-                                  {block.methods.length ? block.methods.join(", ") : "—"}
-                                </span>
+                        <>
+                          <p className="text-sm text-gray-700">
+                            {t("wizard.coverage", {
+                              a: coverage.components.length - coverage.uncovered.length,
+                              b: coverage.components.length,
+                            })}
+                            {coverage.uncovered.length > 0 ? (
+                              <span className="text-amber-800">
+                                {" "}
+                                · {t("wizard.uncovered", {
+                                  codes: coverage.uncovered.map((item) => item.code).join(", "),
+                                })}
+                              </span>
+                            ) : coverage.components.length > 0 ? (
+                              <span className="text-green-700"> · {t("wizard.allCovered")}</span>
+                            ) : null}
+                          </p>
+                          {FORMATION_LEVELS.map((level) => {
+                            const block = assessmentByLevel[level];
+                            return (
+                              <div key={level} className="rounded-lg border border-gray-100 bg-gray-50 p-4 space-y-3">
+                                <h4 className="text-sm font-semibold text-gray-900">
+                                  {translateKeyed(t, FORMATION_I18N_KEYS, level)}
+                                  {block.forNok ? (
+                                    <span className="ml-2 text-xs font-medium text-primary">{t("detail.nok")}</span>
+                                  ) : null}
+                                </h4>
+                                {block.tasks.length === 0 ? (
+                                  <p className="text-sm text-gray-400">{t("wizard.empty")}</p>
+                                ) : (
+                                  <ul className="space-y-3">
+                                    {block.tasks.map((task, idx) => {
+                                      const complete = isAssessmentTaskComplete(task);
+                                      const codes = task.componentIds
+                                        .map((id) => byId.get(id)?.code)
+                                        .filter(Boolean)
+                                        .join(", ");
+                                      const text = task.prompt.trim() || task.context.trim() || t("wizard.noPrompt");
+                                      return (
+                                        <li key={task.id} className="text-sm text-gray-800">
+                                          <div className="font-medium">
+                                            {idx + 1}. {assessmentMethodLabel(task.method)}
+                                            {complete ? (
+                                              <span className="ml-2 text-xs font-normal text-green-700">{t("wizard.filled")}</span>
+                                            ) : (
+                                              <span className="ml-2 text-xs font-normal text-amber-800">{t("wizard.draft")}</span>
+                                            )}
+                                            {task.forNok ? (
+                                              <span className="ml-2 text-xs font-normal text-primary">{t("detail.nok")}</span>
+                                            ) : null}
+                                          </div>
+                                          {codes ? (
+                                            <div className="text-xs text-gray-500 mt-0.5">{t("detail.covers")} {codes}</div>
+                                          ) : (
+                                            <div className="text-xs text-amber-800 mt-0.5">{t("wizard.noComponents")}</div>
+                                          )}
+                                          <p className="whitespace-pre-line leading-snug mt-1">{text}</p>
+                                          {task.criteria.trim() ? (
+                                            <p className="text-xs text-gray-600 mt-1 whitespace-pre-line">
+                                              {t("wizard.criteria")} {task.criteria}
+                                            </p>
+                                          ) : null}
+                                        </li>
+                                      );
+                                    })}
+                                  </ul>
+                                )}
                               </div>
-                              {block.criteria.trim() && (
-                                <div>
-                                  <span className="text-xs font-medium text-gray-500 block mb-1">
-                                    Критерии и задания
-                                  </span>
-                                  <p className="text-sm text-gray-800 whitespace-pre-line leading-snug">
-                                    {block.criteria}
-                                  </p>
-                                </div>
-                              )}
-                            </>
-                          ) : (
-                            <p className="text-sm text-gray-400">Не заполнено</p>
-                          )}
-                        </div>
+                            );
+                          })}
+                        </>
                       );
-                    })}
+                    })()}
+                  </section>
+
+                  <section className="rounded-xl border border-gray-200 bg-white p-5 space-y-4">
+                    <h3 className="text-sm font-semibold uppercase tracking-wide text-primary">
+                      7. {t("wizard.sectionResources")}
+                    </h3>
+                    {formData.resources.map((item) => item.trim()).filter(Boolean).length ? (
+                      <ul className="list-disc list-inside text-sm text-gray-800 space-y-1">
+                        {formData.resources
+                          .map((item) => item.trim())
+                          .filter(Boolean)
+                          .map((item, index) => (
+                            <li key={index}>{item}</li>
+                          ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-gray-500">{t("wizard.empty")}</p>
+                    )}
+                  </section>
+
+                  <section className="rounded-xl border border-gray-200 bg-white p-5 space-y-4">
+                    <h3 className="text-sm font-semibold uppercase tracking-wide text-primary">
+                      8. {t("wizard.sectionValidation")}
+                    </h3>
+                    <ul className="space-y-2 text-sm text-gray-800">
+                      {EXPERTISE_CRITERIA.map((_, index) => {
+                        const row = formData.expertise[criterionKey(index)] || {};
+                        const answer =
+                          row.value === "да"
+                            ? t("common.yes")
+                            : row.value === "нет"
+                              ? t("common.no")
+                              : "—";
+                        return (
+                          <li key={criterionKey(index)}>
+                            <span className="font-medium">{t(`review.c${index}`)}:</span> {answer}
+                            {row.comment?.trim() ? (
+                              <span className="text-gray-600"> — {row.comment.trim()}</span>
+                            ) : null}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </section>
+
+                  <section className="rounded-xl border border-gray-200 bg-white p-5 space-y-4">
+                    <h3 className="text-sm font-semibold uppercase tracking-wide text-primary">
+                      9. {t("wizard.sectionMapping")}
+                    </h3>
+                    <InternationalMappingPreview value={formData.internationalMapping} />
                   </section>
 
                   <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
                     <p className="text-sm text-amber-900">
-                      После отправки заявка будет направлена на экспертизу. Для отправки нужны заполненные дескрипторы и оценочные средства.
+                      {t("wizard.afterSubmit")}
                     </p>
                   </div>
                 </div>
@@ -1631,31 +2096,43 @@ export function NewCompetencyPage() {
 
           <div className="xl:w-72 xl:shrink-0 w-full">
             <div className="surface-padded sticky top-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Правила заполнения</h3>
+              <h3 className="font-semibold text-gray-900 mb-4">{t("wizard.rulesTitle")}</h3>
               <ul className="space-y-2 text-sm text-gray-600">
                 <li className="flex gap-2">
                   <span className="text-primary">•</span>
-                  <span>Сначала найдите профстандарт через поиск (название, рег. номер, область)</span>
+                  <span>{t("wizard.rule1")}</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-primary">•</span>
-                  <span>Можно добавить несколько профстандартов и выбрать ТФ из разных ПС, но только одного уровня квалификации</span>
+                  <span>{t("wizard.rule2")}</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-primary">•</span>
-                  <span>Умения из колонки B можно перенести в практические навыки (C)</span>
+                  <span>{t("wizard.rule3")}</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-primary">•</span>
-                  <span>На шаге 4 нажмите «Загрузить из матрицы», чтобы подставить эталонные формулировки дескрипторов</span>
+                  <span>{t("wizard.rule4")}</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-primary">•</span>
-                  <span>Оценочные средства указываются для каждого уровня сформированности</span>
+                  <span>{t("wizard.rule5")}</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-primary">•</span>
-                  <span>Нажмите на номер шага для быстрого перехода между разделами</span>
+                  <span>{t("wizard.rule6")}</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-primary">•</span>
+                  <span>{t("wizard.rule7")}</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-primary">•</span>
+                  <span>{t("wizard.rule8")}</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-primary">•</span>
+                  <span>{t("wizard.rule9")}</span>
                 </li>
               </ul>
             </div>

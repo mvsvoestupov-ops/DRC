@@ -6,6 +6,7 @@ import { ExpertiseChecklistForm } from "@/app/components/ExpertiseChecklist";
 import { apiClient } from "@/api/client";
 import type { Competence, User } from "@/api/types";
 import { useAuth } from "@/context/AuthContext";
+import { useI18n } from "@/context/I18nContext";
 import { getExpertiseDecision, type ExpertiseChecklist } from "@/lib/expertiseCriteria";
 import { formatUserName } from "@/lib/userDisplay";
 
@@ -26,6 +27,7 @@ interface CompetenceReviewSectionProps {
 
 export function CompetenceReviewSection({ competence, onUpdated }: CompetenceReviewSectionProps) {
   const { isExpert, isModerator } = useAuth();
+  const { t } = useI18n();
   const [expertise, setExpertise] = useState<ExpertiseChecklist>(competence.expertise || {});
   const [commentText, setCommentText] = useState("");
   const [experts, setExperts] = useState<User[]>([]);
@@ -48,8 +50,8 @@ export function CompetenceReviewSection({ competence, onUpdated }: CompetenceRev
     if (!canAssign) return;
     apiClient.listExperts()
       .then(setExperts)
-      .catch(() => setError("Не удалось загрузить список экспертов"));
-  }, [canAssign]);
+      .catch(() => setError(t("review.expertsError")));
+  }, [canAssign, t]);
 
   useEffect(() => {
     return () => {
@@ -66,7 +68,7 @@ export function CompetenceReviewSection({ competence, onUpdated }: CompetenceRev
     if (persistTimer.current) window.clearTimeout(persistTimer.current);
     persistTimer.current = window.setTimeout(() => {
       apiClient.updateCompetence(competence.id, { expertise: next }).catch((err) => {
-        setError(apiErrorMessage(err, "Не удалось сохранить экспертизу. Проверьте, что сервер API запущен."));
+        setError(apiErrorMessage(err, t("review.saveError")));
       });
     }, 400);
   };
@@ -82,9 +84,9 @@ export function CompetenceReviewSection({ competence, onUpdated }: CompetenceRev
       });
       onUpdated(updated as Competence);
       setCommentText("");
-      setNotice(status === "утверждена" ? "Компетенция утверждена" : "Заявка возвращена на доработку");
+      setNotice(status === "утверждена" ? t("review.approved") : t("review.returned"));
     } catch (err) {
-      setError(apiErrorMessage(err, "Не удалось обновить статус. Проверьте, что сервер API запущен."));
+      setError(apiErrorMessage(err, t("review.statusError")));
     } finally {
       setActionLoading(false);
     }
@@ -98,7 +100,7 @@ export function CompetenceReviewSection({ competence, onUpdated }: CompetenceRev
 
   const handleAssign = async () => {
     if (selectedExpertIds.length < MIN_REVIEWERS) {
-      setError(`Назначьте не менее ${MIN_REVIEWERS} экспертов`);
+      setError(t("review.needExperts", { n: MIN_REVIEWERS }));
       return;
     }
     setActionLoading(true);
@@ -107,9 +109,9 @@ export function CompetenceReviewSection({ competence, onUpdated }: CompetenceRev
     try {
       const updated = await apiClient.assignReviewers(competence.id, selectedExpertIds);
       onUpdated(updated as Competence);
-      setNotice("Эксперты назначены");
+      setNotice(t("review.assigned"));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Не удалось назначить экспертов");
+      setError(err instanceof Error ? err.message : t("review.assignError"));
     } finally {
       setActionLoading(false);
     }
@@ -137,10 +139,9 @@ export function CompetenceReviewSection({ competence, onUpdated }: CompetenceRev
       {isExpert && pending ? (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg font-semibold text-gray-900">Экспертиза</CardTitle>
+            <CardTitle className="text-lg font-semibold text-gray-900">{t("review.title")}</CardTitle>
             <p className="text-sm text-gray-600">
-              Для каждого критерия укажите «Да» или «Нет». Если выбран ответ «Нет», комментарий обязателен.
-              Критерий про пригодность оценочных средств для НОК на решение не влияет.
+              {t("review.help")}
             </p>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -151,16 +152,16 @@ export function CompetenceReviewSection({ competence, onUpdated }: CompetenceRev
             />
 
             <div>
-              <h3 className="text-sm font-medium text-gray-900 mb-3">История комментариев</h3>
+              <h3 className="text-sm font-medium text-gray-900 mb-3">{t("review.history")}</h3>
               {competence.validation_notes ? (
                 <div className="bg-secondary rounded-lg p-3">
                   <p className="text-xs font-medium text-gray-900 mb-1">
-                    {competence.validator || "Эксперт"}
+                    {competence.validator || t("review.expert")}
                   </p>
                   <p className="text-sm text-gray-700">{competence.validation_notes}</p>
                 </div>
               ) : (
-                <p className="text-sm text-gray-500">Комментариев пока нет</p>
+                <p className="text-sm text-gray-500">{t("review.noComments")}</p>
               )}
             </div>
 
@@ -181,39 +182,39 @@ export function CompetenceReviewSection({ competence, onUpdated }: CompetenceRev
                     className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 gap-2"
                   >
                     <CheckCircle className="w-4 h-4" />
-                    Утвердить
+                    {t("review.approve")}
                   </Button>
                   <Button
                     onClick={() => {
                       if (!decision.canReturn) return;
-                      updateStatus("проект", commentText || "Требуется доработка");
+                      updateStatus("проект", commentText || t("review.needRevision"));
                     }}
                     disabled={!canReturnAction}
                     className="bg-orange-500 hover:bg-orange-600 text-white disabled:opacity-50 gap-2"
                   >
                     <MessageSquare className="w-4 h-4" />
-                    Отправить на доработку
+                    {t("review.return")}
                   </Button>
                   <Button
                     onClick={() => {
                       if (!decision.canReturn) return;
-                      updateStatus("проект", commentText || "Заявка отклонена экспертом");
+                      updateStatus("проект", commentText || t("review.rejected"));
                     }}
                     disabled={!canReturnAction}
                     className="bg-red-600 hover:bg-red-700 text-white disabled:opacity-50 gap-2"
                   >
                     <XCircle className="w-4 h-4" />
-                    Отклонить
+                    {t("review.reject")}
                   </Button>
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-gray-900 mb-2">Добавить комментарий</h3>
+                  <h3 className="text-sm font-medium text-gray-900 mb-2">{t("review.addComment")}</h3>
                   <textarea
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value)}
                     rows={3}
                     className="form-control"
-                    placeholder="Введите комментарий..."
+                    placeholder={t("review.commentPlaceholder")}
                   />
                 </div>
               </>
@@ -225,13 +226,13 @@ export function CompetenceReviewSection({ competence, onUpdated }: CompetenceRev
       {canAssign ? (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg font-semibold text-gray-900">Назначить экспертов</CardTitle>
+            <CardTitle className="text-lg font-semibold text-gray-900">{t("review.assignExperts")}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-gray-600 mb-3">Выберите не менее {MIN_REVIEWERS} экспертов.</p>
+            <p className="text-sm text-gray-600 mb-3">{t("review.selectExperts", { n: MIN_REVIEWERS })}</p>
             <div className="max-h-56 overflow-y-auto space-y-2 border border-gray-200 rounded-md p-2">
               {experts.length === 0 ? (
-                <p className="text-sm text-gray-500">Нет активных экспертов. Добавьте роль «Эксперт» в списке пользователей.</p>
+                <p className="text-sm text-gray-500">{t("review.noExperts")}</p>
               ) : experts.map((expert) => {
                 const id = Number(expert.id);
                 return (
@@ -250,13 +251,13 @@ export function CompetenceReviewSection({ competence, onUpdated }: CompetenceRev
                 );
               })}
             </div>
-            <p className="text-xs text-gray-500 mt-2">Выбрано: {selectedExpertIds.length}</p>
+            <p className="text-xs text-gray-500 mt-2">{t("review.selected", { n: selectedExpertIds.length })}</p>
             <Button
               className="mt-3"
               onClick={handleAssign}
               disabled={actionLoading || selectedExpertIds.length < MIN_REVIEWERS}
             >
-              Сохранить назначение
+              {t("review.saveAssign")}
             </Button>
           </CardContent>
         </Card>

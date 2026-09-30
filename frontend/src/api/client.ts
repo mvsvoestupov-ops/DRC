@@ -13,9 +13,11 @@ class ApiClient {
       ...(options?.headers as Record<string, string>),
     };
 
+    const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
+
     if (body instanceof URLSearchParams) {
       headers['Content-Type'] = 'application/x-www-form-urlencoded';
-    } else if (body && !(body instanceof FormData)) {
+    } else if (body && !isFormData) {
       headers['Content-Type'] = 'application/json';
     }
 
@@ -23,10 +25,19 @@ class ApiClient {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
+    const payload =
+      body instanceof URLSearchParams
+        ? body.toString()
+        : isFormData
+          ? body
+          : body
+            ? JSON.stringify(body)
+            : undefined;
+
     const response = await fetch(`${BASE_URL}${endpoint}`, {
       method,
       headers,
-      body: body instanceof URLSearchParams ? body.toString() : body ? JSON.stringify(body) : undefined,
+      body: payload,
       ...options,
     });
 
@@ -383,6 +394,15 @@ class ApiClient {
   updateCompetence = (id: number, data: any) => this.put(`/competences/${id}`, data);
   assignReviewers = (id: number, expertIds: number[]) =>
     this.put<any>(`/competences/${id}/reviewers`, { expert_ids: expertIds });
+  listCompetenceInvites = () => this.get<any[]>('/competences/invites');
+  inviteCollaborator = (id: number, email: string) =>
+    this.post<any>(`/competences/${id}/collaborators`, { email });
+  acceptCompetenceInvite = (inviteId: number) =>
+    this.post<any>(`/competences/invites/${inviteId}/accept`);
+  declineCompetenceInvite = (inviteId: number) =>
+    this.post<any>(`/competences/invites/${inviteId}/decline`);
+  removeCollaborator = (competenceId: number, userId: number) =>
+    this.delete<any>(`/competences/${competenceId}/collaborators/${userId}`);
   deleteCompetence = (id: number) => this.delete(`/competences/${id}`);
   getCompetenceStats = () => this.get<{ total: number; active: number; review: number; archived: number }>('/competences/stats');
 
@@ -444,6 +464,19 @@ class ApiClient {
     const formData = new FormData();
     formData.append('file', file);
     return this.post<{ message: string; reg_number: string }>('/upload', formData);
+  };
+
+  uploadAssessmentMedia = (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.post<{
+      id: string;
+      kind: 'image' | 'pdf' | 'video' | 'audio';
+      name: string;
+      mime: string;
+      url: string;
+      size: number;
+    }>('/assessment-media', formData);
   };
 
   fetchBulkRegistry = () =>

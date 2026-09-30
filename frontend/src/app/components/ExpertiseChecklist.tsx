@@ -1,5 +1,6 @@
 import { EXPERTISE_CRITERIA, criterionKey, type ExpertiseChecklist } from "@/lib/expertiseCriteria";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/context/I18nContext";
 
 interface ExpertiseChecklistFormProps {
   value: ExpertiseChecklist;
@@ -12,6 +13,8 @@ export function ExpertiseChecklistForm({
   onChange,
   disabled = false,
 }: ExpertiseChecklistFormProps) {
+  const { t } = useI18n();
+
   const handleChange = (index: number, field: "value" | "comment", nextValue: string) => {
     const key = criterionKey(index);
     onChange({
@@ -25,19 +28,19 @@ export function ExpertiseChecklistForm({
       <table className="data-table min-w-full">
         <thead>
           <tr>
-            <th>Критерий</th>
-            <th className="w-32">Да / Нет</th>
-            <th>Комментарий / Замечание</th>
+            <th>{t("review.criterion")}</th>
+            <th className="w-32">{t("review.yesNo")}</th>
+            <th>{t("review.comment")}</th>
           </tr>
         </thead>
         <tbody>
-          {EXPERTISE_CRITERIA.map((text, index) => {
+          {EXPERTISE_CRITERIA.map((_, index) => {
             const row = value[criterionKey(index)] || {};
             const commentRequired = row.value === "нет";
             const commentMissing = commentRequired && !(row.comment || "").trim();
             return (
-              <tr key={text} className="hover:bg-transparent">
-                <td className="align-middle">{text}</td>
+              <tr key={criterionKey(index)} className="hover:bg-transparent">
+                <td className="align-middle">{t(`review.c${index}`)}</td>
                 <td className="align-middle">
                   <select
                     className="form-control py-1.5"
@@ -46,8 +49,8 @@ export function ExpertiseChecklistForm({
                     onChange={(e) => handleChange(index, "value", e.target.value)}
                   >
                     <option value="">—</option>
-                    <option value="да">Да</option>
-                    <option value="нет">Нет</option>
+                    <option value="да">{t("common.yes")}</option>
+                    <option value="нет">{t("common.no")}</option>
                   </select>
                 </td>
                 <td className="align-middle">
@@ -60,7 +63,7 @@ export function ExpertiseChecklistForm({
                     disabled={disabled}
                     required={commentRequired}
                     aria-required={commentRequired}
-                    placeholder={commentRequired ? "Обязательный комментарий" : "Комментарий"}
+                    placeholder={commentRequired ? t("review.commentRequired") : t("review.commentOptional")}
                     onChange={(e) => handleChange(index, "comment", e.target.value)}
                   />
                 </td>

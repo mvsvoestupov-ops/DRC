@@ -8,6 +8,7 @@ import os
 import datetime
 import re
 from sqlalchemy import or_, func, false as sa_false, String
+from sqlalchemy.orm import joinedload
 from sqlalchemy.orm.attributes import flag_modified
 
 from .parser import (
@@ -25,7 +26,7 @@ from .db import SessionLocal, Base, engine
 from .db.raw_models import StandardRaw, GeneralizedFunctionRaw, ParticularFunctionRaw
 from .db.qualifications_models import Qualification
 from .db.assessment_tools_models import AssessmentTool
-from .db.competence_models import Competence, CompetenceStatus, CompetenceReviewer
+from .db.competence_models import Competence, CompetenceStatus, CompetenceReviewer, CompetenceCollaborator
 from .db.feedback_models import Feedback
 from .db.user_models import User
 from .db.registration_models import Registration
@@ -83,6 +84,7 @@ from .mail import (
     reset_password_link,
     send_invite_email,
     send_reset_password_email,
+    send_collaboration_invite_email,
 )
 from sqlalchemy.orm import Session
 from sqlalchemy import text
@@ -114,6 +116,7 @@ from .competence_profile import (
     suggest_competence_profile,
     validate_competence_payload,
 )
+from .assessment_media import router as assessment_media_router
 from .prof_training_registry import (
     ensure_prof_training_seeded,
     import_prof_training_from_path,
@@ -256,6 +259,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(assessment_media_router)
+
 
 @app.on_event("startup")
 def warm_level_matrix_cache() -> None:
@@ -294,11 +299,14 @@ class CompetenceCreate(BaseModel):
     ed_technologies: Optional[List[str]] = []
     assessment_tools: List[Dict]
     resources: Optional[List[str]] = []
+    expertise: Optional[Dict[str, Any]] = None
+    international_mapping: Optional[Dict[str, Any]] = None
     developer: str
     validator: Optional[str] = None
     status: Optional[str] = "проект"
     description: Optional[str] = ""
     industry: Optional[str] = ""
+    professional_area_code: Optional[str] = ""
     hours: Optional[str] = ""
     education_level: Optional[str] = ""
     education_kind: Optional[str] = ""
@@ -328,9 +336,11 @@ class CompetenceUpdate(BaseModel):
     validator: Optional[str] = None
     validation_notes: Optional[str] = None
     expertise: Optional[Dict[str, Any]] = None
+    international_mapping: Optional[Dict[str, Any]] = None
     status: Optional[str] = None
     description: Optional[str] = None
     industry: Optional[str] = None
+    professional_area_code: Optional[str] = None
     hours: Optional[str] = None
     education_level: Optional[str] = None
     education_kind: Optional[str] = None
@@ -408,8 +418,15 @@ class ReviewerAssign(BaseModel):
     expert_ids: List[int]
 
 
+class CollaboratorInvite(BaseModel):
+    email: str
+
+
 USER_ROLES = ("user", "expert", "moderator", "admin")
 MIN_REVIEWERS = 3
+COLLABORATOR_PENDING = "pending"
+COLLABORATOR_ACCEPTED = "accepted"
+COLLABORATOR_DECLINED = "declined"
 
 
 def _serialize_user(user: User) -> dict:
@@ -589,6 +606,18 @@ def _send_reset_safe(email: str, reset_url: str) -> None:
         send_reset_password_email(email, reset_url)
     except Exception as exc:
         print(f"Reset email failed for {email}: {exc}")
+
+
+def _send_collaboration_invite_safe(
+    email: str,
+    leader_name: str,
+    competence_name: str,
+    projects_url: str,
+) -> None:
+    try:
+        send_collaboration_invite_email(email, leader_name, competence_name, projects_url)
+    except Exception as exc:
+        print(f"Collaboration invite email failed for {email}: {exc}")
 
 
 def _queue_invite(
@@ -1156,6 +1185,7 @@ async def get_labor_functions(standard_id: int, current_user: User = Depends(get
                     "standard_id": std.id,
                     "standard_reg_number": std.reg_number,
                     "standard_name": std.name,
+                    "okz_codes": getattr(gf, "okz_codes", None) or [],
                     "labor_actions": labor_actions_detail,
                 })
         return result
@@ -2746,6 +2776,7 @@ def _build_competence_raw_data(
     existing: dict | None,
     description: str = "",
     industry: str = "",
+    professional_area_code: str = "",
     hours: str = "",
     education_level: str = "",
     education_kind: str = "",
@@ -2770,6 +2801,7 @@ def _build_competence_raw_data(
         industry=industry,
         hours=hours,
         formation_profile=formation_profile,
+        professional_area_code=professional_area_code,
     )
     if education_level:
         raw["education_level"] = education_level
@@ -2852,11 +2884,107 @@ def _is_assigned_reviewer(session, competence_id: int, user_id: int) -> bool:
     )
 
 
+def _collaborator_link(session, competence_id: int, user_id: int) -> CompetenceCollaborator | None:
+    return (
+        session.query(CompetenceCollaborator)
+        .filter(
+            CompetenceCollaborator.competence_id == competence_id,
+            CompetenceCollaborator.user_id == user_id,
+        )
+        .first()
+    )
+
+
+def _accepted_collaborator_ids(session, user_id: int) -> list[int]:
+    return [
+        row[0]
+        for row in session.query(CompetenceCollaborator.competence_id)
+        .filter(
+            CompetenceCollaborator.user_id == user_id,
+            CompetenceCollaborator.status == COLLABORATOR_ACCEPTED,
+        )
+        .all()
+    ]
+
+
+def _is_group_leader(comp: Competence, user) -> bool:
+    return bool(comp.user_id and getattr(user, "id", None) == comp.user_id)
+
+
+def _is_accepted_collaborator(session, competence_id: int, user_id: int) -> bool:
+    link = _collaborator_link(session, competence_id, user_id)
+    return bool(link and link.status == COLLABORATOR_ACCEPTED)
+
+
+def _user_display_name(user: User | None) -> str:
+    if not user:
+        return ""
+    parts = [
+        (getattr(user, "last_name", None) or "").strip(),
+        (getattr(user, "first_name", None) or "").strip(),
+        (getattr(user, "middle_name", None) or "").strip(),
+    ]
+    return " ".join(part for part in parts if part) or (user.email or "")
+
+
+def _serialize_collaborator(link: CompetenceCollaborator) -> dict:
+    return {
+        "id": link.id,
+        "user_id": link.user_id,
+        "role": "member",
+        "status": link.status,
+        "invited_at": link.invited_at.isoformat() if link.invited_at else None,
+        "responded_at": link.responded_at.isoformat() if link.responded_at else None,
+        "user": _serialize_user(link.user) if link.user else None,
+        "invited_by": _serialize_user(link.invited_by) if link.invited_by else None,
+    }
+
+
+def _leader_collaborator(session, comp: Competence) -> dict | None:
+    if not comp.user_id:
+        return None
+    owner = session.query(User).filter(User.id == comp.user_id).first()
+    if not owner:
+        return None
+    return {
+        "id": None,
+        "user_id": owner.id,
+        "role": "leader",
+        "status": COLLABORATOR_ACCEPTED,
+        "invited_at": comp.created_at.isoformat() if comp.created_at else None,
+        "responded_at": None,
+        "user": _serialize_user(owner),
+        "invited_by": None,
+    }
+
+
+def _collaborators_payload(session, comp: Competence) -> list[dict]:
+    leader = _leader_collaborator(session, comp)
+    rows = (
+        session.query(CompetenceCollaborator)
+        .filter(CompetenceCollaborator.competence_id == comp.id)
+        .order_by(CompetenceCollaborator.invited_at.asc())
+        .all()
+    )
+    members = [_serialize_collaborator(row) for row in rows if row.status != COLLABORATOR_DECLINED]
+    if leader:
+        return [leader, *members]
+    return members
+
+
+def _collaboration_role(session, user, comp: Competence) -> str | None:
+    if _is_group_leader(comp, user):
+        return "leader"
+    if _is_accepted_collaborator(session, comp.id, getattr(user, "id", None)):
+        return "member"
+    return None
+
+
 def _can_view_competence(session, user, comp: Competence) -> bool:
     role = user_role(user)
     if role == "admin":
         return True
-    if comp.user_id == getattr(user, "id", None):
+    if _is_group_leader(comp, user) or _is_accepted_collaborator(session, comp.id, user.id):
         return True
     if role == "moderator" and comp.status == CompetenceStatus.REVIEW:
         return True
@@ -2867,7 +2995,34 @@ def _can_view_competence(session, user, comp: Competence) -> bool:
     return False
 
 
-def serialize_competence(comp: Competence, include_matrix: bool = False, reviewers: list | None = None) -> dict:
+def _normalize_area_code(value) -> str:
+    digits = "".join(ch for ch in str(value or "") if ch.isdigit())[:2]
+    return digits.zfill(2) if digits else ""
+
+
+def _competence_area_code(comp: Competence) -> str:
+    raw = comp.raw_data or {}
+    from_raw = _normalize_area_code(raw.get("professional_area_code"))
+    if from_raw:
+        return from_raw
+    std = getattr(comp, "prof_standard", None)
+    if std is None:
+        return ""
+    code = _normalize_area_code(getattr(std, "professional_area_code", None))
+    if not code:
+        code = _normalize_area_code(getattr(std, "ps_code", None))
+    return code
+
+
+def serialize_competence(
+    comp: Competence,
+    include_matrix: bool = False,
+    reviewers: list | None = None,
+    collaborators: list | None = None,
+    collaboration_role: str | None = None,
+    can_invite: bool = False,
+    can_edit: bool = False,
+) -> dict:
     raw = comp.raw_data or {}
     formation_profile = raw.get("formation_profile") or {}
     status = comp.status.value if comp.status else None
@@ -2898,10 +3053,16 @@ def serialize_competence(comp: Competence, include_matrix: bool = False, reviewe
         "validator": comp.validator,
         "validation_notes": comp.validation_notes,
         "expertise": raw.get("expertise") or {},
+        "international_mapping": raw.get("international_mapping") or {},
         "user_id": comp.user_id,
         "reviewers": reviewers if reviewers is not None else [],
+        "collaborators": collaborators if collaborators is not None else [],
+        "collaboration_role": collaboration_role,
+        "can_invite": can_invite,
+        "can_edit": can_edit,
         "description": raw.get("description", ""),
         "industry": raw.get("industry", ""),
+        "professional_area_code": _competence_area_code(comp),
         "hours": raw.get("hours", ""),
         "labor_functions": comp.labor_functions,
         "structure": comp.structure,
@@ -2919,6 +3080,29 @@ def serialize_competence(comp: Competence, include_matrix: bool = False, reviewe
     return payload
 
 
+def _serialize_competence_for_user(
+    session,
+    comp: Competence,
+    user,
+    include_matrix: bool = False,
+    reviewers: list | None = None,
+) -> dict:
+    role = _collaboration_role(session, user, comp)
+    admin = user_role(user) == "admin"
+    status = comp.status
+    can_invite = (admin or role == "leader") and status != CompetenceStatus.APPROVED
+    can_edit = admin or role == "leader" or (role == "member" and status == CompetenceStatus.DRAFT)
+    return serialize_competence(
+        comp,
+        include_matrix=include_matrix,
+        reviewers=reviewers,
+        collaborators=_collaborators_payload(session, comp),
+        collaboration_role=role,
+        can_invite=can_invite,
+        can_edit=can_edit,
+    )
+
+
 @app.get("/competences/public")
 async def list_public_competences(
     q: Optional[str] = None,
@@ -2928,7 +3112,7 @@ async def list_public_competences(
     """Публичный реестр: утверждённые и компетенции на экспертизе."""
     session = SessionLocal()
     try:
-        query = session.query(Competence).filter(
+        query = session.query(Competence).options(joinedload(Competence.prof_standard)).filter(
             Competence.is_active == 1,
             Competence.status.in_([CompetenceStatus.APPROVED, CompetenceStatus.REVIEW]),
         )
@@ -3118,6 +3302,7 @@ async def create_competence(data: CompetenceCreate, current_user: User = Depends
             existing=None,
             description=data.description or "",
             industry=data.industry or "",
+            professional_area_code=data.professional_area_code or "",
             hours=data.hours or "",
             education_level=data.education_level or "",
             education_kind=data.education_kind or "",
@@ -3131,6 +3316,10 @@ async def create_competence(data: CompetenceCreate, current_user: User = Depends
             qualification_level=data.qualification_level,
             universal_skills=data.universal_skills,
         )
+        if data.expertise:
+            raw_data["expertise"] = data.expertise
+        if data.international_mapping:
+            raw_data["international_mapping"] = data.international_mapping
         new_comp = Competence(
             name=data.name,
             qualification_name=data.qualification_name,
@@ -3157,7 +3346,7 @@ async def create_competence(data: CompetenceCreate, current_user: User = Depends
             new_comp.public_code = f"RUS-PK-{int(new_comp.id):04d}"
             session.commit()
             session.refresh(new_comp)
-        return serialize_competence(new_comp, include_matrix=True)
+        return _serialize_competence_for_user(session, new_comp, current_user, include_matrix=True)
     except HTTPException:
         session.rollback()
         raise
@@ -3173,27 +3362,39 @@ async def list_competences(mine: bool = False, current_user: User = Depends(get_
     try:
         query = session.query(Competence).filter(Competence.is_active == 1)
         role = user_role(current_user)
+        collab_ids = _accepted_collaborator_ids(session, current_user.id)
+        own_or_group = [Competence.user_id == current_user.id]
+        if collab_ids:
+            own_or_group.append(Competence.id.in_(collab_ids))
         if mine or role not in ("admin", "moderator", "expert"):
-            query = query.filter(Competence.user_id == current_user.id)
+            query = query.filter(or_(*own_or_group))
         elif role == "moderator":
             query = query.filter(
                 or_(
                     Competence.status == CompetenceStatus.REVIEW,
-                    Competence.user_id == current_user.id,
+                    *own_or_group,
                 )
             )
         elif role == "expert":
             assigned_ids = _assigned_competence_ids(session, current_user.id)
             filters = [
                 Competence.status == CompetenceStatus.APPROVED,
-                Competence.user_id == current_user.id,
+                *own_or_group,
             ]
             if assigned_ids:
                 filters.append(Competence.id.in_(assigned_ids))
             query = query.filter(or_(*filters))
         competences = query.order_by(Competence.updated_at.desc()).all()
         reviewers = _reviewers_map(session, [c.id for c in competences if c.id])
-        return [serialize_competence(c, reviewers=reviewers.get(c.id, [])) for c in competences]
+        return [
+            _serialize_competence_for_user(
+                session,
+                c,
+                current_user,
+                reviewers=reviewers.get(c.id, []),
+            )
+            for c in competences
+        ]
     finally:
         session.close()
 
@@ -3203,7 +3404,11 @@ async def get_competence_stats(current_user: User = Depends(get_current_user)):
     try:
         query = session.query(Competence).filter(Competence.is_active == 1)
         if not is_staff_role(current_user):
-            query = query.filter(Competence.user_id == current_user.id)
+            collab_ids = _accepted_collaborator_ids(session, current_user.id)
+            own_or_group = [Competence.user_id == current_user.id]
+            if collab_ids:
+                own_or_group.append(Competence.id.in_(collab_ids))
+            query = query.filter(or_(*own_or_group))
         elif user_role(current_user) == "moderator":
             query = query.filter(Competence.status == CompetenceStatus.REVIEW)
         elif user_role(current_user) == "expert":
@@ -3217,11 +3422,81 @@ async def get_competence_stats(current_user: User = Depends(get_current_user)):
         review = query.filter(Competence.status == CompetenceStatus.REVIEW).count()
         archived = session.query(Competence).filter(Competence.is_active == 0)
         if not is_staff_role(current_user):
-            archived = archived.filter(Competence.user_id == current_user.id)
+            archived = archived.filter(or_(
+                Competence.user_id == current_user.id,
+                Competence.id.in_(_accepted_collaborator_ids(session, current_user.id) or [-1]),
+            ))
         archived_count = archived.count()
         return {"total": total, "active": active, "review": review, "archived": archived_count}
     finally:
         session.close()
+
+
+@app.get("/competences/invites")
+async def list_competence_invites(current_user: User = Depends(get_current_user)):
+    session = SessionLocal()
+    try:
+        rows = (
+            session.query(CompetenceCollaborator)
+            .filter(
+                CompetenceCollaborator.user_id == current_user.id,
+                CompetenceCollaborator.status == COLLABORATOR_PENDING,
+            )
+            .order_by(CompetenceCollaborator.invited_at.desc())
+            .all()
+        )
+        result = []
+        for link in rows:
+            comp = link.competence
+            if not comp or (comp.is_active or 0) == 0:
+                continue
+            result.append({
+                "id": link.id,
+                "competence_id": link.competence_id,
+                "competence_name": comp.name,
+                "status": link.status,
+                "invited_at": link.invited_at.isoformat() if link.invited_at else None,
+                "invited_by": _serialize_user(link.invited_by) if link.invited_by else None,
+            })
+        return result
+    finally:
+        session.close()
+
+
+def _respond_to_invite(invite_id: int, current_user: User, status: str):
+    session = SessionLocal()
+    try:
+        link = session.query(CompetenceCollaborator).filter(CompetenceCollaborator.id == invite_id).first()
+        if not link or link.user_id != current_user.id:
+            raise HTTPException(404, "Приглашение не найдено")
+        if link.status != COLLABORATOR_PENDING:
+            raise HTTPException(400, "Приглашение уже обработано")
+        link.status = status
+        link.responded_at = datetime.datetime.utcnow()
+        session.commit()
+        session.refresh(link)
+        if status == COLLABORATOR_ACCEPTED and link.competence:
+            reviewers = _reviewers_map(session, [link.competence_id]).get(link.competence_id, [])
+            return _serialize_competence_for_user(
+                session, link.competence, current_user, include_matrix=True, reviewers=reviewers
+            )
+        return {"status": "ok"}
+    except HTTPException:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+
+@app.post("/competences/invites/{invite_id}/accept")
+async def accept_competence_invite(invite_id: int, current_user: User = Depends(get_current_user)):
+    return _respond_to_invite(invite_id, current_user, COLLABORATOR_ACCEPTED)
+
+
+@app.post("/competences/invites/{invite_id}/decline")
+async def decline_competence_invite(invite_id: int, current_user: User = Depends(get_current_user)):
+    return _respond_to_invite(invite_id, current_user, COLLABORATOR_DECLINED)
+
 
 @app.get("/competences/{comp_id}")
 async def get_competence(comp_id: int, current_user: User = Depends(get_current_user)):
@@ -3233,7 +3508,9 @@ async def get_competence(comp_id: int, current_user: User = Depends(get_current_
         if not _can_view_competence(session, current_user, comp):
             raise HTTPException(403, "Доступ запрещён")
         reviewers = _reviewers_map(session, [comp.id]).get(comp.id, [])
-        return serialize_competence(comp, include_matrix=True, reviewers=reviewers)
+        return _serialize_competence_for_user(
+            session, comp, current_user, include_matrix=True, reviewers=reviewers
+        )
     finally:
         session.close()
 
@@ -3298,6 +3575,111 @@ async def assign_competence_reviewers(
         session.close()
 
 
+@app.post("/competences/{comp_id}/collaborators")
+async def invite_competence_collaborator(
+    comp_id: int,
+    data: CollaboratorInvite,
+    background_tasks: BackgroundTasks,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+):
+    session = SessionLocal()
+    try:
+        comp = session.query(Competence).filter(Competence.id == comp_id).first()
+        if not comp:
+            raise HTTPException(404, "Компетенция не найдена")
+        if not _is_group_leader(comp, current_user) and user_role(current_user) != "admin":
+            raise HTTPException(403, "Приглашать участников может только руководитель рабочей группы")
+        if comp.status == CompetenceStatus.APPROVED:
+            raise HTTPException(400, "В утверждённую компетенцию нельзя приглашать участников")
+        email = _normalize_email(data.email)
+        if not email or "@" not in email:
+            raise HTTPException(400, "Укажите корректный email")
+        if email == _normalize_email(current_user.email):
+            raise HTTPException(400, "Нельзя пригласить самого себя")
+        target = session.query(User).filter(func.lower(User.email) == email).first()
+        if not target:
+            raise HTTPException(404, "Пользователь с таким email не зарегистрирован")
+        if not is_user_active(target):
+            raise HTTPException(400, "Этот пользователь отключён")
+        if target.id == comp.user_id:
+            raise HTTPException(400, "Этот пользователь уже руководитель рабочей группы")
+        existing = _collaborator_link(session, comp.id, target.id)
+        if existing and existing.status == COLLABORATOR_ACCEPTED:
+            raise HTTPException(400, "Пользователь уже в рабочей группе")
+        if existing and existing.status == COLLABORATOR_PENDING:
+            link = existing
+        else:
+            if existing:
+                existing.status = COLLABORATOR_PENDING
+                existing.invited_by_id = current_user.id
+                existing.invited_at = datetime.datetime.utcnow()
+                existing.responded_at = None
+                link = existing
+            else:
+                link = CompetenceCollaborator(
+                    competence_id=comp.id,
+                    user_id=target.id,
+                    invited_by_id=current_user.id,
+                    status=COLLABORATOR_PENDING,
+                )
+                session.add(link)
+        session.commit()
+        session.refresh(link)
+        projects_url = f"{frontend_base_url(request).rstrip('/')}/my-projects"
+        background_tasks.add_task(
+            _send_collaboration_invite_safe,
+            target.email,
+            _user_display_name(current_user) or current_user.email,
+            comp.name,
+            projects_url,
+        )
+        reviewers = _reviewers_map(session, [comp.id]).get(comp.id, [])
+        return _serialize_competence_for_user(
+            session, comp, current_user, include_matrix=False, reviewers=reviewers
+        )
+    except HTTPException:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+
+@app.delete("/competences/{comp_id}/collaborators/{user_id}")
+async def remove_competence_collaborator(
+    comp_id: int,
+    user_id: int,
+    current_user: User = Depends(get_current_user),
+):
+    session = SessionLocal()
+    try:
+        comp = session.query(Competence).filter(Competence.id == comp_id).first()
+        if not comp:
+            raise HTTPException(404, "Компетенция не найдена")
+        is_leader = _is_group_leader(comp, current_user) or user_role(current_user) == "admin"
+        is_self = current_user.id == user_id
+        if not is_leader and not is_self:
+            raise HTTPException(403, "Недостаточно прав")
+        if user_id == comp.user_id:
+            raise HTTPException(400, "Нельзя удалить руководителя рабочей группы")
+        link = _collaborator_link(session, comp.id, user_id)
+        if not link:
+            raise HTTPException(404, "Участник не найден")
+        session.delete(link)
+        session.commit()
+        if is_self and not is_leader:
+            return {"status": "ok"}
+        reviewers = _reviewers_map(session, [comp.id]).get(comp.id, [])
+        return _serialize_competence_for_user(
+            session, comp, current_user, include_matrix=False, reviewers=reviewers
+        )
+    except HTTPException:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+
 @app.put("/competences/{comp_id}")
 async def update_competence(comp_id: int, data: CompetenceUpdate, current_user: User = Depends(get_current_user)):
     session = SessionLocal()
@@ -3312,7 +3694,8 @@ async def update_competence(comp_id: int, data: CompetenceUpdate, current_user: 
         incoming_keys = set(update_data.keys())
         role = user_role(current_user)
         assigned = _is_assigned_reviewer(session, comp.id, current_user.id)
-        is_owner = comp.user_id == current_user.id
+        is_owner = _is_group_leader(comp, current_user)
+        is_collab = _is_accepted_collaborator(session, comp.id, current_user.id)
         if "status" in update_data and update_data["status"]:
             try:
                 target_status = CompetenceStatus(update_data["status"])
@@ -3328,16 +3711,22 @@ async def update_competence(comp_id: int, data: CompetenceUpdate, current_user: 
             elif role == "moderator":
                 raise HTTPException(403, "Модератор назначает экспертов и не меняет статус экспертизы")
             else:
+                if is_collab and not is_owner:
+                    raise HTTPException(403, "Только руководитель рабочей группы может менять статус компетенции")
                 if not is_owner:
                     raise HTTPException(403, "Доступ запрещён")
                 if target_status not in (CompetenceStatus.DRAFT, CompetenceStatus.REVIEW):
                     raise HTTPException(403, "Недостаточно прав для утверждения компетенции")
         elif role not in ("admin",) and not is_owner and not assigned:
-            raise HTTPException(403, "Доступ запрещён")
+            if not is_collab:
+                raise HTTPException(403, "Доступ запрещён")
+            if comp.status != CompetenceStatus.DRAFT:
+                raise HTTPException(403, "Участник рабочей группы может править только черновик")
         raw_fields: dict[str, Any] = {}
         for key in (
             "description",
             "industry",
+            "professional_area_code",
             "hours",
             "education_level",
             "education_kind",
@@ -3350,6 +3739,7 @@ async def update_competence(comp_id: int, data: CompetenceUpdate, current_user: 
             "universal_skills",
             "competence_kind",
             "expertise",
+            "international_mapping",
         ):
             if key in update_data:
                 raw_fields[key] = update_data.pop(key)
@@ -3375,6 +3765,10 @@ async def update_competence(comp_id: int, data: CompetenceUpdate, current_user: 
             existing=existing_raw,
             description=raw_fields.get("description", existing_raw.get("description", "")),
             industry=raw_fields.get("industry", existing_raw.get("industry", "")),
+            professional_area_code=raw_fields.get(
+                "professional_area_code",
+                existing_raw.get("professional_area_code", ""),
+            ),
             hours=raw_fields.get("hours", existing_raw.get("hours", "")),
             education_level=raw_fields.get("education_level", existing_raw.get("education_level", "")),
             education_kind=raw_fields.get("education_kind", existing_raw.get("education_kind", "")),
@@ -3396,6 +3790,11 @@ async def update_competence(comp_id: int, data: CompetenceUpdate, current_user: 
             raw["expertise"] = raw_fields["expertise"] or {}
             comp.raw_data = raw
             flag_modified(comp, "raw_data")
+        if "international_mapping" in raw_fields:
+            raw = dict(comp.raw_data or {})
+            raw["international_mapping"] = raw_fields["international_mapping"] or {}
+            comp.raw_data = raw
+            flag_modified(comp, "raw_data")
 
         review_only = incoming_keys <= {"status", "validation_notes", "validator", "expertise"}
         if not review_only:
@@ -3413,7 +3812,10 @@ async def update_competence(comp_id: int, data: CompetenceUpdate, current_user: 
 
         session.commit()
         session.refresh(comp)
-        return serialize_competence(comp, include_matrix=not review_only)
+        reviewers = _reviewers_map(session, [comp.id]).get(comp.id, [])
+        return _serialize_competence_for_user(
+            session, comp, current_user, include_matrix=not review_only, reviewers=reviewers
+        )
     except HTTPException:
         session.rollback()
         raise

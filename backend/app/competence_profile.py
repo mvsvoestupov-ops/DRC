@@ -75,12 +75,15 @@ def merge_raw_data(
     industry: str = "",
     hours: str = "",
     formation_profile: dict[str, Any] | None = None,
+    professional_area_code: str = "",
 ) -> dict[str, Any]:
     raw = dict(existing or {})
     if description:
         raw["description"] = description
     if industry:
         raw["industry"] = industry
+    if professional_area_code:
+        raw["professional_area_code"] = professional_area_code
     if hours:
         raw["hours"] = hours
     if formation_profile is not None:

@@ -36,8 +36,8 @@ class Competence(Base):
     # Образовательные технологии
     ed_technologies = Column(JSON)  # ["кейс-метод", "проектная работа"]
     
-    # Оценочные средства
-    assessment_tools = Column(JSON)  # [{"level": "базовый", "tool": "...", "criteria": "...", "for_nok": True}]
+    # Оценочные средства (задания конструктора ФОС)
+    assessment_tools = Column(JSON)  # [{"level": "базовый", "tool": "...", "method": "testing", "prompt": "...", "criteria": "...", "component_ids": [], "for_nok": True, "attachments": []}]
     
     # Материально-техническая база
     resources = Column(JSON)  # ["оборудование", "ПО", "помещения"]
@@ -62,6 +62,7 @@ class Competence(Base):
     user_id = Column(Integer, ForeignKey('users.id'), nullable=True)
     user = relationship("User", backref="competences")
     reviewer_links = relationship("CompetenceReviewer", back_populates="competence", cascade="all, delete-orphan")
+    collaborator_links = relationship("CompetenceCollaborator", back_populates="competence", cascade="all, delete-orphan")
 
 
 class CompetenceReviewer(Base):
@@ -75,3 +76,20 @@ class CompetenceReviewer(Base):
 
     competence = relationship("Competence", back_populates="reviewer_links")
     user = relationship("User")
+
+
+class CompetenceCollaborator(Base):
+    __tablename__ = "competence_collaborators"
+    __table_args__ = (UniqueConstraint("competence_id", "user_id", name="uq_competence_collaborator"),)
+
+    id = Column(Integer, primary_key=True)
+    competence_id = Column(Integer, ForeignKey("competences.id"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    invited_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    status = Column(String(20), nullable=False, default="pending")  # pending | accepted | declined
+    invited_at = Column(DateTime, default=datetime.datetime.utcnow)
+    responded_at = Column(DateTime, nullable=True)
+
+    competence = relationship("Competence", back_populates="collaborator_links")
+    user = relationship("User", foreign_keys=[user_id])
+    invited_by = relationship("User", foreign_keys=[invited_by_id])

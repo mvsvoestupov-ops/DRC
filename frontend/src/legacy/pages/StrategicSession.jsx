@@ -3,6 +3,7 @@ import { Button, Typography, message, ConfigProvider } from 'antd';
 import { useNavigate } from 'react-router';
 import { createCompetence } from '@/api/compat';
 import { useAuth } from '@/context/AuthContext';
+import { useI18n } from '@/context/I18nContext';
 import Step1SelectStandard from '@/legacy/components/strategic/Step1SelectStandard';
 import Step2StructureABC from '@/legacy/components/strategic/Step2StructureABC';
 import Step3Descriptors from '@/legacy/components/strategic/Step3Descriptors';
@@ -19,6 +20,7 @@ const { Title } = Typography;
 const StrategicSession = () => {
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
+  const { t } = useI18n();
   const [currentStep, setCurrentStep] = useState(0);
   const [sessionData, setSessionData] = useState({
     prof_standard_id: null,
@@ -184,7 +186,7 @@ const StrategicSession = () => {
     >
       <div className="page-shell">
         <Title level={2} className="!text-3xl !font-bold !text-gray-900 !tracking-tight !mb-6">
-          Стратегическая сессия: разработка компетенции
+          {t('workspace.sessionTitle')}
         </Title>
         <div className="surface-padded">
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
@@ -225,11 +227,11 @@ const StrategicSession = () => {
             {stepComponents[currentStep]}
           </div>
           <div style={{ marginTop: 24, display: 'flex', justifyContent: 'space-between' }}>
-            <Button onClick={prevStep} disabled={currentStep === 0}>Назад</Button>
+            <Button onClick={prevStep} disabled={currentStep === 0}>{t('common.back')}</Button>
             <div>
               {currentStep < 9 && (currentStep !== 0 || isAdmin) && (
                 <Button type="primary" onClick={nextStep}>
-                  Далее
+                  {t('common.next')}
                 </Button>
               )}
             </div>

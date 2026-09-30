@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, Plus, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { LaborFunctionDetail, StructureABC, StructureItem } from '@/lib/structureFromLaborFunctions';
 import { createStructureItemId, isManualStructureItem } from '@/lib/structureFromLaborFunctions';
+import { useI18n } from '@/context/I18nContext';
 
 type Container = 'A' | 'B' | 'C';
 
@@ -12,21 +13,21 @@ type Props = {
   onChange: (next: StructureABC) => void;
 };
 
-const CONTAINER_META: Record<Container, { title: string; subtitle: string; badge: string; badgeClass: string }> = {
+const CONTAINER_META: Record<Container, { descriptorKey: string; subtitle: string; badge: string; badgeClass: string }> = {
   A: {
-    title: 'A – Знания',
+    descriptorKey: 'descriptor.a',
     subtitle: 'Из трудовых действий выбранных функций',
     badge: 'A',
     badgeClass: 'bg-blue-100 text-primary',
   },
   B: {
-    title: 'B – Умения / интеллектуальные навыки',
+    descriptorKey: 'descriptor.b',
     subtitle: 'Часть умений можно перенести в практические навыки',
     badge: 'B',
     badgeClass: 'bg-green-100 text-green-700',
   },
   C: {
-    title: 'C – Практические навыки',
+    descriptorKey: 'descriptor.c',
     subtitle: 'Перенесённые из B или добавленные вручную. Можно вернуть в B.',
     badge: 'C',
     badgeClass: 'bg-purple-100 text-purple-700',
@@ -34,6 +35,7 @@ const CONTAINER_META: Record<Container, { title: string; subtitle: string; badge
 };
 
 export function StructureABCEditor({ structure, selectedLaborFunctions, onChange }: Props) {
+  const { t } = useI18n();
   const [addTarget, setAddTarget] = useState<Container | null>(null);
   const [newText, setNewText] = useState('');
   const [newTdKey, setNewTdKey] = useState('');
@@ -184,7 +186,7 @@ export function StructureABCEditor({ structure, selectedLaborFunctions, onChange
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">Структура компетенции (A/B/C)</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">{t("structure.title")}</h2>
         <p className="text-sm text-gray-500">
           Знания и умения из профстандарта нельзя удалить — только перенести умение в практические навыки и вернуть обратно.
           Удаляются лишь элементы, добавленные вручную.
@@ -211,7 +213,7 @@ export function StructureABCEditor({ structure, selectedLaborFunctions, onChange
                     <span className={`w-8 h-8 rounded flex items-center justify-center text-sm font-bold ${meta.badgeClass}`}>
                       {meta.badge}
                     </span>
-                    <h3 className="text-sm font-semibold text-gray-900">{meta.title}</h3>
+                    <h3 className="text-sm font-semibold text-gray-900">{`${container} – ${t(meta.descriptorKey)}`}</h3>
                   </div>
                   <p className="text-xs text-gray-500">{meta.subtitle}</p>
                 </div>
@@ -230,20 +232,20 @@ export function StructureABCEditor({ structure, selectedLaborFunctions, onChange
           <div className="surface w-full max-w-lg p-6 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900">
-                Добавить в {CONTAINER_META[addTarget].title}
+                {t("structure.add")} {addTarget} – {t(CONTAINER_META[addTarget].descriptorKey)}
               </h3>
               <button type="button" onClick={() => setAddTarget(null)} className="p-1 rounded-md hover:bg-gray-100">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Текст</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t("structure.text")}</label>
               <textarea
                 value={newText}
                 onChange={(e) => setNewText(e.target.value)}
                 rows={3}
                 className="form-control w-full"
-                placeholder="Введите описание..."
+                placeholder={t("structure.textPlaceholder")}
               />
             </div>
             {addTarget !== 'C' && laborActionOptions.length > 0 && (
@@ -268,10 +270,10 @@ export function StructureABCEditor({ structure, selectedLaborFunctions, onChange
             )}
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setAddTarget(null)}>
-                Отмена
+                {t("structure.cancel")}
               </Button>
               <Button type="button" onClick={confirmAdd} disabled={!newText.trim() || (addTarget !== 'C' && laborActionOptions.length > 0 && !newTdKey)}>
-                Добавить
+                {t("structure.add")}
               </Button>
             </div>
           </div>

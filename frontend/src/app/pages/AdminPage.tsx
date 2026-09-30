@@ -8,6 +8,7 @@ import { formatUserName } from "@/lib/userDisplay";
 import { PageHeader } from "@/app/components/PageHeader";
 import { PageShell } from "@/app/components/PageShell";
 import { useAuth } from "@/context/AuthContext";
+import { useI18n } from "@/context/I18nContext";
 
 const MIN_REVIEWERS = 3;
 
@@ -38,7 +39,7 @@ function mapCompetenceToReview(comp: Competence): ReviewItem {
     submittedBy: comp.developer || "—",
     submittedDate: comp.created_at || new Date().toISOString(),
     status,
-    expert: reviewers.map((row) => formatUserName(row) || row.email).join(", ") || "Не назначены",
+    expert: reviewers.map((row) => formatUserName(row) || row.email).join(", "),
     reviewerCount: reviewers.length,
   };
 }
@@ -46,6 +47,7 @@ function mapCompetenceToReview(comp: Competence): ReviewItem {
 export function AdminPage() {
   const navigate = useNavigate();
   const { isModerator, isAdmin } = useAuth();
+  const { t, intlLocale } = useI18n();
   const [filter, setFilter] = useState<string>(isModerator && !isAdmin ? "pending" : "all");
   const [applications, setApplications] = useState<ReviewItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,9 +63,9 @@ export function AdminPage() {
           .map(mapCompetenceToReview);
         setApplications(reviewItems);
       })
-      .catch(() => setError("Не удалось загрузить заявки."))
+      .catch(() => setError(t("admin.loadError")))
       .finally(() => setLoading(false));
-  }, []);
+  }, [t]);
 
   const filteredApplications = filter === "all"
     ? applications
@@ -77,34 +79,42 @@ export function AdminPage() {
   };
 
   const statusLabels: Record<string, string> = {
-    pending: "На рассмотрении",
-    approved: "Одобрено",
-    rejected: "Отклонено",
-    revision: "На доработке",
+    pending: t("admin.pending"),
+    approved: t("admin.approved"),
+    rejected: t("admin.rejected"),
+    revision: t("admin.revision"),
   };
 
   const stats = [
-    { key: "all", icon: AlertCircle, color: "text-gray-400", label: "Всего", value: applications.length },
-    { key: "pending", icon: Calendar, color: "text-yellow-400", label: "На рассмотрении", value: applications.filter((a) => a.status === "pending").length, valueColor: "text-yellow-600" },
-    { key: "approved", icon: CheckCircle, color: "text-green-400", label: "Одобрено", value: applications.filter((a) => a.status === "approved").length, valueColor: "text-green-600" },
-    { key: "revision", icon: MessageSquare, color: "text-blue-400", label: "На доработке", value: applications.filter((a) => a.status === "revision").length, valueColor: "text-blue-600" },
+    { key: "all", icon: AlertCircle, color: "text-gray-400", label: t("admin.total"), value: applications.length },
+    { key: "pending", icon: Calendar, color: "text-yellow-400", label: t("admin.pending"), value: applications.filter((a) => a.status === "pending").length, valueColor: "text-yellow-600" },
+    { key: "approved", icon: CheckCircle, color: "text-green-400", label: t("admin.approved"), value: applications.filter((a) => a.status === "approved").length, valueColor: "text-green-600" },
+    { key: "revision", icon: MessageSquare, color: "text-blue-400", label: t("admin.revision"), value: applications.filter((a) => a.status === "revision").length, valueColor: "text-blue-600" },
+  ];
+
+  const tableHeads = [
+    t("admin.colId"),
+    t("admin.colName"),
+    t("admin.colDate"),
+    t("admin.colStatus"),
+    t("admin.colExperts"),
   ];
 
   return (
     <PageShell>
       <PageHeader
-        title={isModerator ? "Панель модератора" : "Панель эксперта"}
+        title={isModerator ? t("admin.moderatorTitle") : t("admin.expertTitle")}
         description={
           isModerator
-            ? "Компетенции на рассмотрении. Назначьте не менее трёх экспертов."
-            : "Утверждённые компетенции и заявки, назначенные вам на экспертизу."
+            ? t("admin.moderatorLead")
+            : t("admin.expertLead")
         }
       />
       {error && (
         <p className="mb-6 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-2">{error}</p>
       )}
 
-      <div className="grid grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {stats.map((stat) => {
           const active = filter === stat.key;
           return (
@@ -121,8 +131,8 @@ export function AdminPage() {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">{stat.label}</p>
-                  <p className={`text-2xl font-bold ${stat.valueColor || "text-gray-900"}`}>
+                  <p className="text-base text-gray-600">{stat.label}</p>
+                  <p className={`text-3xl font-bold ${stat.valueColor || "text-gray-900"}`}>
                     {loading ? "—" : stat.value}
                   </p>
                 </div>
@@ -135,14 +145,14 @@ export function AdminPage() {
 
       <div className="surface overflow-hidden">
         {loading ? (
-          <div className="text-center py-12 text-gray-500">Загрузка...</div>
+          <div className="text-center py-12 text-gray-500">{t("common.loading")}</div>
         ) : filteredApplications.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">Нет компетенций для отображения</div>
+          <div className="text-center py-12 text-gray-500">{t("admin.empty")}</div>
         ) : (
           <table className="data-table min-w-full">
             <thead>
               <tr>
-                {["ID заявки", "Название компетенции", "Дата подачи", "Статус", "Эксперты"].map((head) => (
+                {tableHeads.map((head) => (
                   <th key={head}>{head}</th>
                 ))}
               </tr>
@@ -162,7 +172,7 @@ export function AdminPage() {
                     <p className="text-xs text-gray-500 mt-1">{app.submittedBy}</p>
                   </td>
                   <td className="whitespace-nowrap text-gray-500">
-                    {new Date(app.submittedDate).toLocaleDateString("ru-RU")}
+                    {new Date(app.submittedDate).toLocaleDateString(intlLocale)}
                   </td>
                   <td className="whitespace-nowrap">
                     <span className={`status-pill ${statusColors[app.status]}`}>
@@ -170,9 +180,9 @@ export function AdminPage() {
                     </span>
                   </td>
                   <td className="text-gray-500 max-w-[220px]">
-                    <span className="line-clamp-2">{app.expert}</span>
+                    <span className="line-clamp-2">{app.expert || t("admin.unassigned")}</span>
                     {app.status === "pending" && app.reviewerCount < MIN_REVIEWERS ? (
-                      <span className="block text-xs text-amber-700 mt-1">Нужно не менее {MIN_REVIEWERS}</span>
+                      <span className="block text-xs text-amber-700 mt-1">{t("admin.needReviewers", { n: MIN_REVIEWERS })}</span>
                     ) : null}
                   </td>
                 </tr>

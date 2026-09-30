@@ -5,20 +5,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { apiClient } from "@/api/client";
+import { useI18n } from "@/context/I18nContext";
 
 export function ResetPasswordPage() {
+  const { t } = useI18n();
   const [params] = useSearchParams();
   const token = params.get("token") || "";
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(token ? "" : "В ссылке нет токена сброса пароля");
+  const [error, setError] = useState(token ? "" : t("reset.noToken"));
   const [done, setDone] = useState("");
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (password !== passwordConfirm) {
-      setError("Пароли не совпадают");
+      setError(t("reset.mismatch"));
       return;
     }
     setLoading(true);
@@ -27,7 +29,7 @@ export function ResetPasswordPage() {
       const result = await apiClient.resetPassword(token, password);
       setDone(result.message);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Не удалось сменить пароль");
+      setError(err instanceof Error ? err.message : t("reset.error"));
     } finally {
       setLoading(false);
     }
@@ -38,8 +40,8 @@ export function ResetPasswordPage() {
       <div className="w-full max-w-md">
         <Card>
           <CardHeader>
-            <CardTitle>Новый пароль</CardTitle>
-            <CardDescription>Задайте пароль для входа в Цифровой реестр компетенций</CardDescription>
+            <CardTitle>{t("reset.title")}</CardTitle>
+            <CardDescription>{t("reset.desc")}</CardDescription>
           </CardHeader>
           <CardContent>
             {done ? (
@@ -48,7 +50,7 @@ export function ResetPasswordPage() {
               <form onSubmit={handleSubmit}>
                 <div className="flex flex-col gap-4">
                   <div className="flex flex-col gap-2">
-                    <Label htmlFor="password">Новый пароль</Label>
+                    <Label htmlFor="password">{t("reset.newPassword")}</Label>
                     <Input
                       id="password"
                       type="password"
@@ -60,7 +62,7 @@ export function ResetPasswordPage() {
                     />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <Label htmlFor="password-confirm">Повтор пароля</Label>
+                    <Label htmlFor="password-confirm">{t("reset.passwordConfirm")}</Label>
                     <Input
                       id="password-confirm"
                       type="password"
@@ -75,7 +77,7 @@ export function ResetPasswordPage() {
                     <div className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">{error}</div>
                   ) : null}
                   <Button type="submit" disabled={loading || !token} className="w-full">
-                    {loading ? "Сохранение..." : "Сохранить пароль"}
+                    {loading ? t("reset.saving") : t("reset.submit")}
                   </Button>
                 </div>
               </form>
@@ -84,7 +86,7 @@ export function ResetPasswordPage() {
           <CardFooter>
             <p className="text-sm text-muted-foreground text-center w-full">
               <Link to="/login" className="text-primary hover:underline">
-                Перейти ко входу
+                {t("reset.login")}
               </Link>
             </p>
           </CardFooter>

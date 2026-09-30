@@ -16,6 +16,7 @@ import {
   ClipboardList,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useI18n } from '@/context/I18nContext';
 import {
   getQualifications,
   getQualificationsStats,
@@ -108,6 +109,7 @@ function FilterStatCard({ active, icon: Icon, color, bg, value, label, onClick, 
 
 const QualificationsList = () => {
   const { isAdmin } = useAuth();
+  const { t } = useI18n();
   const [allQualifications, setAllQualifications] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -266,7 +268,7 @@ const QualificationsList = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="page-title">Сведения о квалификациях</h2>
+        <h2 className="page-title">{t('workspace.qualificationsTitle')}</h2>
         <p className="page-subtitle">
           НАРК: ~4049 квалификаций. В системе: {Number(totalCount).toLocaleString('ru-RU')}
         </p>
@@ -360,7 +362,7 @@ const QualificationsList = () => {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Поиск..."
+            placeholder={t('workspace.search')}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             className="pl-10"
@@ -388,7 +390,7 @@ const QualificationsList = () => {
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-muted-foreground">Загрузка...</div>
+        <div className="text-center py-12 text-muted-foreground">{t('workspace.loading')}</div>
       ) : filtered.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="p-12 text-center">

@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useI18n } from "@/context/I18nContext";
 import { cn } from "@/lib/utils";
-import { formatUserName } from "@/lib/userDisplay";
+import { LanguageSwitcher } from "@/app/components/LanguageSwitcher";
 
 function NavLink({ to, children }: { to: string; children: React.ReactNode }) {
   const { pathname } = useLocation();
@@ -14,7 +15,7 @@ function NavLink({ to, children }: { to: string; children: React.ReactNode }) {
     <Link
       to={to}
       className={cn(
-        "font-medium transition-colors flex items-center gap-1",
+        "font-medium transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0",
         active ? "text-primary" : "text-gray-700 hover:text-primary"
       )}
     >
@@ -24,9 +25,9 @@ function NavLink({ to, children }: { to: string; children: React.ReactNode }) {
 }
 
 export function Layout() {
-  const [language, setLanguage] = useState("RU");
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
+  const { t } = useI18n();
   const { isAuthenticated, isAdmin, isExpert, isModerator, user, logout, isImpersonating, impersonatorEmail, stopImpersonation } = useAuth();
 
   const handleSearch = (e: React.FormEvent) => {
@@ -41,9 +42,10 @@ export function Layout() {
       {isImpersonating ? (
         <div className="bg-amber-500 text-amber-950 px-4 py-2 text-sm flex flex-wrap items-center justify-center gap-3">
           <span>
-            Вы вошли как <strong>{user?.email}</strong>
-            {impersonatorEmail ? <> от имени администратора {impersonatorEmail}</> : null}.
-            Действия выполняются от этого пользователя.
+            {t("impersonationBanner", {
+              email: user?.email || "",
+              asAdmin: impersonatorEmail ? t("impersonationAsAdmin", { email: impersonatorEmail }) : "",
+            })}
           </span>
           <Button
             size="sm"
@@ -54,14 +56,14 @@ export function Layout() {
               navigate("/admin/users");
             }}
           >
-            Вернуться в админку
+            {t("impersonationBack")}
           </Button>
         </div>
       ) : null}
       <header className="bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-[1440px] mx-auto px-8">
           <div className="flex justify-between items-center h-20">
-            <Link to="/" className="flex items-center gap-4">
+            <Link to="/" className="flex items-center gap-4 shrink-0">
               <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
                 <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden>
                   <path
@@ -82,50 +84,39 @@ export function Layout() {
                 </svg>
               </div>
               <div>
-                <div className="font-bold text-gray-900 text-lg leading-6">
-                  Национальный реестр компетенций
+                <div className="font-bold text-gray-900 text-lg leading-tight">
+                  {t("brand.title")}
                 </div>
-                <div className="text-xs text-gray-500">РОСОБРНАДЗОР</div>
+                <div className="text-sm text-gray-500">{t("brand.subtitle")}</div>
               </div>
             </Link>
 
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-4 min-w-0">
               <form onSubmit={handleSearch} className="relative hidden md:block">
                 <Input
                   type="text"
-                  placeholder="Поиск по названию или ID компетенции..."
+                  placeholder={t("searchPlaceholder")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-[400px] max-w-[40vw] pl-10 pr-4 h-10 border-gray-300 focus-visible:ring-primary"
+                  className="w-[320px] max-w-[32vw] pl-10 pr-4 h-10 border-gray-300 focus-visible:ring-primary"
                 />
                 <Search className="absolute left-3 top-2.5 w-5 h-5 text-gray-400 pointer-events-none" />
               </form>
 
-              <select
-                value={language}
-                onChange={(e) => setLanguage(e.target.value)}
-                className="form-control w-auto px-3 py-2"
-                aria-label="Язык"
-              >
-                <option>RU</option>
-                <option>EN</option>
-              </select>
+              <LanguageSwitcher />
 
               {isAuthenticated ? (
-                <div className="flex items-center gap-3">
-                  <Link to="/profile" className="text-sm text-gray-600 hidden lg:block hover:text-primary">
-                    {formatUserName(user) || user?.email}
-                  </Link>
+                <div className="flex items-center gap-3 shrink-0">
                   <Button variant="outline" size="default" className="gap-2" asChild>
                     <Link to="/profile">
                       <User className="w-4 h-4" />
-                      <span>Кабинет</span>
+                      <span>{t("cabinet")}</span>
                     </Link>
                   </Button>
                   <Button variant="outline" size="default" className="gap-2" asChild>
                     <Link to="/my-projects">
                       <FolderOpen className="w-4 h-4" />
-                      <span>Мои проекты</span>
+                      <span>{t("myProjects")}</span>
                     </Link>
                   </Button>
                   <Button
@@ -138,14 +129,14 @@ export function Layout() {
                     }}
                   >
                     <LogOut className="w-4 h-4" />
-                    <span>Выйти</span>
+                    <span>{t("logout")}</span>
                   </Button>
                 </div>
               ) : (
                 <Button variant="default" size="default" className="gap-2" asChild>
                   <Link to="/login">
                     <User className="w-4 h-4" />
-                    <span>Войти</span>
+                    <span>{t("login")}</span>
                   </Link>
                 </Button>
               )}
@@ -155,44 +146,44 @@ export function Layout() {
 
         <div className="border-t border-gray-200 bg-nav">
           <div className="max-w-[1440px] mx-auto px-8">
-            <nav className="flex gap-8 h-12 items-center text-sm overflow-x-auto">
-              <NavLink to="/">Главная</NavLink>
-              <NavLink to="/search">Поиск компетенций</NavLink>
-              <NavLink to="/new">Предложить компетенцию</NavLink>
+            <nav className="flex gap-6 h-14 items-center text-base overflow-x-auto whitespace-nowrap">
+              <NavLink to="/">{t("nav.home")}</NavLink>
+              <NavLink to="/search">{t("nav.search")}</NavLink>
+              <NavLink to="/new">{t("nav.propose")}</NavLink>
               {isAuthenticated && isAdmin && (
                 <>
                   <NavLink to="/strategic-session">
                     <Play className="w-3.5 h-3.5" />
-                    Стратегическая сессия
+                    {t("nav.session")}
                   </NavLink>
                   <NavLink to="/standards">
                     <BookOpen className="w-3.5 h-3.5" />
-                    Профстандарты
+                    {t("nav.standards")}
                   </NavLink>
                   <NavLink to="/qualifications">
                     <GraduationCap className="w-3.5 h-3.5" />
-                    Квалификации
+                    {t("nav.qualifications")}
                   </NavLink>
                   <NavLink to="/assessment-tools">
                     <ClipboardList className="w-3.5 h-3.5" />
-                    Оценочные средства
+                    {t("nav.assessment")}
                   </NavLink>
                   <NavLink to="/fgos">
                     <ScrollText className="w-3.5 h-3.5" />
-                    ФГОС
+                    {t("nav.fgos")}
                   </NavLink>
                 </>
               )}
               {(isModerator || isExpert) && (
-                <NavLink to="/admin">{isModerator ? "Модерация" : "Панель эксперта"}</NavLink>
+                <NavLink to="/admin">{isModerator ? t("nav.moderation") : t("nav.expert")}</NavLink>
               )}
               {isAdmin && !isImpersonating && (
                 <NavLink to="/admin/users">
                   <Users className="w-3.5 h-3.5" />
-                  Пользователи
+                  {t("nav.users")}
                 </NavLink>
               )}
-              <NavLink to="/integration">Интеграция</NavLink>
+              <NavLink to="/integration">{t("nav.integration")}</NavLink>
             </nav>
           </div>
         </div>
@@ -206,82 +197,82 @@ export function Layout() {
         <div className="max-w-[1440px] mx-auto px-8 py-12">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
             <div>
-              <h3 className="font-semibold text-white mb-4">О реестре</h3>
-              <ul className="space-y-2 text-sm">
+              <h3 className="font-semibold text-white mb-4">{t("footer.aboutRegistry")}</h3>
+              <ul className="space-y-2 text-base">
                 <li>
                   <Link to="/about" className="text-footer-muted hover:text-white transition-colors">
-                    О проекте
+                    {t("footer.aboutProject")}
                   </Link>
                 </li>
                 <li>
                   <a href="#" className="text-footer-muted hover:text-white transition-colors">
-                    Нормативная база
+                    {t("footer.legal")}
                   </a>
                 </li>
                 <li>
                   <Link to="/methodology" className="text-footer-muted hover:text-white transition-colors">
-                    Методология
+                    {t("footer.methodology")}
                   </Link>
                 </li>
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold text-white mb-4">Для разработчиков</h3>
-              <ul className="space-y-2 text-sm">
+              <h3 className="font-semibold text-white mb-4">{t("footer.forDevs")}</h3>
+              <ul className="space-y-2 text-base">
                 <li>
                   <Link to="/integration" className="text-footer-muted hover:text-white transition-colors">
-                    Документация API
+                    {t("footer.api")}
                   </Link>
                 </li>
                 <li>
                   <a href="#" className="text-footer-muted hover:text-white transition-colors">
-                    Техническая поддержка
+                    {t("footer.support")}
                   </a>
                 </li>
                 <li>
                   <a href="#" className="text-footer-muted hover:text-white transition-colors">
-                    Примеры интеграции
+                    {t("footer.examples")}
                   </a>
                 </li>
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold text-white mb-4">Помощь</h3>
-              <ul className="space-y-2 text-sm">
+              <h3 className="font-semibold text-white mb-4">{t("footer.help")}</h3>
+              <ul className="space-y-2 text-base">
                 <li>
                   <Link to="/user-guide" className="text-footer-muted hover:text-white transition-colors">
-                    Руководство пользователя
+                    {t("footer.guide")}
                   </Link>
                 </li>
                 <li>
                   <a href="#" className="text-footer-muted hover:text-white transition-colors">
-                    FAQ
+                    {t("footer.faq")}
                   </a>
                 </li>
                 <li>
                   <a href="#" className="text-footer-muted hover:text-white transition-colors">
-                    Обратная связь
+                    {t("footer.feedback")}
                   </a>
                 </li>
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold text-white mb-4">Контакты</h3>
-              <ul className="space-y-2 text-sm text-footer-muted">
+              <h3 className="font-semibold text-white mb-4">{t("footer.contacts")}</h3>
+              <ul className="space-y-2 text-base text-footer-muted">
                 <li>Email: info@nrk.edu.ru</li>
-                <li>Тел: +7 (495) 123-45-67</li>
-                <li>Москва, ул. Тверская, 1</li>
+                <li>{t("footer.phone")} +7 (495) 123-45-67</li>
+                <li>{t("footer.address")}</li>
               </ul>
             </div>
           </div>
           <div className="border-t border-gray-700 pt-6 flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center text-sm">
-            <div>© 2026 Национальный реестр компетенций. Министерство науки и высшего образования РФ</div>
+            <div>{t("footer.copyright")}</div>
             <div className="flex gap-6">
               <a href="#" className="text-footer-muted hover:text-white transition-colors">
-                Политика конфиденциальности
+                {t("footer.privacy")}
               </a>
               <a href="#" className="text-footer-muted hover:text-white transition-colors">
-                Условия использования
+                {t("footer.terms")}
               </a>
             </div>
           </div>

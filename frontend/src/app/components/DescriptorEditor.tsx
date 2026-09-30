@@ -8,6 +8,8 @@ import {
   type DescriptorCategory,
 } from '@/lib/competenceMappers';
 import { Button } from '@/components/ui/button';
+import { useI18n } from '@/context/I18nContext';
+import { DESCRIPTOR_I18N_KEYS, FORMATION_I18N_KEYS, translateKeyed } from '@/i18n/helpers';
 
 export type DescriptorMap = Record<DescriptorCategory, Record<FormationLevel, string>>;
 
@@ -30,6 +32,7 @@ export function DescriptorEditor({
   onApplyMatrix,
   applying,
 }: Props) {
+  const { t } = useI18n();
   const [activeLevel, setActiveLevel] = useState<FormationLevel>('базовый');
 
   const update = (cat: DescriptorCategory, level: FormationLevel, value: string) => {
@@ -53,14 +56,14 @@ export function DescriptorEditor({
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">Дескрипторы уровней сформированности</h3>
+          <h3 className="text-lg font-semibold text-gray-900">{t("wizard.step4")}</h3>
           <p className="text-sm text-gray-500">
             Принцип «уровень внутри уровня»: базовый соответствует минимуму приказа №148н для выбранной квалификации.
           </p>
         </div>
         {onApplyMatrix && (
           <Button type="button" variant="outline" onClick={onApplyMatrix} disabled={applying}>
-            {applying ? 'Загрузка…' : 'Загрузить из матрицы'}
+            {applying ? t("common.loading") : t("wizard.loadMatrix")}
           </Button>
         )}
       </div>
@@ -86,7 +89,7 @@ export function DescriptorEditor({
                 : 'bg-white text-gray-700 border-gray-200'
             }`}
           >
-            {FORMATION_LEVEL_LABELS[level]}
+            {translateKeyed(t, FORMATION_I18N_KEYS, level, FORMATION_LEVEL_LABELS[level])}
           </button>
         ))}
       </div>
@@ -95,7 +98,7 @@ export function DescriptorEditor({
         {DESCRIPTOR_CATEGORIES.map((cat) => (
           <div key={cat}>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Категория {cat} ({DESCRIPTOR_CATEGORY_LABELS[cat]}) — {FORMATION_LEVEL_LABELS[activeLevel]}
+              {t("detail.category", { cat })} ({translateKeyed(t, DESCRIPTOR_I18N_KEYS, cat, DESCRIPTOR_CATEGORY_LABELS[cat])}) — {translateKeyed(t, FORMATION_I18N_KEYS, activeLevel, FORMATION_LEVEL_LABELS[activeLevel])}
             </label>
             <textarea
               value={descriptors[cat][activeLevel] || ''}

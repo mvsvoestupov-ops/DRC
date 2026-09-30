@@ -26,6 +26,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { PageShell } from "@/app/components/PageShell";
 import { apiClient } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
+import { useI18n } from "@/context/I18nContext";
 import { formatUserName } from "@/lib/userDisplay";
 
 type AdminUser = {
@@ -41,22 +42,16 @@ type AdminUser = {
   created_at?: string | null;
 };
 
-const ROLE_LABELS: Record<string, string> = {
-  admin: "Администратор",
-  moderator: "Модератор",
-  expert: "Эксперт",
-  user: "Пользователь",
-};
-
-function formatDate(value?: string | null) {
+function formatDate(value?: string | null, locale = "ru-RU") {
   if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleString("ru-RU");
+  return date.toLocaleString(locale);
 }
 
 export function UsersAdminPage() {
   const { user: currentUser, impersonate, isImpersonating } = useAuth();
+  const { t, intlLocale } = useI18n();
   const navigate = useNavigate();
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,11 +75,11 @@ export function UsersAdminPage() {
       const data = await apiClient.listUsers();
       setUsers(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Не удалось загрузить пользователей");
+      setError(err instanceof Error ? err.message : t("users.loadError"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadUsers();
@@ -111,10 +106,10 @@ export function UsersAdminPage() {
       setFormMiddleName("");
       setFormOrganization("");
       setFormRole("user");
-      setNotice(`Пользователь создан. Письмо с логином, паролем и ссылкой уходит на ${created.email}`);
+      setNotice(t("users.created", { email: created.email }));
       await loadUsers();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Не удалось создать пользователя");
+      setError(err instanceof Error ? err.message : t("users.createError"));
     } finally {
       setSaving(false);
     }
@@ -126,7 +121,7 @@ export function UsersAdminPage() {
       const updated = await apiClient.updateUser(target.id, { role });
       setUsers((prev) => prev.map((row) => (row.id === updated.id ? updated : row)));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Не удалось изменить роль");
+      setError(err instanceof Error ? err.message : t("users.roleError"));
     }
   };
 
@@ -136,7 +131,7 @@ export function UsersAdminPage() {
       const updated = await apiClient.updateUser(target.id, { is_active });
       setUsers((prev) => prev.map((row) => (row.id === updated.id ? updated : row)));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Не удалось изменить статус");
+      setError(err instanceof Error ? err.message : t("users.statusError"));
     }
   };
 
@@ -150,7 +145,7 @@ export function UsersAdminPage() {
       setPasswordUser(null);
       setNewPassword("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Не удалось сменить пароль");
+      setError(err instanceof Error ? err.message : t("users.passwordError"));
     } finally {
       setSaving(false);
     }
@@ -159,22 +154,22 @@ export function UsersAdminPage() {
   const handleImpersonate = async (target: AdminUser) => {
     setError("");
     try {
-      navigate("/my-projects");
       await impersonate(target.id);
+      navigate("/my-projects");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Не удалось войти от имени пользователя");
+      setError(err instanceof Error ? err.message : t("users.impersonateError"));
     }
   };
 
   return (
     <PageShell>
       <PageHeader
-        title="Пользователи"
-        description="Добавление учёток, роли и вход в систему от имени выбранного пользователя. Новый пользователь получает письмо с логином, паролем и ссылкой подтверждения."
+        title={t("users.title")}
+        description={t("users.lead")}
         actions={
           <Button className="gap-2" onClick={() => setCreateOpen(true)}>
             <Plus className="w-4 h-4" />
-            Добавить пользователя
+            {t("users.add")}
           </Button>
         }
       />
@@ -195,13 +190,13 @@ export function UsersAdminPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>ФИО</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Организация</TableHead>
-                <TableHead>Роль</TableHead>
-                <TableHead>Статус</TableHead>
-                <TableHead>Создан</TableHead>
-                <TableHead className="text-right">Действия</TableHead>
+                <TableHead>{t("users.colName")}</TableHead>
+                <TableHead>{t("users.colEmail")}</TableHead>
+                <TableHead>{t("users.colOrg")}</TableHead>
+                <TableHead>{t("users.colRole")}</TableHead>
+                <TableHead>{t("users.colStatus")}</TableHead>
+                <TableHead>{t("users.colCreated")}</TableHead>
+                <TableHead className="text-right">{t("users.colActions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -212,7 +207,7 @@ export function UsersAdminPage() {
                     <TableCell className="font-medium">
                       {formatUserName(row) || "—"}
                       {isSelf ? (
-                        <span className="ml-2 text-xs text-muted-foreground">это вы</span>
+                        <span className="ml-2 text-xs text-muted-foreground">{t("users.you")}</span>
                       ) : null}
                     </TableCell>
                     <TableCell>{row.email}</TableCell>
@@ -223,12 +218,12 @@ export function UsersAdminPage() {
                         value={row.role}
                         disabled={isSelf}
                         onChange={(event) => handleRoleChange(row, event.target.value)}
-                        aria-label={`Роль ${row.email}`}
+                        aria-label={t("users.roleAria", { email: row.email })}
                       >
-                        <option value="user">{ROLE_LABELS.user}</option>
-                        <option value="expert">{ROLE_LABELS.expert}</option>
-                        <option value="moderator">{ROLE_LABELS.moderator}</option>
-                        <option value="admin">{ROLE_LABELS.admin}</option>
+                        <option value="user">{t("role.user")}</option>
+                        <option value="expert">{t("role.expert")}</option>
+                        <option value="moderator">{t("role.moderator")}</option>
+                        <option value="admin">{t("role.admin")}</option>
                       </select>
                     </TableCell>
                     <TableCell>
@@ -237,18 +232,18 @@ export function UsersAdminPage() {
                           checked={row.is_active}
                           disabled={isSelf}
                           onCheckedChange={(checked) => handleActiveChange(row, checked)}
-                          aria-label={`Активность ${row.email}`}
+                          aria-label={t("users.activeAria", { email: row.email })}
                         />
                         <Badge variant={row.is_active ? "secondary" : "outline"}>
                           {row.email_confirmed === false
-                            ? "Ожидает подтверждения"
+                            ? t("users.pending")
                             : row.is_active
-                              ? "Активен"
-                              : "Отключён"}
+                              ? t("users.active")
+                              : t("users.disabled")}
                         </Badge>
                       </div>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{formatDate(row.created_at)}</TableCell>
+                    <TableCell className="text-muted-foreground">{formatDate(row.created_at, intlLocale)}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button
@@ -261,14 +256,14 @@ export function UsersAdminPage() {
                             setError("");
                             try {
                               await apiClient.resendInvite(row.id);
-                              setNotice(`Повторное письмо отправлено на ${row.email}`);
+                              setNotice(t("users.resent", { email: row.email }));
                             } catch (err) {
-                              setError(err instanceof Error ? err.message : "Не удалось отправить письмо");
+                              setError(err instanceof Error ? err.message : t("users.mailError"));
                             }
                           }}
                         >
                           <Mail className="w-3.5 h-3.5" />
-                          Письмо
+                          {t("users.mail")}
                         </Button>
                         <Button
                           type="button"
@@ -281,7 +276,7 @@ export function UsersAdminPage() {
                           }}
                         >
                           <KeyRound className="w-3.5 h-3.5" />
-                          Пароль
+                          {t("users.password")}
                         </Button>
                         <Button
                           type="button"
@@ -291,7 +286,7 @@ export function UsersAdminPage() {
                           onClick={() => handleImpersonate(row)}
                         >
                           <LogIn className="w-3.5 h-3.5" />
-                          Войти
+                          {t("users.loginAs")}
                         </Button>
                       </div>
                     </TableCell>
@@ -307,14 +302,14 @@ export function UsersAdminPage() {
         <DialogContent className="max-h-[90vh] overflow-y-auto">
           <form onSubmit={handleCreate}>
             <DialogHeader>
-              <DialogTitle>Новый пользователь</DialogTitle>
+              <DialogTitle>{t("users.createTitle")}</DialogTitle>
               <DialogDescription>
-                Пароль сгенерируется автоматически. На указанный адрес уйдёт письмо с логином, паролем и ссылкой подтверждения.
+                {t("users.createDesc")}
               </DialogDescription>
             </DialogHeader>
             <div className="flex flex-col gap-4 py-4">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="new-last-name">Фамилия</Label>
+                <Label htmlFor="new-last-name">{t("common.lastName")}</Label>
                 <Input
                   id="new-last-name"
                   required
@@ -323,7 +318,7 @@ export function UsersAdminPage() {
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="new-first-name">Имя</Label>
+                <Label htmlFor="new-first-name">{t("common.firstName")}</Label>
                 <Input
                   id="new-first-name"
                   required
@@ -332,7 +327,7 @@ export function UsersAdminPage() {
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="new-middle-name">Отчество</Label>
+                <Label htmlFor="new-middle-name">{t("common.middleName")}</Label>
                 <Input
                   id="new-middle-name"
                   value={formMiddleName}
@@ -340,7 +335,7 @@ export function UsersAdminPage() {
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="new-organization">Организация</Label>
+                <Label htmlFor="new-organization">{t("common.organization")}</Label>
                 <Input
                   id="new-organization"
                   required
@@ -349,7 +344,7 @@ export function UsersAdminPage() {
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="new-email">Email</Label>
+                <Label htmlFor="new-email">{t("common.email")}</Label>
                 <Input
                   id="new-email"
                   type="email"
@@ -359,26 +354,26 @@ export function UsersAdminPage() {
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="new-role">Роль</Label>
+                <Label htmlFor="new-role">{t("users.colRole")}</Label>
                 <select
                   id="new-role"
                   className="form-control px-3 py-2"
                   value={formRole}
                   onChange={(event) => setFormRole(event.target.value)}
                 >
-                  <option value="user">{ROLE_LABELS.user}</option>
-                  <option value="expert">{ROLE_LABELS.expert}</option>
-                  <option value="moderator">{ROLE_LABELS.moderator}</option>
-                  <option value="admin">{ROLE_LABELS.admin}</option>
+                  <option value="user">{t("role.user")}</option>
+                  <option value="expert">{t("role.expert")}</option>
+                  <option value="moderator">{t("role.moderator")}</option>
+                  <option value="admin">{t("role.admin")}</option>
                 </select>
               </div>
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>
-                Отмена
+                {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={saving}>
-                {saving ? "Сохранение..." : "Создать"}
+                {saving ? t("common.saving") : t("users.createSubmit")}
               </Button>
             </DialogFooter>
           </form>
@@ -389,11 +384,11 @@ export function UsersAdminPage() {
         <DialogContent>
           <form onSubmit={handlePasswordSave}>
             <DialogHeader>
-              <DialogTitle>Сменить пароль</DialogTitle>
+              <DialogTitle>{t("users.passwordTitle")}</DialogTitle>
               <DialogDescription>{passwordUser?.email}</DialogDescription>
             </DialogHeader>
             <div className="py-4">
-              <Label htmlFor="reset-password">Новый пароль</Label>
+              <Label htmlFor="reset-password">{t("users.newPassword")}</Label>
               <Input
                 id="reset-password"
                 type="password"
@@ -406,10 +401,10 @@ export function UsersAdminPage() {
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setPasswordUser(null)}>
-                Отмена
+                {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={saving}>
-                {saving ? "Сохранение..." : "Сохранить"}
+                {saving ? t("common.saving") : t("common.save")}
               </Button>
             </DialogFooter>
           </form>

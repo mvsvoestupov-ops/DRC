@@ -7,8 +7,10 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { PageShell } from "@/app/components/PageShell";
 import { apiClient } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
+import { useI18n } from "@/context/I18nContext";
 
 export function ProfilePage() {
+  const { t } = useI18n();
   const { user, refreshUser } = useAuth();
   const [lastName, setLastName] = useState(user?.last_name || "");
   const [firstName, setFirstName] = useState(user?.first_name || "");
@@ -42,9 +44,9 @@ export function ProfilePage() {
         organization: organization.trim(),
       });
       await refreshUser();
-      setNotice("Данные профиля сохранены");
+      setNotice(t("profile.saved"));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Не удалось сохранить профиль");
+      setError(err instanceof Error ? err.message : t("profile.saveError"));
     } finally {
       setSavingProfile(false);
     }
@@ -53,7 +55,7 @@ export function ProfilePage() {
   const handlePassword = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (newPassword !== newPasswordConfirm) {
-      setError("Новые пароли не совпадают");
+      setError(t("profile.passwordMismatch"));
       return;
     }
     setSavingPassword(true);
@@ -67,9 +69,9 @@ export function ProfilePage() {
       setCurrentPassword("");
       setNewPassword("");
       setNewPasswordConfirm("");
-      setNotice("Пароль изменён");
+      setNotice(t("profile.passwordChanged"));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Не удалось сменить пароль");
+      setError(err instanceof Error ? err.message : t("profile.passwordError"));
     } finally {
       setSavingPassword(false);
     }
@@ -77,7 +79,7 @@ export function ProfilePage() {
 
   return (
     <PageShell>
-      <PageHeader title="Личный кабинет" description="Профиль, организация и смена пароля" />
+      <PageHeader title={t("profile.title")} description={t("profile.lead")} />
       {notice ? (
         <div className="mb-4 text-sm text-emerald-800 bg-emerald-50 px-3 py-2 rounded-md">{notice}</div>
       ) : null}
@@ -88,17 +90,17 @@ export function ProfilePage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Профиль</CardTitle>
-            <CardDescription>Email меняется только администратором</CardDescription>
+            <CardTitle>{t("profile.cardTitle")}</CardTitle>
+            <CardDescription>{t("profile.cardDesc")}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleProfile} className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="profile-email">Email</Label>
+                <Label htmlFor="profile-email">{t("common.email")}</Label>
                 <Input id="profile-email" value={user?.email || ""} disabled />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="profile-last-name">Фамилия</Label>
+                <Label htmlFor="profile-last-name">{t("common.lastName")}</Label>
                 <Input
                   id="profile-last-name"
                   required
@@ -107,7 +109,7 @@ export function ProfilePage() {
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="profile-first-name">Имя</Label>
+                <Label htmlFor="profile-first-name">{t("common.firstName")}</Label>
                 <Input
                   id="profile-first-name"
                   required
@@ -116,7 +118,7 @@ export function ProfilePage() {
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="profile-middle-name">Отчество</Label>
+                <Label htmlFor="profile-middle-name">{t("common.middleName")}</Label>
                 <Input
                   id="profile-middle-name"
                   value={middleName}
@@ -124,7 +126,7 @@ export function ProfilePage() {
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="profile-org">Организация</Label>
+                <Label htmlFor="profile-org">{t("common.organization")}</Label>
                 <Input
                   id="profile-org"
                   required
@@ -133,7 +135,7 @@ export function ProfilePage() {
                 />
               </div>
               <Button type="submit" disabled={savingProfile}>
-                {savingProfile ? "Сохранение..." : "Сохранить профиль"}
+                {savingProfile ? t("profile.saving") : t("profile.save")}
               </Button>
             </form>
           </CardContent>
@@ -141,13 +143,13 @@ export function ProfilePage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Смена пароля</CardTitle>
-            <CardDescription>Укажите текущий пароль и новый не короче 6 символов</CardDescription>
+            <CardTitle>{t("profile.passwordTitle")}</CardTitle>
+            <CardDescription>{t("profile.passwordDesc")}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handlePassword} className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="current-password">Текущий пароль</Label>
+                <Label htmlFor="current-password">{t("profile.currentPassword")}</Label>
                 <Input
                   id="current-password"
                   type="password"
@@ -158,7 +160,7 @@ export function ProfilePage() {
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="new-password">Новый пароль</Label>
+                <Label htmlFor="new-password">{t("profile.newPassword")}</Label>
                 <Input
                   id="new-password"
                   type="password"
@@ -170,7 +172,7 @@ export function ProfilePage() {
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="new-password-confirm">Повтор нового пароля</Label>
+                <Label htmlFor="new-password-confirm">{t("profile.newPasswordConfirm")}</Label>
                 <Input
                   id="new-password-confirm"
                   type="password"
@@ -182,7 +184,7 @@ export function ProfilePage() {
                 />
               </div>
               <Button type="submit" disabled={savingPassword}>
-                {savingPassword ? "Сохранение..." : "Сменить пароль"}
+                {savingPassword ? t("profile.saving") : t("profile.passwordSubmit")}
               </Button>
             </form>
           </CardContent>

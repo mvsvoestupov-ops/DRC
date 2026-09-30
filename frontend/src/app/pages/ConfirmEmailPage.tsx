@@ -3,12 +3,14 @@ import { Link, useSearchParams } from "react-router";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/api/client";
+import { useI18n } from "@/context/I18nContext";
 
 export function ConfirmEmailPage() {
+  const { t } = useI18n();
   const [params] = useSearchParams();
   const token = params.get("token") || "";
   const [status, setStatus] = useState<"loading" | "ok" | "error">(token ? "loading" : "error");
-  const [message, setMessage] = useState(token ? "Подтверждаем адрес..." : "В ссылке нет токена подтверждения");
+  const [message, setMessage] = useState(token ? t("confirm.checking") : t("confirm.noToken"));
 
   useEffect(() => {
     if (!token) return;
@@ -18,12 +20,12 @@ export function ConfirmEmailPage() {
       .then((data) => {
         if (cancelled) return;
         setStatus("ok");
-        setMessage(data.message || "Email подтверждён. Можно войти в систему.");
+        setMessage(data.message || t("confirm.okFallback"));
       })
       .catch((err) => {
         if (cancelled) return;
         setStatus("error");
-        setMessage(err instanceof Error ? err.message : "Не удалось подтвердить email");
+        setMessage(err instanceof Error ? err.message : t("confirm.error"));
       });
     return () => {
       cancelled = true;
@@ -35,8 +37,8 @@ export function ConfirmEmailPage() {
       <div className="w-full max-w-md">
         <Card>
           <CardHeader>
-            <CardTitle>Подтверждение email</CardTitle>
-            <CardDescription>Активация учётки в Цифровом реестре компетенций</CardDescription>
+            <CardTitle>{t("confirm.title")}</CardTitle>
+            <CardDescription>{t("confirm.desc")}</CardDescription>
           </CardHeader>
           <CardContent>
             {status === "loading" ? (
@@ -49,7 +51,7 @@ export function ConfirmEmailPage() {
           </CardContent>
           <CardFooter>
             <Button asChild className="w-full">
-              <Link to="/login">Перейти ко входу</Link>
+              <Link to="/login">{t("confirm.login")}</Link>
             </Button>
           </CardFooter>
         </Card>

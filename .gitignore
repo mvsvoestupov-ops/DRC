@@ -43,6 +43,7 @@ yarn.lock
 *~
 
 # Server / local DB (do not upload)
+backend/uploads/
 backend/profstandart.db
 backend/*.bak
 backend/*.zip
@@ -58,3 +59,7 @@ debug_startup.py
 fix_parser.py
 test_debug.db
 PassForDRC_mail.txt
+пароли и команды.txt
+chat*.txt
+frontend_old_backup/
+DRCFigma/

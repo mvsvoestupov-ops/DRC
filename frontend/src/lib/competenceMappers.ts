@@ -37,6 +37,7 @@ export interface CompetenceListItem {
   status: UiStatus;
   developer: string;
   industry: string;
+  professional_area_code: string;
   educationLevel: string;
   version: string;
   lastUpdated: string;
@@ -54,6 +55,7 @@ export function toListItem(comp: Competence): CompetenceListItem {
     status: mapApiStatusToUi(comp.status, (comp as Competence & { is_active?: number }).is_active ?? 1),
     developer: comp.developer || '—',
     industry: industry || '—',
+    professional_area_code: (comp as Competence & { professional_area_code?: string }).professional_area_code || '',
     educationLevel: comp.qualification_level || '—',
     version: '1.0',
     lastUpdated: comp.updated_at || comp.created_at || '',

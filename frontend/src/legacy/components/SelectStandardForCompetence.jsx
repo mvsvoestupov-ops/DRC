@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import { Search, Shield, CheckCircle2, Folder } from 'lucide-react';
 import { getStandards, getEnrichedStandard, getStandard, getQualificationsByStandard, calculateCoverage } from '@/api/compat';
+import { useI18n } from '@/context/I18nContext';
+import { translateAreaName } from '@/i18n/helpers';
 
 const AREAS = [
   { code: '01', name: 'Образование и наука' },
@@ -59,6 +61,7 @@ const SelectStandardForCompetence = ({
   initialCoverage,
   initialLaborFunctions,
 }) => {
+  const { t } = useI18n();
   const [allStandards, setAllStandards] = useState([]);
   const [filteredStandards, setFilteredStandards] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -269,7 +272,7 @@ const SelectStandardForCompetence = ({
           </SelectTrigger>
           <SelectContent>
             {AREAS.map(area => (
-              <SelectItem key={area.code} value={area.code}>{area.code} – {area.name}</SelectItem>
+              <SelectItem key={area.code} value={area.code}>{area.code} – {translateAreaName(t, area.code, area.name)}</SelectItem>
             ))}
           </SelectContent>
         </Select>

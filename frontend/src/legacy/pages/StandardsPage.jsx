@@ -32,6 +32,8 @@ import {
   getStandardAreaCode,
 } from '@/lib/profStandardAreas';
 import { useAuth } from '@/context/AuthContext';
+import { useI18n } from '@/context/I18nContext';
+import { translateAreaName } from '@/i18n/helpers';
 
 const MIN_MODAL_DISPLAY_TIME = 800;
 const RAW_PAGE_SIZE = 40;
@@ -50,6 +52,7 @@ function filterStandards(items, query) {
 
 const StandardsPage = () => {
   const { isAdmin } = useAuth();
+  const { t } = useI18n();
   const [rawItems, setRawItems] = useState([]);
   const [rawTotal, setRawTotal] = useState(0);
   const [rawPage, setRawPage] = useState(1);
@@ -472,7 +475,7 @@ const StandardsPage = () => {
             <div className="flex flex-wrap items-center gap-2 mt-1">
               <div className="text-xs text-muted-foreground">Рег. № {item.reg_number}</div>
               {getStandardAreaCode(item) && (
-                <span className="text-[10px] text-muted-foreground" title={getAreaLabel(getStandardAreaCode(item)) || undefined}>
+                <span className="text-[10px] text-muted-foreground" title={translateAreaName(t, getStandardAreaCode(item), getAreaLabel(getStandardAreaCode(item))) || undefined}>
                   Обл. {getStandardAreaCode(item)}
                 </span>
               )}
@@ -543,7 +546,7 @@ const StandardsPage = () => {
     <div className="space-y-6">
       {/* Заголовок и статистика */}
       <div>
-        <h1 className="page-title mb-1">Профессиональные стандарты</h1>
+        <h1 className="page-title mb-1">{t('workspace.standardsTitle')}</h1>
         <p className="text-sm text-muted-foreground mb-4">
           Загрузка, обогащение и просмотр профессиональных стандартов
         </p>
@@ -673,7 +676,7 @@ const StandardsPage = () => {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Поиск по названию, рег. №, виду деятельности..."
+              placeholder={t('workspace.search')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 pr-9"
@@ -699,10 +702,10 @@ const StandardsPage = () => {
               onChange={(e) => setAreaFilter(e.target.value)}
               className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
             >
-              <option value="">Все области ({areaFilterOptions.length || '—'})</option>
+              <option value="">{t("picker.allAreas")} ({areaFilterOptions.length || '—'})</option>
               {areaFilterOptions.map((area) => (
                 <option key={area.code} value={area.code}>
-                  {area.code} — {area.name} ({area.count})
+                  {area.code} — {translateAreaName(t, area.code, area.name)} ({area.count})
                 </option>
               ))}
             </select>
@@ -737,7 +740,7 @@ const StandardsPage = () => {
           </div>
           <p className="text-xs text-muted-foreground px-1">
             {activeTab === 'raw' && rawListLoading ? (
-              'Поиск...'
+              t('workspace.search')
             ) : searchQuery.trim() ? (
               <>Найдено: <strong>{foundCount.toLocaleString('ru-RU')}</strong> из {totalInTab.toLocaleString('ru-RU')}</>
             ) : (
@@ -757,7 +760,7 @@ const StandardsPage = () => {
             <TabsContent value="raw" className="flex flex-col flex-1 min-h-0 mt-0">
               <div className="flex-1 min-h-0 overflow-y-auto">
                 {listLoading && rawItems.length === 0 ? (
-                  <div className="text-center text-muted-foreground text-sm py-8">Загрузка...</div>
+                  <div className="text-center text-muted-foreground text-sm py-8">{t('workspace.loading')}</div>
                 ) : (
                   renderStandardList(rawItems, handleSelectRaw)
                 )}
@@ -766,7 +769,7 @@ const StandardsPage = () => {
             </TabsContent>
             <TabsContent value="enriched" className="flex-1 min-h-0 overflow-y-auto mt-0">
               {listLoading ? (
-                <div className="text-center text-muted-foreground text-sm py-8">Загрузка...</div>
+                <div className="text-center text-muted-foreground text-sm py-8">{t('workspace.loading')}</div>
               ) : (
                 renderStandardList(filteredEnrichedStandards, handleSelectEnriched)
               )}

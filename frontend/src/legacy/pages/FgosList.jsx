@@ -7,10 +7,12 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search, ScrollText, ExternalLink } from 'lucide-react';
 import { getFgosCategories, getFgosList } from '@/api/compat';
+import { useI18n } from '@/context/I18nContext';
 
 const DEFAULT_CATEGORY = 'spo';
 
 const FgosGrid = ({ items, loading, onOpen, emptyHint }) => {
+  const { t } = useI18n();
   const [searchText, setSearchText] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 12;
@@ -38,7 +40,7 @@ const FgosGrid = ({ items, loading, onOpen, emptyHint }) => {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Поиск по коду, названию, квалификации…"
+            placeholder={t('workspace.search')}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             className="pl-10"
@@ -50,7 +52,7 @@ const FgosGrid = ({ items, loading, onOpen, emptyHint }) => {
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-muted-foreground">Загрузка...</div>
+        <div className="text-center py-12 text-muted-foreground">{t('workspace.loading')}</div>
       ) : filtered.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="p-12 text-center">
@@ -128,6 +130,7 @@ const FgosGrid = ({ items, loading, onOpen, emptyHint }) => {
 };
 
 const FgosList = () => {
+  const { t } = useI18n();
   const [categories, setCategories] = useState([]);
   const [itemsByCategory, setItemsByCategory] = useState({});
   const [loadingCategory, setLoadingCategory] = useState(null);
@@ -171,7 +174,7 @@ const FgosList = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="page-title">ФГОС</h2>
+        <h2 className="page-title">{t('workspace.fgosTitle')}</h2>
         <p className="page-subtitle">
           Федеральные государственные образовательные стандарты (classinform.ru).
           В системе: {totalCount.toLocaleString('ru-RU')} записей

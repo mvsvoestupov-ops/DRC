@@ -91,23 +91,137 @@ def _labor_functions(data: dict[str, Any]) -> list[dict[str, str]]:
     return result
 
 
+METHOD_LABELS = {
+    "testing": "Тестирование",
+    "practical": "Практические задания",
+    "case": "Кейс-метод",
+    "business_game": "Деловая игра",
+    "project": "Проектная работа",
+}
+
+ITEM_TYPE_LABELS = {
+    "single": "одиночный выбор",
+    "multiple": "множественный выбор",
+    "match": "соответствие",
+    "sequence": "упорядочивание",
+    "open": "открытый вопрос",
+}
+
+
+def _method_label(raw: dict[str, Any]) -> str:
+    method = str(raw.get("method") or "").strip()
+    if method in METHOD_LABELS:
+        return METHOD_LABELS[method]
+    tool = str(raw.get("tool") or raw.get("type") or "").strip()
+    return METHOD_LABELS.get(tool, tool)
+
+
+def _normalize_assessment_task(raw: dict[str, Any]) -> dict[str, Any]:
+    components = raw.get("components") or []
+    texts: list[str] = []
+    if isinstance(components, list):
+        for item in components:
+            if isinstance(item, dict):
+                code = str(item.get("code") or "").strip()
+                text = str(item.get("text") or "").strip()
+                if code and text:
+                    texts.append(f"{code}. {text}")
+                elif text:
+                    texts.append(text)
+            elif str(item).strip():
+                texts.append(str(item).strip())
+    if not texts:
+        for item in raw.get("component_texts") or []:
+            if str(item).strip():
+                texts.append(str(item).strip())
+    options = []
+    for opt in raw.get("options") or []:
+        if isinstance(opt, dict):
+            text = str(opt.get("text") or "").strip()
+            if text:
+                options.append(
+                    {
+                        "text": text,
+                        "is_correct": bool(opt.get("isCorrect") or opt.get("is_correct")),
+                    }
+                )
+        elif str(opt).strip():
+            options.append({"text": str(opt).strip(), "is_correct": False})
+    attachments: list[str] = []
+    for item in raw.get("attachments") or []:
+        if not isinstance(item, dict):
+            continue
+        name = str(item.get("name") or "").strip()
+        kind = str(item.get("kind") or "").strip()
+        if not name:
+            continue
+        attachments.append(f"{name} ({kind})" if kind else name)
+    return {
+        "tool": _method_label(raw),
+        "prompt": str(raw.get("prompt") or raw.get("taskText") or raw.get("title") or "").strip(),
+        "context": str(raw.get("context") or "").strip(),
+        "roles": str(raw.get("roles") or "").strip(),
+        "product": str(raw.get("product") or "").strip(),
+        "criteria": str(raw.get("criteria") or "").strip(),
+        "item_type": str(raw.get("item_type") or raw.get("itemType") or "").strip(),
+        "components": texts,
+        "options": options,
+        "attachments": attachments,
+        "for_nok": bool(raw.get("for_nok") or raw.get("forNok")),
+    }
+
+
+def _tasks_from_level_block(block: Any) -> list[dict[str, Any]]:
+    if not isinstance(block, dict):
+        return []
+    tasks = block.get("tasks") or []
+    result: list[dict[str, Any]] = []
+    if isinstance(tasks, list):
+        for item in tasks:
+            if isinstance(item, dict):
+                result.append(_normalize_assessment_task(item))
+    if result:
+        return result
+    methods = block.get("methods") or []
+    criteria = str(block.get("criteria") or "").strip()
+    if isinstance(methods, list):
+        for method in methods:
+            label = str(method).strip()
+            if not label:
+                continue
+            result.append(
+                _normalize_assessment_task({"tool": label, "criteria": criteria})
+            )
+    return result
+
+
 def _assessment_by_level(data: dict[str, Any]) -> dict[str, dict[str, Any]]:
     by_level: dict[str, dict[str, Any]] = {
-        level: {"methods": [], "criteria": ""} for level in FORMATION_LEVEL_CODES
+        level: {"methods": [], "criteria": "", "tasks": [], "for_nok": False}
+        for level in FORMATION_LEVEL_CODES
     }
-    # New form shape: assessment_by_level
     abl = data.get("assessment_by_level")
+    has_tasks = False
     if isinstance(abl, dict):
         for level in FORMATION_LEVEL_CODES:
             block = abl.get(level) or {}
-            methods = block.get("methods") or []
+            tasks = _tasks_from_level_block(block)
+            if tasks:
+                has_tasks = True
+            methods = []
+            for task in tasks:
+                label = task.get("tool") or ""
+                if label and label not in methods:
+                    methods.append(label)
             by_level[level] = {
-                "methods": [str(m).strip() for m in methods if str(m).strip()],
-                "criteria": str(block.get("criteria") or "").strip(),
+                "methods": methods,
+                "criteria": str((block or {}).get("criteria") or "").strip(),
+                "tasks": tasks,
+                "for_nok": bool((block or {}).get("forNok") or (block or {}).get("for_nok")),
             }
-        return by_level
+        if has_tasks or any(by_level[level]["methods"] for level in FORMATION_LEVEL_CODES):
+            return by_level
 
-    # Stored shape: assessment_tools = [{level, tool, criteria}, ...]
     tools = data.get("assessment_tools") or []
     for tool in tools:
         if not isinstance(tool, dict):
@@ -115,10 +229,14 @@ def _assessment_by_level(data: dict[str, Any]) -> dict[str, dict[str, Any]]:
         level = str(tool.get("level") or "").strip()
         if level not in by_level:
             continue
-        method = str(tool.get("tool") or tool.get("method") or "").strip()
+        task = _normalize_assessment_task(tool)
+        by_level[level]["tasks"].append(task)
+        method = task.get("tool") or ""
         if method and method not in by_level[level]["methods"]:
             by_level[level]["methods"].append(method)
-        criteria = str(tool.get("criteria") or "").strip()
+        if task.get("for_nok"):
+            by_level[level]["for_nok"] = True
+        criteria = task.get("criteria") or ""
         if criteria and not by_level[level]["criteria"]:
             by_level[level]["criteria"] = criteria
     return by_level
@@ -332,13 +450,51 @@ def build_competence_docx_bytes(data: dict[str, Any]) -> bytes:
     for level in FORMATION_LEVEL_CODES:
         block = assessment[level]
         add_para(FORMATION_LABELS.get(level, level), bold=True, size=11, space_before=6, space_after=4)
+        tasks = block.get("tasks") or []
         methods = block.get("methods") or []
         criteria = block.get("criteria") or ""
-        if not methods and not criteria:
+        if not tasks and not methods and not criteria:
             add_para("Не заполнено", size=11, space_after=4)
             continue
-        add_field("Методы", ", ".join(methods) if methods else "—")
-        if criteria:
+        if methods:
+            add_field("Методы", ", ".join(methods))
+        if block.get("for_nok"):
+            add_field("Пригодность для НОК", "да")
+        if tasks:
+            for idx, task in enumerate(tasks, start=1):
+                title = str(task.get("tool") or "Задание")
+                item_type = ITEM_TYPE_LABELS.get(str(task.get("item_type") or ""), "")
+                heading = f"{idx}. {title}"
+                if item_type:
+                    heading += f" ({item_type})"
+                add_para(heading, bold=True, size=10, space_before=4, space_after=2)
+                components = task.get("components") or []
+                if components:
+                    add_field("Покрывает", "; ".join(str(c) for c in components))
+                if task.get("context"):
+                    add_para("Ситуация / бриф:", bold=True, size=10, space_after=1)
+                    add_multiline(task["context"])
+                if task.get("roles"):
+                    add_field("Роли", task["roles"])
+                if task.get("prompt"):
+                    add_para("Задание:", bold=True, size=10, space_after=1)
+                    add_multiline(task["prompt"])
+                if task.get("product"):
+                    add_field("Ожидаемый результат", task["product"])
+                options = task.get("options") or []
+                if options:
+                    add_para("Варианты ответов:", bold=True, size=10, space_after=1)
+                    for opt in options:
+                        mark = " [верный]" if opt.get("is_correct") else ""
+                        add_para(f"• {opt.get('text')}{mark}", size=10, space_after=1)
+                if task.get("criteria"):
+                    add_para("Критерии:", bold=True, size=10, space_after=1)
+                    add_multiline(task["criteria"])
+                if task.get("attachments"):
+                    add_field("Материалы к заданию", "; ".join(str(item) for item in task["attachments"]))
+                if task.get("for_nok"):
+                    add_field("НОК", "да")
+        elif criteria:
             add_para("Критерии и задания:", bold=True, size=10, space_after=2)
             add_multiline(criteria)
 

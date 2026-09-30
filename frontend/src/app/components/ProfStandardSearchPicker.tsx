@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { apiClient } from '@/api/client';
 
 import { areaCodeFromPsCode, getAreaLabel, PROF_STANDARD_AREAS } from '@/lib/profStandardAreas';
+import { useI18n } from '@/context/I18nContext';
+import { translateAreaName } from '@/i18n/helpers';
 
 
 
@@ -167,6 +169,7 @@ function mergeSearchResults(
 
 
 export function ProfStandardSearchPicker({ selectedId, selected, onSelect, selectedIds = [], allowMultiple = false }: Props) {
+  const { t } = useI18n();
 
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -366,13 +369,13 @@ export function ProfStandardSearchPicker({ selectedId, selected, onSelect, selec
 
         >
 
-          <option value="">Все области деятельности</option>
+          <option value="">{t("picker.allAreas")}</option>
 
           {PROF_STANDARD_AREAS.map((area) => (
 
             <option key={area.code} value={area.code}>
 
-              {area.code} — {area.name}
+              {area.code} — {translateAreaName(t, area.code, area.name)}
 
             </option>
 
@@ -426,7 +429,7 @@ export function ProfStandardSearchPicker({ selectedId, selected, onSelect, selec
 
               <p className="text-xs text-gray-500 mt-1">
 
-                Область {standardAreaCode(selectedStandard)}: {getAreaLabel(standardAreaCode(selectedStandard))}
+                {t("wizard.area")} {standardAreaCode(selectedStandard)}: {translateAreaName(t, standardAreaCode(selectedStandard), getAreaLabel(standardAreaCode(selectedStandard)))}
 
               </p>
 
@@ -538,7 +541,7 @@ export function ProfStandardSearchPicker({ selectedId, selected, onSelect, selec
 
                           {standardAreaCode(item) && (
 
-                            <span className="text-xs text-gray-500" title={getAreaLabel(standardAreaCode(item)) || undefined}>
+                            <span className="text-xs text-gray-500" title={translateAreaName(t, standardAreaCode(item), getAreaLabel(standardAreaCode(item))) || undefined}>
 
                               Обл. {standardAreaCode(item)}
 

@@ -5,8 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { apiClient } from "@/api/client";
+import { useI18n } from "@/context/I18nContext";
 
 export function ForgotPasswordPage() {
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -21,7 +23,7 @@ export function ForgotPasswordPage() {
       const result = await apiClient.forgotPassword(email.trim());
       setNotice(result.message);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Не удалось отправить письмо");
+      setError(err instanceof Error ? err.message : t("forgot.error"));
     } finally {
       setLoading(false);
     }
@@ -32,14 +34,14 @@ export function ForgotPasswordPage() {
       <div className="w-full max-w-md">
         <Card>
           <CardHeader>
-            <CardTitle>Восстановление пароля</CardTitle>
-            <CardDescription>Укажите email учётной записи. Если он есть в системе, придёт письмо со ссылкой.</CardDescription>
+            <CardTitle>{t("forgot.title")}</CardTitle>
+            <CardDescription>{t("forgot.desc")}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit}>
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t("common.email")}</Label>
                   <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
                 </div>
                 {notice ? (
@@ -49,7 +51,7 @@ export function ForgotPasswordPage() {
                   <div className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">{error}</div>
                 ) : null}
                 <Button type="submit" disabled={loading} className="w-full">
-                  {loading ? "Отправка..." : "Отправить ссылку"}
+                  {loading ? t("forgot.submitting") : t("forgot.submit")}
                 </Button>
               </div>
             </form>
@@ -57,7 +59,7 @@ export function ForgotPasswordPage() {
           <CardFooter>
             <p className="text-sm text-muted-foreground text-center w-full">
               <Link to="/login" className="text-primary hover:underline">
-                Вернуться ко входу
+                {t("forgot.back")}
               </Link>
             </p>
           </CardFooter>

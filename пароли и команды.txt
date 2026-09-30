@@ -23,7 +23,7 @@ wget -O DCR.rar "https://ao-nk.ru/DCR.rar"
 
 wget -O DCR.rar ""
 
-Admin@admin.ru Aonk2019!
+admin@aonk.ru Aonk2026!
 stol1@mail.ru", "pass1",
 stol2@mail.ru", "pass2",
 stol3@mail.ru", "pass3",

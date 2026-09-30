@@ -5,8 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { apiClient } from "@/api/client";
+import { useI18n } from "@/context/I18nContext";
 
 export function RegisterPage() {
+  const { t } = useI18n();
   const [lastName, setLastName] = useState("");
   const [firstName, setFirstName] = useState("");
   const [middleName, setMiddleName] = useState("");
@@ -21,7 +23,7 @@ export function RegisterPage() {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (password !== passwordConfirm) {
-      setError("Пароли не совпадают");
+      setError(t("register.mismatch"));
       return;
     }
     setLoading(true);
@@ -38,7 +40,7 @@ export function RegisterPage() {
       });
       setDone(result.message);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Не удалось зарегистрироваться");
+      setError(err instanceof Error ? err.message : t("register.error"));
     } finally {
       setLoading(false);
     }
@@ -49,9 +51,9 @@ export function RegisterPage() {
       <div className="w-full max-w-md">
         <Card>
           <CardHeader>
-            <CardTitle>Регистрация</CardTitle>
+            <CardTitle>{t("register.title")}</CardTitle>
             <CardDescription>
-              После регистрации на email придёт ссылка подтверждения. Войти можно после перехода по ней.
+              {t("register.desc")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -61,19 +63,19 @@ export function RegisterPage() {
               <form onSubmit={handleSubmit}>
                 <div className="flex flex-col gap-4">
                   <div className="flex flex-col gap-2">
-                    <Label htmlFor="last-name">Фамилия</Label>
+                    <Label htmlFor="last-name">{t("common.lastName")}</Label>
                     <Input id="last-name" required value={lastName} onChange={(e) => setLastName(e.target.value)} />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <Label htmlFor="first-name">Имя</Label>
+                    <Label htmlFor="first-name">{t("common.firstName")}</Label>
                     <Input id="first-name" required value={firstName} onChange={(e) => setFirstName(e.target.value)} />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <Label htmlFor="middle-name">Отчество</Label>
+                    <Label htmlFor="middle-name">{t("common.middleName")}</Label>
                     <Input id="middle-name" value={middleName} onChange={(e) => setMiddleName(e.target.value)} />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <Label htmlFor="organization">Организация</Label>
+                    <Label htmlFor="organization">{t("common.organization")}</Label>
                     <Input
                       id="organization"
                       required
@@ -82,11 +84,11 @@ export function RegisterPage() {
                     />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">{t("common.email")}</Label>
                     <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <Label htmlFor="password">Пароль</Label>
+                    <Label htmlFor="password">{t("common.password")}</Label>
                     <Input
                       id="password"
                       type="password"
@@ -98,7 +100,7 @@ export function RegisterPage() {
                     />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <Label htmlFor="password-confirm">Повтор пароля</Label>
+                    <Label htmlFor="password-confirm">{t("register.passwordConfirm")}</Label>
                     <Input
                       id="password-confirm"
                       type="password"
@@ -113,7 +115,7 @@ export function RegisterPage() {
                     <div className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">{error}</div>
                   ) : null}
                   <Button type="submit" disabled={loading} className="w-full">
-                    {loading ? "Отправка..." : "Зарегистрироваться"}
+                    {loading ? t("register.submitting") : t("register.submit")}
                   </Button>
                 </div>
               </form>
@@ -121,9 +123,9 @@ export function RegisterPage() {
           </CardContent>
           <CardFooter>
             <p className="text-sm text-muted-foreground text-center w-full">
-              Уже есть аккаунт?{" "}
+              {t("register.hasAccount")}{" "}
               <Link to="/login" className="text-primary hover:underline">
-                Войти
+                {t("register.login")}
               </Link>
             </p>
           </CardFooter>

@@ -1,0 +1,12 @@
+1. Бэкенд — http://127.0.0.1:10000
+
+cd /d C:\IT\DRC\backend
+venv\Scripts\activate
+uvicorn app.main:app --reload --host 127.0.0.1 --port 10000
+
+
+2. Фронт — http://127.0.0.1:5173
+
+
+cd /d C:\IT\DRC\frontend
+pnpm.cmd dev -- --host 127.0.0.1 --port 5173

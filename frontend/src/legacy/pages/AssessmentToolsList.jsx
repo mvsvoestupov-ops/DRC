@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Search, RefreshCw, Database, Link2, Unlink, ClipboardList, Ban } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useI18n } from '@/context/I18nContext';
 import {
   getAssessmentTools,
   getAssessmentToolsStats,
@@ -45,6 +46,7 @@ const FILTERS = { all: 'all', linked: 'linked', unlinked: 'unlinked', inactive: 
 
 const AssessmentToolsList = () => {
   const { isAdmin } = useAuth();
+  const { t } = useI18n();
   const [items, setItems] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -147,7 +149,7 @@ const AssessmentToolsList = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="page-title">Оценочные средства НАРК</h2>
+        <h2 className="page-title">{t('workspace.assessmentTitle')}</h2>
         <p className="page-subtitle">
           НАРК: ~{Number(expected).toLocaleString('ru-RU')} карточек. В системе:{' '}
           {Number(totalCount).toLocaleString('ru-RU')}
@@ -222,7 +224,7 @@ const AssessmentToolsList = () => {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Поиск по коду, названию, СПК, ПС…"
+            placeholder={t('workspace.search')}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             className="pl-10"
@@ -232,7 +234,7 @@ const AssessmentToolsList = () => {
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-muted-foreground">Загрузка...</div>
+        <div className="text-center py-12 text-muted-foreground">{t('workspace.loading')}</div>
       ) : filtered.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="p-12 text-center">

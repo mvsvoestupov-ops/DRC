@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/api/client';
 import type { QualificationLevelRef } from '@/api/types';
-import { FORMATION_LEVEL_LABELS, FORMATION_LEVELS } from '@/lib/competenceMappers';
+import { FORMATION_LEVELS } from '@/lib/competenceMappers';
+import { FORMATION_I18N_KEYS, translateKeyed } from '@/i18n/helpers';
+import { useI18n } from '@/context/I18nContext';
 
 export function LevelMatrixOverview() {
+  const { t } = useI18n();
   const [levels, setLevels] = useState<QualificationLevelRef[]>([]);
   const [selected, setSelected] = useState<number>(6);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     apiClient
@@ -19,29 +22,28 @@ export function LevelMatrixOverview() {
           setSelected(hasSix ? 6 : data[0].qualification_level);
         }
       })
-      .catch(() => setError('Не удалось загрузить матрицу уровней'))
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
   const active = levels.find((row) => row.qualification_level === selected);
 
   if (loading) {
-    return <div className="text-center py-8 text-gray-500">Загрузка матрицы...</div>;
+    return <div className="text-center py-8 text-gray-500">{t("methodology.matrixLoading") || t("common.loading")}</div>;
   }
 
   if (error) {
-    return <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">{error}</div>;
+    return <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">{t("methodology.matrixLoadError")}</div>;
   }
 
   return (
     <div className="surface p-6 mb-10">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Матрица уровней квалификации и сформированности
+          {t("methodology.matrixTitle")}
         </h2>
         <p className="text-sm text-gray-500 max-w-3xl">
-          Соответствие уровней квалификации (приказ Минтруда №148н), уровней сформированности компетенции
-          (базовый / продвинутый / экспертный) и универсальных навыков. Принцип: «уровень внутри уровня».
+          {t("methodology.matrixLead")}
         </p>
       </div>
 
@@ -72,7 +74,9 @@ export function LevelMatrixOverview() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {FORMATION_LEVELS.map((level) => (
               <div key={level} className="rounded-xl border border-gray-100 bg-gray-50/60 p-4">
-                <div className="text-sm font-semibold text-primary mb-2">{FORMATION_LEVEL_LABELS[level]}</div>
+                <div className="text-sm font-semibold text-primary mb-2">
+                  {translateKeyed(t, FORMATION_I18N_KEYS, level)}
+                </div>
                 <p className="text-sm text-gray-700 leading-relaxed">{active.formation_levels[level]}</p>
               </div>
             ))}
@@ -80,7 +84,9 @@ export function LevelMatrixOverview() {
 
           {active.universal_skills.length > 0 && (
             <div>
-              <h4 className="text-sm font-semibold text-gray-900 mb-3">Soft skills для уровня {active.qualification_level}</h4>
+              <h4 className="text-sm font-semibold text-gray-900 mb-3">
+                {t("methodology.softSkills", { n: active.qualification_level })}
+              </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {active.universal_skills.map((skill) => (
                   <div key={skill.category} className="rounded-lg border border-gray-100 p-3 bg-white">

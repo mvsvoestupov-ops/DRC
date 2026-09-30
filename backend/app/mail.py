@@ -241,6 +241,45 @@ def send_email(to_addr: str, subject: str, text_body: str, html_body: str | None
         raise RuntimeError(f"Не удалось отправить письмо: {exc}") from exc
 
 
+def send_collaboration_invite_email(
+    to_addr: str,
+    leader_name: str,
+    competence_name: str,
+    projects_url: str,
+) -> None:
+    safe_url = html.escape(projects_url)
+    safe_leader = html.escape(leader_name or "Руководитель рабочей группы")
+    safe_name = html.escape(competence_name or "компетенции")
+    text = (
+        "Здравствуйте!\n\n"
+        f"{leader_name or 'Руководитель рабочей группы'} приглашает вас в рабочую группу "
+        f"по разработке компетенции «{competence_name}».\n\n"
+        "Войдите в реестр и откройте раздел «Мои проекты», чтобы принять приглашение:\n"
+        f"{projects_url}\n"
+    )
+    html_body = f"""\
+<html>
+  <body style="font-family: Arial, sans-serif; color: #212529; line-height: 1.5;">
+    <p>Здравствуйте!</p>
+    <p>
+      <strong>{safe_leader}</strong> приглашает вас в рабочую группу по разработке компетенции
+      «<strong>{safe_name}</strong>».
+    </p>
+    <p>
+      <a href="{safe_url}" style="display:inline-block;background:#1E40AF;color:#fff;padding:10px 16px;text-decoration:none;border-radius:6px;">
+        Открыть мои проекты
+      </a>
+    </p>
+    <p style="font-size:13px;color:#5c656c;">
+      Если кнопка не открывается, скопируйте ссылку в браузер:<br/>
+      {safe_url}
+    </p>
+  </body>
+</html>
+"""
+    send_email(to_addr, "Приглашение в рабочую группу компетенции", text, html_body)
+
+
 def send_invite_email(to_addr: str, password: str | None, confirm_url: str) -> None:
     text_body, html_body = _invite_bodies(to_addr, password, confirm_url)
     send_email(

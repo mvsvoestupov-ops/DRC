@@ -7,16 +7,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/app/components/PageHeader";
 import { PageShell } from "@/app/components/PageShell";
+import { useI18n } from "@/context/I18nContext";
+import { translateAreaName } from "@/i18n/helpers";
+import {
+  PROFESSIONAL_AREAS,
+  areaDisplayCode,
+  findProfessionalArea,
+  competenceMatchesArea,
+} from "@/lib/professionalAreas";
 import {
   toListItem,
   statusColors,
-  statusLabels,
-  defaultIndustries,
   type CompetenceListItem,
   type UiStatus,
 } from "@/lib/competenceMappers";
 
 export function SearchPage() {
+  const { t } = useI18n();
   const parseStatusParam = (raw: string | null): UiStatus[] => {
     if (!raw) return [];
     return raw.split(",").filter((s): s is UiStatus =>
@@ -24,36 +31,40 @@ export function SearchPage() {
     );
   };
 
-  const [searchParams] = useSearchParams();
-  const initialIndustry = searchParams.get("industry") || "";
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialArea = searchParams.get("area") || "";
   const initialQuery = searchParams.get("q") || "";
   const initialStatus = parseStatusParam(searchParams.get("status"));
 
   const [competencies, setCompetencies] = useState<CompetenceListItem[]>([]);
-  const [industries, setIndustries] = useState<string[]>(defaultIndustries);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const [filters, setFilters] = useState({
-    industry: initialIndustry,
+    area: initialArea,
     status: initialStatus,
     educationLevel: "",
     search: initialQuery,
   });
 
   const statusOptions: { value: UiStatus; label: string; color: string }[] = [
-    { value: "active", label: "Действует", color: "#10B981" },
-    { value: "draft", label: "Проект", color: "#6B7280" },
-    { value: "review", label: "На экспертизе", color: "#F59E0B" },
-    { value: "archived", label: "Архив", color: "#64748B" },
+    { value: "active", label: t("status.active"), color: "#10B981" },
+    { value: "draft", label: t("status.draft"), color: "#6B7280" },
+    { value: "review", label: t("status.review"), color: "#F59E0B" },
+    { value: "archived", label: t("status.archived"), color: "#64748B" },
   ];
 
-  const educationLevels = ["Бакалавриат", "Магистратура", "СПО", "ДПО"];
+  const educationLevels = [
+    t("searchPage.levelBachelor"),
+    t("searchPage.levelMaster"),
+    t("searchPage.levelSpo"),
+    t("searchPage.levelDpo"),
+  ];
 
   useEffect(() => {
     setFilters((prev) => ({
       ...prev,
-      industry: searchParams.get("industry") || "",
+      area: searchParams.get("area") || "",
       status: parseStatusParam(searchParams.get("status")),
       search: searchParams.get("q") || "",
     }));
@@ -64,19 +75,15 @@ export function SearchPage() {
     setError("");
     apiClient.getPublicCompetences()
       .then((data) => {
-        const items = (data as Competence[]).map(toListItem);
-        setCompetencies(items);
-        const fromApi = [...new Set(items.map((c) => c.industry).filter((i) => i && i !== "—"))];
-        if (fromApi.length > 0) {
-          setIndustries([...new Set([...fromApi, ...defaultIndustries])]);
-        }
+        setCompetencies((data as Competence[]).map(toListItem));
       })
-      .catch(() => setError("Не удалось загрузить компетенции. Проверьте, что сервер API запущен."))
+      .catch(() => setError(t("searchPage.error")))
       .finally(() => setLoading(false));
   }, []);
 
+  const selectedArea = findProfessionalArea(filters.area);
   const filteredCompetencies = competencies.filter((comp) => {
-    if (filters.industry && comp.industry !== filters.industry) return false;
+    if (filters.area && !competenceMatchesArea(comp, filters.area)) return false;
     if (filters.status.length > 0 && !filters.status.includes(comp.status)) return false;
     if (filters.educationLevel && comp.educationLevel !== filters.educationLevel) return false;
     if (filters.search) {
@@ -100,25 +107,35 @@ export function SearchPage() {
   };
 
   const clearFilters = () => {
-    setFilters({ industry: "", status: [], educationLevel: "", search: "" });
+    setFilters({ area: "", status: [], educationLevel: "", search: "" });
+    setSearchParams({});
   };
 
-  const activeFiltersCount = [filters.industry, ...filters.status, filters.educationLevel].filter(Boolean).length;
+  const activeFiltersCount = [filters.area, ...filters.status, filters.educationLevel].filter(Boolean).length;
 
   return (
     <PageShell>
       <PageHeader
-        title="Поиск компетенций"
+        title={t("searchPage.title")}
         description={
           <>
-            Найдено компетенций:{" "}
+            {selectedArea ? (
+              <>
+                {t("searchPage.foundInArea", {
+                  code: areaDisplayCode(selectedArea),
+                  name: translateAreaName(t, selectedArea.code, selectedArea.name),
+                })}{" "}
+              </>
+            ) : (
+              <>{t("searchPage.found")} </>
+            )}
             <strong className="text-gray-900">{filteredCompetencies.length}</strong>
           </>
         }
         actions={
           <Button variant="outline" className="flex items-center gap-2">
             <Download className="w-4 h-4" />
-            Экспорт результатов
+            {t("searchPage.export")}
           </Button>
         }
       />
@@ -126,43 +143,54 @@ export function SearchPage() {
         <p className="mb-6 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-2">{error}</p>
       )}
 
-      <div className="flex gap-6">
-        <div className="w-80 flex-shrink-0">
+      <div className="flex flex-col lg:flex-row gap-6">
+        <div className="w-full lg:w-80 flex-shrink-0">
           <div className="surface-padded sticky top-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <Filter className="w-5 h-5 text-gray-700" />
-                <h2 className="text-lg font-semibold text-gray-900">Фильтры</h2>
+                <h2 className="text-lg font-semibold text-gray-900">{t("searchPage.filters")}</h2>
                 {activeFiltersCount > 0 && (
-                  <span className="bg-secondary text-primary text-xs px-2 py-0.5 rounded-full font-semibold">
+                  <span className="bg-secondary text-primary text-sm px-2 py-0.5 rounded-full font-semibold">
                     {activeFiltersCount}
                   </span>
                 )}
               </div>
               {activeFiltersCount > 0 && (
-                <button onClick={clearFilters} className="text-sm text-primary font-medium hover:underline">
-                  Очистить
+                <button onClick={clearFilters} className="text-base text-primary font-medium hover:underline">
+                  {t("searchPage.clear")}
                 </button>
               )}
             </div>
 
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Отрасль</label>
+                <label className="block text-base font-medium text-gray-700 mb-2">
+                  {t("searchPage.area")}
+                </label>
                 <select
-                  value={filters.industry}
-                  onChange={(e) => setFilters({ ...filters, industry: e.target.value })}
+                  value={filters.area}
+                  onChange={(e) => {
+                    const area = e.target.value;
+                    setFilters({ ...filters, area });
+                    const next = new URLSearchParams(searchParams);
+                    if (area) next.set("area", area);
+                    else next.delete("area");
+                    setSearchParams(next, { replace: true });
+                  }}
                   className="form-control"
                 >
-                  <option value="">Все отрасли</option>
-                  {industries.map((industry) => (
-                    <option key={industry} value={industry}>{industry}</option>
+                  <option value="">{t("searchPage.allAreas")}</option>
+                  {PROFESSIONAL_AREAS.map((area) => (
+                    <option key={area.code} value={area.code}>
+                      {areaDisplayCode(area)} — {translateAreaName(t, area.code, area.name)}
+                    </option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Статус</label>
+                <label className="block text-base font-medium text-gray-700 mb-2">{t("searchPage.status")}</label>
                 <div className="space-y-3">
                   {statusOptions.map((option) => (
                     <label key={option.value} className="flex items-center gap-3 cursor-pointer">
@@ -173,20 +201,20 @@ export function SearchPage() {
                         className="w-4.5 h-4.5 rounded border-2 border-gray-300 text-primary focus:ring-primary"
                         style={{ accentColor: option.color }}
                       />
-                      <span className="text-sm text-gray-700">{option.label}</span>
+                      <span className="text-base text-gray-700">{option.label}</span>
                     </label>
                   ))}
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Уровень образования</label>
+                <label className="block text-base font-medium text-gray-700 mb-2">{t("searchPage.educationLevel")}</label>
                 <select
                   value={filters.educationLevel}
                   onChange={(e) => setFilters({ ...filters, educationLevel: e.target.value })}
                   className="form-control"
                 >
-                  <option value="">Все уровни</option>
+                  <option value="">{t("searchPage.allLevels")}</option>
                   {educationLevels.map((level) => (
                     <option key={level} value={level}>{level}</option>
                   ))}
@@ -194,12 +222,12 @@ export function SearchPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Поиск по тексту</label>
+                <label className="block text-base font-medium text-gray-700 mb-2">{t("searchPage.textSearch")}</label>
                 <Input
                   type="text"
                   value={filters.search}
                   onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                  placeholder="Название или ID..."
+                  placeholder={t("searchPage.textPlaceholder")}
                   className="w-full"
                 />
               </div>
@@ -208,15 +236,21 @@ export function SearchPage() {
         </div>
 
         <div className="flex-1">
-          <div className="surface overflow-hidden">
+            <div className="surface overflow-x-auto">
             {loading ? (
-              <div className="text-center py-16 text-gray-500">Загрузка...</div>
+              <div className="text-center py-16 text-gray-500">{t("home.loading")}</div>
             ) : (
               <>
                 <table className="data-table min-w-full">
                   <thead>
                     <tr>
-                      {["ID", "Название", "Статус", "Версия", "Разработчик"].map((head) => (
+                      {[
+                        t("searchPage.colId"),
+                        t("searchPage.colName"),
+                        t("searchPage.colStatus"),
+                        t("searchPage.colVersion"),
+                        t("searchPage.colDeveloper"),
+                      ].map((head) => (
                         <th key={head}>{head}</th>
                       ))}
                     </tr>
@@ -225,18 +259,18 @@ export function SearchPage() {
                     {filteredCompetencies.map((competency) => (
                       <tr key={competency.id} className="cursor-pointer">
                         <td>
-                          <Link to={`/competency/${competency.id}`} className="text-sm font-mono text-primary font-semibold hover:underline">
+                          <Link to={`/competency/${competency.id}`} className="text-base font-mono text-primary font-semibold hover:underline whitespace-nowrap">
                             {competency.displayId}
                           </Link>
                         </td>
                         <td className="max-w-[400px]">
-                          <Link to={`/competency/${competency.id}`} className="text-sm text-gray-900 font-medium hover:text-primary transition-colors line-clamp-2">
+                          <Link to={`/competency/${competency.id}`} className="text-base text-gray-900 font-medium hover:text-primary transition-colors line-clamp-2">
                             {competency.title}
                           </Link>
                         </td>
                         <td>
                           <span className={`status-pill ${statusColors[competency.status]}`}>
-                            {statusLabels[competency.status]}
+                            {t(`status.${competency.status}`)}
                           </span>
                         </td>
                         <td className="text-gray-500">{competency.version}</td>
@@ -251,9 +285,9 @@ export function SearchPage() {
                     <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                       <Filter className="w-8 h-8 text-gray-400" />
                     </div>
-                    <p className="text-base text-gray-500 mb-4">Компетенции не найдены</p>
+                    <p className="text-base text-gray-500 mb-4">{t("searchPage.notFound")}</p>
                     <Button onClick={clearFilters}>
-                      Очистить фильтры
+                      {t("searchPage.clearFilters")}
                     </Button>
                   </div>
                 )}
