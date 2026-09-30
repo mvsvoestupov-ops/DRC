@@ -14,6 +14,7 @@ set "VITE_API_URL=https://drc.ao-nk.online/api"
 set "COMMIT_MSG=DRC: крупнее шрифты, карточка компетенции и свежие доработки"
 REM ==================================================
 
+if /I "%~1"=="/deploy" goto :deploy
 if /I "%~1"=="/y" goto :ready
 if not "%~1"=="" set "COMMIT_MSG=%~1"
 
@@ -56,6 +57,7 @@ if errorlevel 1 (
   exit /b 1
 )
 
+:deploy
 set "SSH_OPTS=-p %SSH_PORT%"
 if exist "%SSH_KEY%" (
   set "SSH_OPTS=-i %SSH_KEY% -p %SSH_PORT%"
