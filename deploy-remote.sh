@@ -53,7 +53,7 @@ discover_root() {
       echo "$candidate"
       return 0
     fi
-  done
+  fi
   return 1
 }
 
