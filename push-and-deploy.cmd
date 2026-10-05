@@ -11,7 +11,7 @@ set "SSH_KEY=%USERPROFILE%\.ssh\id_ed25519_drc"
 set "REMOTE_DIR=/opt/drc"
 set "BRANCH=main"
 set "VITE_API_URL=https://drc.ao-nk.online/api"
-set "COMMIT_MSG=DRC: крупнее шрифты, карточка компетенции и свежие доработки"
+set "COMMIT_MSG=DRC: шаг 5 — верстка привязки дисциплин, деплой без torch"
 REM ==================================================
 
 if /I "%~1"=="/deploy" goto :deploy
@@ -23,9 +23,14 @@ echo Репозиторий: %CD%
 echo Ветка:       %BRANCH%
 echo Сервер:      %SSH_USER%@%SSH_HOST%:%SSH_PORT%  %REMOTE_DIR%
 echo.
+echo Что сделает скрипт:
+echo   1. git commit текущих правок
+echo   2. git push origin %BRANCH%
+echo   3. ssh на сервер: pull, pip без torch/CUDA, seed 0019/0020, сборка фронта, nginx
+echo.
 echo База на сервере не заменяется файлом.
-echo В неё допишутся примеры RUS-PK-0019 и RUS-PK-0020.
-echo Чаты, пароли и frontend_old_backup в коммит не попадут.
+echo Чаты, пароли, .env, venv и frontend_old_backup в коммит не попадут.
+echo SSH спросит пароль, если ключа нет.
 echo.
 git status
 echo.
@@ -36,7 +41,17 @@ pause >nul
 echo.
 
 git add -A
-git restore --staged -- "chat 2.txt" "chat_290726.txt" "chat_Фулстек-разработчик_20260728_170951.txt" "frontend_old_backup" "пароли и команды.txt" "PassForDRC_mail.txt" 2>nul
+git restore --staged -- ^
+  "chat 2.txt" ^
+  "chat_290726.txt" ^
+  "chat_Фулстек-разработчик_20260728_170951.txt" ^
+  "frontend_old_backup" ^
+  "DRCFigma" ^
+  "пароли и команды.txt" ^
+  "PassForDRC_mail.txt" ^
+  "frontend/.env" ^
+  "backend/venv" ^
+  "backend/profstandart.db" 2>nul
 
 git diff --cached --quiet
 if errorlevel 1 (

@@ -214,12 +214,12 @@ function ScaleScoreSelect({
   onChange: (value: ScaleScore) => void;
 }) {
   return (
-    <label className="block min-w-[88px]">
+    <label className="block w-[5.5rem] shrink-0">
       <span className="block text-[11px] font-medium text-gray-500 mb-1">{label}</span>
       <select
         value={value === "" ? "" : String(value)}
         onChange={(e) => onChange(parseScaleScore(e.target.value))}
-        className="form-control"
+        className="form-control py-2 px-2"
         aria-label={label}
       >
         <option value="">—</option>
@@ -300,101 +300,91 @@ export function DisciplineMappingEditor({
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-gray-200">
-      <table className="data-table min-w-[920px]">
-        <thead>
-          <tr>
-            <th className="w-[32%]">Компонент (A/B/C)</th>
-            <th className="w-[180px]">Экспертная оценка (1–10)</th>
-            <th>Дисциплины / модули / практики и форма контроля</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => {
-            const bindings = normalizeBindings(row);
-            const taken = bindings.map((binding) => binding.discipline.trim()).filter(Boolean);
-            return (
-              <tr key={row.id}>
-                <td className="align-top">
-                  <div className="flex items-start gap-2">
-                    <span
-                      className={`mt-0.5 inline-flex shrink-0 rounded-md border px-1.5 py-0.5 text-[11px] font-semibold ${CATEGORY_STYLE[row.category]}`}
-                    >
-                      {row.component}
-                    </span>
+    <div className="rounded-xl border border-gray-200 overflow-hidden min-w-0">
+      <div className="divide-y divide-gray-100">
+        {rows.map((row) => {
+          const bindings = normalizeBindings(row);
+          const taken = bindings.map((binding) => binding.discipline.trim()).filter(Boolean);
+          return (
+            <div key={row.id} className="p-4 space-y-3 min-w-0">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div className="flex items-start gap-2 min-w-0 flex-1">
+                  <span
+                    className={`mt-0.5 inline-flex shrink-0 rounded-md border px-1.5 py-0.5 text-[11px] font-semibold ${CATEGORY_STYLE[row.category]}`}
+                  >
+                    {row.component}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-900 leading-snug break-words">{row.text}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {row.category} ({translateKeyed(t, DESCRIPTOR_I18N_KEYS, row.category)})
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2 shrink-0">
+                  <ScaleScoreSelect
+                    label={t("discipline.importance")}
+                    value={parseScaleScore(row.importance)}
+                    onChange={(importance) => updateRowScores(row.id, { importance })}
+                  />
+                  <ScaleScoreSelect
+                    label={t("discipline.volume")}
+                    value={parseScaleScore(row.volume)}
+                    onChange={(volume) => updateRowScores(row.id, { volume })}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2 min-w-0">
+                {bindings.map((binding, index) => (
+                  <div
+                    key={`${row.id}-${index}`}
+                    className="grid grid-cols-1 min-[720px]:grid-cols-[minmax(0,1fr)_11rem_auto] gap-2 items-start min-w-0"
+                  >
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-gray-900 leading-snug">{row.text}</p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {row.category} ({translateKeyed(t, DESCRIPTOR_I18N_KEYS, row.category)})
-                      </p>
+                      <DisciplineCatalogPicker
+                        value={binding.discipline}
+                        items={catalogItems}
+                        extraNames={extraNames}
+                        excludeNames={taken.filter((name) => name !== binding.discipline.trim())}
+                        onChange={(discipline) => updateBinding(row.id, index, { discipline })}
+                      />
                     </div>
-                  </div>
-                </td>
-                <td className="align-top">
-                  <div className="flex items-start gap-2">
-                    <ScaleScoreSelect
-                      label={t("discipline.importance")}
-                      value={parseScaleScore(row.importance)}
-                      onChange={(importance) => updateRowScores(row.id, { importance })}
-                    />
-                    <ScaleScoreSelect
-                      label={t("discipline.volume")}
-                      value={parseScaleScore(row.volume)}
-                      onChange={(volume) => updateRowScores(row.id, { volume })}
-                    />
-                  </div>
-                </td>
-                <td className="align-top">
-                  <div className="space-y-2">
-                    {bindings.map((binding, index) => (
-                      <div key={`${row.id}-${index}`} className="flex items-start gap-2">
-                        <div className="min-w-0 flex-1">
-                          <DisciplineCatalogPicker
-                            value={binding.discipline}
-                            items={catalogItems}
-                            extraNames={extraNames}
-                            excludeNames={taken.filter((name) => name !== binding.discipline.trim())}
-                            onChange={(discipline) => updateBinding(row.id, index, { discipline })}
-                          />
-                        </div>
-                        <select
-                          value={binding.control}
-                          onChange={(e) => updateBinding(row.id, index, { control: e.target.value })}
-                          className="form-control w-[150px] shrink-0"
-                        >
-                          <option value="">{t("discipline.control")}</option>
-                          {DISCIPLINE_CONTROL_OPTIONS.map((option) => (
-                            <option key={option} value={option}>
-                              {translateKeyed(t, DISCIPLINE_CONTROL_I18N_KEYS, option)}
-                            </option>
-                          ))}
-                        </select>
-                        <button
-                          type="button"
-                          className="mt-1.5 p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 shrink-0"
-                          aria-label="Удалить дисциплину"
-                          disabled={bindings.length === 1 && !binding.discipline && !binding.control}
-                          onClick={() => removeBinding(row.id, index)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
+                    <select
+                      value={binding.control}
+                      onChange={(e) => updateBinding(row.id, index, { control: e.target.value })}
+                      className="form-control min-w-0 w-full"
+                    >
+                      <option value="">{t("discipline.control")}</option>
+                      {DISCIPLINE_CONTROL_OPTIONS.map((option) => (
+                        <option key={option} value={option}>
+                          {translateKeyed(t, DISCIPLINE_CONTROL_I18N_KEYS, option)}
+                        </option>
+                      ))}
+                    </select>
                     <button
                       type="button"
-                      className="inline-flex items-center gap-1.5 text-sm text-primary hover:text-primary/80 font-medium"
-                      onClick={() => addBinding(row.id)}
+                      className="justify-self-start min-[720px]:justify-self-center mt-1.5 p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50"
+                      aria-label="Удалить дисциплину"
+                      disabled={bindings.length === 1 && !binding.discipline && !binding.control}
+                      onClick={() => removeBinding(row.id, index)}
                     >
-                      <Plus className="w-4 h-4" />
-                      {t("discipline.add")}
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                ))}
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1.5 text-sm text-primary hover:text-primary/80 font-medium"
+                  onClick={() => addBinding(row.id)}
+                >
+                  <Plus className="w-4 h-4" />
+                  {t("discipline.add")}
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
       <p className="px-4 py-2.5 text-xs text-gray-500 border-t border-gray-100 bg-gray-50">
         Эксперты оценивают каждый компонент по двум критериям: важность для компетенции и объём освоения,
         шкала от 1 до 10. К одному З/У/Н можно привязать несколько дисциплин. В справочнике{" "}

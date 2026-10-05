@@ -154,7 +154,7 @@ export function DisciplineCatalogPicker({
       <PopoverContent
         align="start"
         sideOffset={6}
-        className="p-0 w-[var(--radix-popover-trigger-width)] min-w-[360px]"
+        className="p-0 w-[var(--radix-popover-trigger-width)] max-w-[min(28rem,calc(100vw-2rem))]"
       >
         <div className="px-3 pt-3 pb-2 border-b border-gray-100">
           <p className="text-xs font-medium text-gray-500 mb-2">

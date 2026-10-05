@@ -120,8 +120,8 @@ if [ ! -x venv/bin/pip ]; then
 fi
 # sentence-transformers тянет GPU-torch (~1 GB). На VPS это не нужно:
 # enrichment.py работает только если пакет уже установлен.
-grep -viE '^(sentence-transformers|torch)' requirements.txt > /tmp/drc-req-prod.txt
-venv/bin/pip install --disable-pip-version-check -r /tmp/drc-req-prod.txt
+grep -viE '^(sentence-transformers|torch|#)' requirements.txt > /tmp/drc-req-prod.txt
+venv/bin/pip install --disable-pip-version-check --no-input -r /tmp/drc-req-prod.txt
 
 echo "==> seed example competences RUS-PK-0019 / RUS-PK-0020"
 venv/bin/python scripts/seed_example_competences.py

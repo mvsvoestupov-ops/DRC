@@ -921,7 +921,7 @@ export function NewCompetencyPage() {
 
       <div className="flex flex-col xl:flex-row gap-6 xl:gap-8 w-full">
         <div className="flex-1 min-w-0">
-          <div className="surface p-6 lg:p-8 w-full">
+          <div className="surface p-6 lg:p-8 w-full min-w-0">
               <div className="flex justify-between mb-6 pb-6 border-b border-gray-200">
                 <Button
                   variant="outline"
