@@ -1,11 +1,15 @@
-"""Fill empty OTF OKSO fields from stored source_html / source_xml."""
+"""Fill empty OTF OKSO fields from stored source_html / source_xml.
+
+Process one standard at a time so a small VPS is not OOM-killed.
+"""
 from __future__ import annotations
 
+import gc
 import re
 
 from sqlalchemy.orm import defer, joinedload, undefer
 
-from .db.raw_models import GeneralizedFunctionRaw, StandardRaw
+from .db.raw_models import StandardRaw
 from .db_operations import _codes_from_units, _units_to_json
 from .parser import extract_okso_codes_from_text, parse_xml
 
@@ -39,11 +43,6 @@ def _apply_okso(gf, units, codes) -> bool:
     return True
 
 
-def _chunks(ids: list[int], size: int = 400):
-    for i in range(0, len(ids), size):
-        yield ids[i : i + size]
-
-
 def _parsed_by_key(generalized_functions) -> dict[str, object]:
     mapped: dict[str, object] = {}
     for gf in generalized_functions or []:
@@ -71,83 +70,73 @@ def _overlay_parsed(std: StandardRaw, parsed_gfs) -> int:
 
 
 def repair_okso_units(session) -> dict:
-    standards = (
-        session.query(StandardRaw)
-        .options(
-            defer(StandardRaw.source_xml),
-            defer(StandardRaw.source_html),
-            joinedload(StandardRaw.generalized_functions),
-        )
-        .all()
-    )
-    need_ids = [
-        std.id
-        for std in standards
-        if any(not _gf_has_okso(gf) for gf in (std.generalized_functions or []))
-    ]
+    ids = [row[0] for row in session.query(StandardRaw.id).order_by(StandardRaw.id).all()]
+    session.expunge_all()
+
     html_updated = 0
     xml_updated = 0
-    filled_ids: set[int] = set()
-    if need_ids:
-        from .classinform_parser import parse_classinform_html
+    needed = 0
+    parse_html = None
 
-        for chunk in _chunks(need_ids):
-            html_rows = (
-                session.query(StandardRaw)
-                .options(
-                    undefer(StandardRaw.source_html),
-                    defer(StandardRaw.source_xml),
-                    joinedload(StandardRaw.generalized_functions),
-                )
-                .filter(StandardRaw.id.in_(chunk))
-                .all()
+    for index, sid in enumerate(ids, 1):
+        std = (
+            session.query(StandardRaw)
+            .options(
+                defer(StandardRaw.source_xml),
+                defer(StandardRaw.source_html),
+                joinedload(StandardRaw.generalized_functions),
             )
-            for std in html_rows:
-                html = getattr(std, "source_html", None) or ""
-                if not html.strip():
-                    continue
-                try:
-                    parsed = parse_classinform_html(html)
-                except Exception:
-                    continue
-                count = _overlay_parsed(std, parsed.generalized_functions)
-                html_updated += count
-                if count:
-                    filled_ids.add(std.id)
+            .filter(StandardRaw.id == sid)
+            .first()
+        )
+        if not std or all(_gf_has_okso(gf) for gf in (std.generalized_functions or [])):
+            session.expunge_all()
+            continue
+        needed += 1
+        updated = 0
 
-        still_need = [sid for sid in need_ids if sid not in filled_ids]
-        for chunk in _chunks(still_need):
-            xml_rows = (
-                session.query(StandardRaw)
-                .options(
-                    undefer(StandardRaw.source_xml),
-                    defer(StandardRaw.source_html),
-                    joinedload(StandardRaw.generalized_functions),
-                )
-                .filter(StandardRaw.id.in_(chunk))
-                .all()
+        html = (
+            session.query(StandardRaw.source_html)
+            .filter(StandardRaw.id == sid)
+            .scalar()
+        )
+        if html and str(html).strip():
+            if parse_html is None:
+                from .classinform_parser import parse_classinform_html
+
+                parse_html = parse_classinform_html
+            try:
+                parsed = parse_html(html)
+                updated = _overlay_parsed(std, parsed.generalized_functions)
+                html_updated += updated
+            except Exception:
+                updated = 0
+            del html
+
+        if not updated:
+            xml = (
+                session.query(StandardRaw.source_xml)
+                .filter(StandardRaw.id == sid)
+                .scalar()
             )
-            for std in xml_rows:
-                xml = getattr(std, "source_xml", None) or ""
-                if not xml.strip():
-                    continue
+            if xml and str(xml).strip():
                 try:
                     payload = xml.encode("utf-8") if isinstance(xml, str) else xml
                     parsed = parse_xml(payload)
+                    xml_updated += _overlay_parsed(std, parsed.generalized_functions)
                 except Exception:
-                    continue
-                xml_updated += _overlay_parsed(std, parsed.generalized_functions)
+                    pass
+                del xml
 
-    session.commit()
-    still_empty = 0
-    for std in standards:
-        for gf in std.generalized_functions or []:
-            if not _gf_has_okso(gf):
-                still_empty += 1
+        session.commit()
+        session.expunge_all()
+        if index % 25 == 0:
+            print(f"repair_okso: {index}/{len(ids)} needed={needed} html={html_updated} xml={xml_updated}", flush=True)
+            gc.collect()
+
     return {
-        "standards": len(standards),
-        "needed": len(need_ids),
+        "standards": len(ids),
+        "needed": needed,
         "html_updated": html_updated,
         "xml_updated": xml_updated,
-        "still_empty_otf": still_empty,
     }
