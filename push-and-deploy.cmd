@@ -11,7 +11,7 @@ set "SSH_KEY=%USERPROFILE%\.ssh\id_ed25519_drc"
 set "REMOTE_DIR=/opt/drc"
 set "BRANCH=main"
 set "VITE_API_URL=https://drc.ao-nk.online/api"
-set "COMMIT_MSG=DRC: уровни ТФ/ОТФ из кода, вёрстка ПК и поля 1 см"
+set "COMMIT_MSG=DRC: рекомендованные ПС по ОКСО из XML/HTML, уровни ТФ, вёрстка ПК"
 REM ==================================================
 
 REM Запуск из cmd:
@@ -34,7 +34,7 @@ echo.
 echo Что сделает скрипт:
 echo   1. git commit текущих правок
 echo   2. git push origin %BRANCH%
-echo   3. ssh: pull, pip без torch/CUDA, ремонт ТФ/ОТФ в существующей БД,
+echo   3. ssh: pull, pip без torch/CUDA, ремонт ТФ/ОТФ и ОКСО в существующей БД,
 echo      seed 0019/0020, сборка фронта с VITE_API_URL, nginx
 echo.
 echo Файл базы на сервере не подменяется.

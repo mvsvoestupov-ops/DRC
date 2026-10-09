@@ -128,10 +128,15 @@ def okso_matches_fgos(okso_value: str, fgos_code: str) -> bool:
     okso_n = normalize_okso_code(okso_raw)
     if fgos_n and okso_n and fgos_n == okso_n:
         return True
+    for extracted in extract_okso_codes_from_text(okso_raw):
+        if extracted == fgos_n:
+            return True
     haystacks = [okso_raw]
     if okso_n and okso_n != okso_raw:
         haystacks.append(okso_n)
     needles = {n for n in (fgos_raw, fgos_n) if n}
+    if fgos_n and not fgos_n.startswith("2."):
+        needles.add(f"2.{fgos_n}")
     for haystack in haystacks:
         for needle in needles:
             if re.search(rf"(?<![\d]){re.escape(needle)}(?![\d])", haystack):

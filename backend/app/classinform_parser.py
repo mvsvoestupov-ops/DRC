@@ -298,6 +298,31 @@ def _clean_dash(value: str) -> str:
     return value
 
 
+_REF_TABLE_CHROME = frozenset(
+    {
+        "Код",
+        "Наименование",
+        "Наименование документа",
+    }
+)
+_REF_DOC_HEADER_RE = re.compile(
+    r"^(ОКЗ|ЕТКС|ЕКС|ОКПДТР|ОКСО|Перечень СПО|Перечень ВО|ОКСВНК)",
+    re.I,
+)
+
+
+def _is_ref_table_chrome(line: str) -> bool:
+    text = (line or "").strip()
+    if not text or text in _REF_TABLE_CHROME:
+        return True
+    return text.lower().startswith("наименование базовой группы")
+
+
+def _is_ref_section_end(line: str) -> bool:
+    text = (line or "").strip()
+    return text.startswith("3.") or text.startswith("IV.") or pf_header_re_match(text)
+
+
 def _parse_reference_units(lines: List[str]) -> dict[str, List[ClassifierUnit]]:
     result = {"okz": [], "okpdtr": [], "okso": [], "etks": []}
     started = False
@@ -311,8 +336,11 @@ def _parse_reference_units(lines: List[str]) -> dict[str, List[ClassifierUnit]]:
         if not started:
             i += 1
             continue
-        if line.startswith("3.") or line.startswith("IV.") or pf_header_re_match(line):
-            break
+        if _is_ref_section_end(line) or _is_ref_table_chrome(line):
+            if _is_ref_section_end(line):
+                break
+            i += 1
+            continue
 
         doc_key = None
         doc_raw = line
@@ -338,11 +366,14 @@ def _parse_reference_units(lines: List[str]) -> dict[str, List[ClassifierUnit]]:
                 )
             if m_one:
                 doc_raw, code, name = m_one.group(1), m_one.group(2).strip(), m_one.group(3).strip()
-                if code in ("-", "—"):
+                if code in ("-", "—") or _is_ref_table_chrome(code):
                     code = ""
+                if _is_ref_table_chrome(name):
+                    name = ""
                 for alias, mapped in REF_DOC_ALIASES.items():
                     if doc_raw.upper().startswith(alias):
-                        result[mapped].append(ClassifierUnit(code=code, name=name))
+                        if code or name:
+                            result[mapped].append(ClassifierUnit(code=code, name=name))
                         break
                 i += 1
                 continue
@@ -357,23 +388,27 @@ def _parse_reference_units(lines: List[str]) -> dict[str, List[ClassifierUnit]]:
             i += 1
             continue
 
+        while i + 1 < len(lines) and _is_ref_table_chrome(lines[i + 1]):
+            i += 1
+
         code = ""
         name = ""
         if i + 1 < len(lines):
             nxt = lines[i + 1].strip()
-            if nxt not in FIELD_LABELS and not nxt.startswith("3.") and not re.match(
-                r"^(ОКЗ|ЕТКС|ЕКС|ОКПДТР|ОКСО|Перечень)", nxt, re.I
-            ):
+            if not _is_ref_section_end(nxt) and not _REF_DOC_HEADER_RE.match(nxt):
                 code = "" if nxt in ("-", "—") else nxt
                 i += 1
                 if i + 1 < len(lines):
                     nxt2 = lines[i + 1].strip()
-                    if nxt2 not in FIELD_LABELS and not nxt2.startswith("3.") and not re.match(
-                        r"^(ОКЗ|ЕТКС|ЕКС|ОКПДТР|ОКСО|Перечень|Наименование документа)", nxt2, re.I
+                    if (
+                        not _is_ref_section_end(nxt2)
+                        and not _REF_DOC_HEADER_RE.match(nxt2)
+                        and not _is_ref_table_chrome(nxt2)
                     ):
                         name = "" if nxt2 in ("-", "—") else nxt2
                         i += 1
-        result[doc_key].append(ClassifierUnit(code=code, name=name))
+        if code or name:
+            result[doc_key].append(ClassifierUnit(code=code, name=name))
         i += 1
     return result
 

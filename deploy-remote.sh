@@ -123,7 +123,7 @@ fi
 grep -viE '^(sentence-transformers|torch|#)' requirements.txt > /tmp/drc-req-prod.txt
 venv/bin/pip install --disable-pip-version-check --no-input -r /tmp/drc-req-prod.txt
 
-echo "==> repair TF/OTF codes and 148н levels (existing DB, in place)"
+echo "==> repair TF/OTF codes, 148н levels and OKSO from HTML/XML (existing DB, in place)"
 venv/bin/python -u scripts/repair_tf_levels.py
 
 echo "==> seed example competences RUS-PK-0019 / RUS-PK-0020"

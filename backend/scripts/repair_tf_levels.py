@@ -13,6 +13,7 @@ print("repair_tf_levels: start", flush=True)
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.db import SessionLocal
+from app.repair_okso import repair_okso_units
 from app.repair_tf_levels import repair_tf_levels
 
 
@@ -28,6 +29,11 @@ def main() -> None:
                     print("  STILL", row, flush=True)
             else:
                 print(f"{key}={value}", flush=True)
+        print("repair_okso: start", flush=True)
+        okso = repair_okso_units(session)
+        print("repair_okso: done", flush=True)
+        for key, value in okso.items():
+            print(f"okso_{key}={value}", flush=True)
     finally:
         session.close()
 

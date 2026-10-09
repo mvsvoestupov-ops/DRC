@@ -1302,6 +1302,9 @@ def _okso_like_needles(code: str) -> list[str]:
         needles.add(".".join(str(int(p)) if p.isdigit() else p for p in parts))
     except ValueError:
         pass
+    compact = normalize_okso_code(text)
+    if compact and not compact.startswith("2."):
+        needles.add(f"2.{compact}")
     return [n for n in needles if n]
 
 
@@ -1388,6 +1391,19 @@ async def standards_by_okso(
                     values.extend(extract_okso_codes_from_text(str(blob)))
                     values.append(str(blob))
             add_match(standard_id, values)
+
+        # Коды ОКСО часто остаются только в XML/HTML (2.20.03.01), а в JSON
+        # поле пустое — после нормализации gf.code до буквы ОТФ LIKE по code их больше не находит.
+        source_filters = []
+        for needle in needles:
+            pattern = f"%{needle}%"
+            source_filters.append(StandardRaw.source_html.like(pattern))
+            source_filters.append(StandardRaw.source_xml.like(pattern))
+        if source_filters:
+            for (standard_id,) in (
+                session.query(StandardRaw.id).filter(or_(*source_filters)).all()
+            ):
+                add_match(standard_id, [fgos_code])
 
         if not matched:
             return []
