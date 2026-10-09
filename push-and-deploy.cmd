@@ -11,8 +11,15 @@ set "SSH_KEY=%USERPROFILE%\.ssh\id_ed25519_drc"
 set "REMOTE_DIR=/opt/drc"
 set "BRANCH=main"
 set "VITE_API_URL=https://drc.ao-nk.online/api"
-set "COMMIT_MSG=DRC: шаг 5 — верстка привязки дисциплин, деплой без torch"
+set "COMMIT_MSG=DRC: уровни ТФ/ОТФ из кода, вёрстка ПК и поля 1 см"
 REM ==================================================
+
+REM Запуск из cmd:
+REM   C:\IT\DRC\push-and-deploy.cmd
+REM Без подтверждения:
+REM   C:\IT\DRC\push-and-deploy.cmd /y
+REM Только деплой уже запушенной ветки:
+REM   C:\IT\DRC\push-and-deploy.cmd /deploy
 
 if /I "%~1"=="/deploy" goto :deploy
 if /I "%~1"=="/y" goto :ready
@@ -22,14 +29,16 @@ echo.
 echo Репозиторий: %CD%
 echo Ветка:       %BRANCH%
 echo Сервер:      %SSH_USER%@%SSH_HOST%:%SSH_PORT%  %REMOTE_DIR%
+echo Коммит:      %COMMIT_MSG%
 echo.
 echo Что сделает скрипт:
 echo   1. git commit текущих правок
 echo   2. git push origin %BRANCH%
-echo   3. ssh на сервер: pull, pip без torch/CUDA, seed 0019/0020, сборка фронта, nginx
+echo   3. ssh: pull, pip без torch/CUDA, ремонт ТФ/ОТФ в существующей БД,
+echo      seed 0019/0020, сборка фронта с VITE_API_URL, nginx
 echo.
-echo База на сервере не заменяется файлом.
-echo Чаты, пароли, .env, venv и frontend_old_backup в коммит не попадут.
+echo Файл базы на сервере не подменяется.
+echo Чаты, пароли, .env, venv, profstandart.db и frontend_old_backup в коммит не попадут.
 echo SSH спросит пароль, если ключа нет.
 echo.
 git status

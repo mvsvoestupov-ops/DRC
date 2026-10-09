@@ -14,6 +14,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from .db import SessionLocal
+from .tf_codes import compact_otf_code, compact_tf_code, qualification_digit
 from .db_operations import save_raw_standard
 from .db.raw_models import StandardRaw
 from .models import (
@@ -95,11 +96,43 @@ def _page_lines(html: str) -> List[str]:
     return [ln for ln in lines if ln]
 
 
+_KEEP_FIRST_LABELS = {
+    "Код",
+    "Наименование",
+    "Уровень квалификации",
+    "Уровень (подуровень) квалификации",
+}
+_CODE_COLUMN_CONTEXT = {
+    "Наименование документа",
+    "Справочная информация",
+}
+_INLINE_LABEL_RE = re.compile(
+    r"^(Уровень квалификации|Уровень \(подуровень\) квалификации|Код|Наименование)\s+(.+)$"
+)
+
+
 def _parse_label_blocks(lines: List[str]) -> Dict[str, List[str]]:
     blocks: Dict[str, List[str]] = {}
     current: str | None = None
     for line in lines:
+        if line in _CODE_COLUMN_CONTEXT:
+            current = line
+            blocks.setdefault(current, [])
+            continue
+        if line == "Код" and current in _CODE_COLUMN_CONTEXT:
+            continue
+        inline = _INLINE_LABEL_RE.match(line)
+        if inline:
+            label, rest = inline.group(1), inline.group(2).strip()
+            blocks.setdefault(label, [])
+            if rest and (label not in _KEEP_FIRST_LABELS or not blocks[label]):
+                blocks[label].append(rest)
+            current = label
+            continue
         if line in FIELD_LABELS:
+            if line in _KEEP_FIRST_LABELS and blocks.get(line):
+                current = None
+                continue
             current = line
             blocks[current] = []
             continue
@@ -382,9 +415,9 @@ def _parse_section_iii(lines: List[str]) -> List[GeneralizedWorkFunction]:
         meta_lines = gf_lines[:meta_end] if meta_end else gf_lines
         meta_blocks = _parse_label_blocks(meta_lines)
 
-        gf_code = _field_value(meta_blocks, "Код")
+        gf_code = compact_otf_code(_field_value(meta_blocks, "Код"))
         gf_name = _field_value(meta_blocks, "Наименование")
-        gf_level = _field_value(meta_blocks, "Уровень квалификации")
+        gf_level = qualification_digit(_field_value(meta_blocks, "Уровень квалификации"))
         titles_raw = _field_value(
             meta_blocks,
             "Возможные наименования должностей, профессий рабочих",
@@ -419,9 +452,11 @@ def _parse_section_iii(lines: List[str]) -> List[GeneralizedWorkFunction]:
 
         for pf_lines in pf_chunks:
             pf_blocks = _parse_label_blocks(pf_lines)
-            pf_code = _field_value(pf_blocks, "Код")
+            pf_code = compact_tf_code(_field_value(pf_blocks, "Код"))
             pf_name = _field_value(pf_blocks, "Наименование")
-            pf_level = _field_value(pf_blocks, "Уровень (подуровень) квалификации")
+            pf_level = qualification_digit(
+                _field_value(pf_blocks, "Уровень (подуровень) квалификации")
+            ) or qualification_digit(pf_code)
             labor_actions = [
                 LaborAction(text=item) for item in _list_items(pf_blocks, "Трудовые действия")
             ]
@@ -442,6 +477,19 @@ def _parse_section_iii(lines: List[str]) -> List[GeneralizedWorkFunction]:
                     necessary_knowledges=knowledges,
                     other_characteristics=other_pf or None,
                 )
+            )
+
+        if not gf_code and particular_functions:
+            gf_code = compact_otf_code(None, particular_functions[0].code)
+        if not gf_level and particular_functions:
+            gf_level = next(
+                (
+                    qualification_digit(item.sub_qualification)
+                    or qualification_digit(item.code)
+                    for item in particular_functions
+                    if qualification_digit(item.sub_qualification) or qualification_digit(item.code)
+                ),
+                "",
             )
 
         if not gf_code and not gf_name and not particular_functions:

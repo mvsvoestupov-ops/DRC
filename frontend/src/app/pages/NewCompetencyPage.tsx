@@ -246,7 +246,7 @@ export function NewCompetencyPage() {
   const lockedTfLevel = useMemo(() => {
     const selected = laborFunctions.filter((lf) => formData.selectedLaborFunctionIds.includes(lf.id));
     if (selected.length === 0) return null;
-    return parseTfLevel(selected[0]?.otf_level);
+    return parseTfLevel(selected[0]?.otf_level, selected[0]?.code);
   }, [laborFunctions, formData.selectedLaborFunctionIds]);
   const allowedQualificationLevels = useMemo(() => {
     if (!tfLevelRange) return qualificationLevels;
@@ -321,7 +321,7 @@ export function NewCompetencyPage() {
 
   const toggleLaborFunction = (id: number) => {
     const target = laborFunctions.find((lf) => lf.id === id);
-    const level = parseTfLevel(target?.otf_level);
+    const level = parseTfLevel(target?.otf_level, target?.code);
     const alreadySelected = formData.selectedLaborFunctionIds.includes(id);
     if (!alreadySelected && tfDisabledReason(level, tfLevelRange, lockedTfLevel)) {
       return;
@@ -331,7 +331,7 @@ export function NewCompetencyPage() {
         ? prev.selectedLaborFunctionIds.filter((item) => item !== id)
         : [...prev.selectedLaborFunctionIds, id];
       const selected = laborFunctions.filter((lf) => ids.includes(lf.id));
-      const otfLevel = selected[0] ? parseTfLevel(selected[0].otf_level) : null;
+      const otfLevel = selected[0] ? parseTfLevel(selected[0].otf_level, selected[0].code) : null;
       return {
         ...prev,
         selectedLaborFunctionIds: ids,
@@ -440,7 +440,7 @@ export function NewCompetencyPage() {
               standard_id: lf.standard_id ?? Number(standardId),
               standard_reg_number: lf.standard_reg_number ?? first.standard_reg_number,
               standard_name: lf.standard_name ?? first.standard_name,
-              otf_level: formatTfLevel(lf.otf_level) ?? "",
+              otf_level: formatTfLevel(lf.otf_level, lf.code) ?? "",
             }));
             setLaborFunctions(tagged);
             const selectedCodes = new Set(lfList.map((item: { code?: string }) => item.code).filter(Boolean));
@@ -482,7 +482,7 @@ export function NewCompetencyPage() {
           standard_id: lf.standard_id ?? standard.id,
           standard_reg_number: lf.standard_reg_number ?? standard.reg_number,
           standard_name: lf.standard_name ?? standard.name,
-          otf_level: formatTfLevel(lf.otf_level) ?? "",
+          otf_level: formatTfLevel(lf.otf_level, lf.code) ?? "",
         }));
         setLaborFunctions((prev) => {
           const seen = new Set(prev.map((item) => item.id));
@@ -511,7 +511,7 @@ export function NewCompetencyPage() {
       const selected = laborFunctions.filter(
         (lf) => lf.standard_id !== standardId && ids.includes(lf.id),
       );
-      const otfLevel = selected[0] ? parseTfLevel(selected[0].otf_level) : null;
+      const otfLevel = selected[0] ? parseTfLevel(selected[0].otf_level, selected[0].code) : null;
       return {
         ...prev,
         profStandardId: remaining[0]?.id ?? null,
@@ -557,7 +557,7 @@ export function NewCompetencyPage() {
       if (prev.selectedLaborFunctionIds.length > 0 && laborFunctions.length === 0) return prev;
       const allowedIds = prev.selectedLaborFunctionIds.filter((id) => {
         const lf = laborFunctions.find((item) => item.id === id);
-        return isTfLevelInRange(parseTfLevel(lf?.otf_level), range);
+        return isTfLevelInRange(parseTfLevel(lf?.otf_level, lf?.code), range);
       });
       let nextLevel = prev.qualificationLevel;
       if (nextLevel && range && !isTfLevelInRange(Number(nextLevel), range)) {
@@ -567,13 +567,13 @@ export function NewCompetencyPage() {
         return prev;
       }
       const selected = laborFunctions.filter((lf) => allowedIds.includes(lf.id));
-      const firstLevel = selected[0] ? parseTfLevel(selected[0].otf_level) : null;
+      const firstLevel = selected[0] ? parseTfLevel(selected[0].otf_level, selected[0].code) : null;
       const sameLevelIds =
         firstLevel == null
           ? allowedIds
           : allowedIds.filter((id) => {
               const lf = laborFunctions.find((item) => item.id === id);
-              return parseTfLevel(lf?.otf_level) === firstLevel;
+              return parseTfLevel(lf?.otf_level, lf?.code) === firstLevel;
             });
       return {
         ...prev,
@@ -1355,8 +1355,8 @@ export function NewCompetencyPage() {
                                         <p className="text-sm text-gray-500 py-1">{t("wizard.tfNotFound")}</p>
                                       ) : (
                                         items.map((lf) => {
-                                          const levelLabel = formatTfLevel(lf.otf_level);
-                                          const level = parseTfLevel(lf.otf_level);
+                                          const levelLabel = formatTfLevel(lf.otf_level, lf.code);
+                                          const level = parseTfLevel(lf.otf_level, lf.code);
                                           const selected = formData.selectedLaborFunctionIds.includes(lf.id);
                                           const reason = selected
                                             ? null

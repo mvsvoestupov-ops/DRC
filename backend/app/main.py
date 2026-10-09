@@ -33,6 +33,7 @@ from .db.registration_models import Registration
 from .db.fgos_models import FgosSpo
 from .fgos_registry import FGOS_CATEGORIES, FGOS_CATEGORY_BY_ID, FGOS_CATEGORY_IDS
 from .db_operations import save_raw_standard
+from .tf_codes import compact_otf_code, compact_tf_code, tf_qualification_level
 from .enrichment import (
     enrich_standard,
     enrich_standards_batch,
@@ -1115,16 +1116,6 @@ async def standards_qualification_coverage_stats(current_user: User = Depends(ge
     finally:
         session.close()
 
-def _short_qualification_level(value: str | None) -> str:
-    text = (value or "").strip()
-    if not text:
-        return ""
-    if len(text) <= 12 and re.fullmatch(r"\d+(?:\s*[-–]\s*\d+)?[^\d]*", text):
-        return re.sub(r"\s+", " ", text).strip()
-    match = re.search(r"\d+", text)
-    return match.group(0) if match else ""
-
-
 @app.get("/standards/{standard_id}/labor-functions")
 async def get_labor_functions(standard_id: int, current_user: User = Depends(get_current_user)):
     session = SessionLocal()
@@ -1149,8 +1140,9 @@ async def get_labor_functions(standard_id: int, current_user: User = Depends(get
         result = []
         for gf in std.generalized_functions:
             for pf in gf.particular_functions:
+                tf_code = compact_tf_code(pf.code)
                 labor_actions_detail: list[dict[str, Any]] = []
-                enriched_pf = enriched_pf_map.get(pf.code)
+                enriched_pf = enriched_pf_map.get(pf.code) or enriched_pf_map.get(tf_code)
                 if enriched_pf and enriched_pf.labor_actions:
                     for la in enriched_pf.labor_actions:
                         labor_actions_detail.append({
@@ -1177,11 +1169,13 @@ async def get_labor_functions(standard_id: int, current_user: User = Depends(get
 
                 result.append({
                     "id": pf.id,
-                    "code": pf.code,
+                    "code": tf_code,
                     "name": pf.name,
-                    "otf_code": gf.code,
+                    "otf_code": compact_otf_code(gf.code, tf_code),
                     "otf_name": gf.name,
-                    "otf_level": _short_qualification_level(gf.level),
+                    "otf_level": tf_qualification_level(
+                        gf.level, getattr(pf, "sub_qualification", None), tf_code
+                    ),
                     "standard_id": std.id,
                     "standard_reg_number": std.reg_number,
                     "standard_name": std.name,
@@ -2038,6 +2032,18 @@ async def get_qualifications_by_standard(standard_id: int, current_user: User = 
 @app.get("/qualifications/stats")
 async def qualifications_stats(current_user: User = Depends(get_current_user)):
     return get_qualification_stats()
+
+
+@app.post("/standards/repair-tf-levels")
+async def repair_tf_levels_endpoint(current_user: User = Depends(get_current_admin)):
+    """Normalize OTF/TF codes and fill missing 148н levels from TF codes / HTML leftovers."""
+    from .repair_tf_levels import repair_tf_levels
+
+    session = SessionLocal()
+    try:
+        return repair_tf_levels(session)
+    finally:
+        session.close()
 
 
 @app.post("/qualifications/relink-standards")

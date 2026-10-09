@@ -104,7 +104,7 @@ export function HomePage() {
   return (
     <div className="bg-page">
       <div className="bg-gradient-to-br from-[#1E3A8A] via-[#1E40AF] to-[#3B82F6] text-white">
-        <div className="max-w-[1440px] mx-auto px-8 py-20">
+        <div className="site-wrap py-20">
           <div className="max-w-3xl">
             <h1 className="text-5xl font-bold leading-tight mb-6">
               {t("home.title")}
@@ -132,7 +132,7 @@ export function HomePage() {
         </div>
       </div>
 
-      <div className="max-w-[1440px] mx-auto px-8 -mt-12">
+      <div className="site-wrap -mt-12">
         {invites.length > 0 ? (
           <Link
             to="/my-projects"

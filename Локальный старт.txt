@@ -7,6 +7,10 @@ uvicorn app.main:app --reload --host 127.0.0.1 --port 10000
 
 2. Фронт — http://127.0.0.1:5173
 
+В frontend\.env должно быть:
+VITE_API_URL=http://127.0.0.1:10000
+
+После смены .env Vite нужно перезапустить (Ctrl+C, затем снова pnpm).
 
 cd /d C:\IT\DRC\frontend
 pnpm.cmd dev -- --host 127.0.0.1 --port 5173

@@ -202,12 +202,26 @@
 }
 
 @layer components {
+  .site-wrap,
+  .page-shell,
+  .page-shell-narrow {
+    width: 100%;
+    max-width: 2400px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1cm;
+    padding-right: 1cm;
+    box-sizing: border-box;
+  }
+
   .page-shell {
-    @apply max-w-[1440px] mx-auto px-8 py-8;
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
   }
 
   .page-shell-narrow {
-    @apply max-w-6xl mx-auto px-8 py-8;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
   }
 
   .surface {

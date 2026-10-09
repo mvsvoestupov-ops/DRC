@@ -14,8 +14,7 @@ export function PageShell({ children, className, narrow, flush }: PageShellProps
   return (
     <div
       className={cn(
-        narrow ? "max-w-6xl" : "max-w-[1440px]",
-        "mx-auto px-8",
+        "site-wrap",
         flush ? "" : "py-8",
         className
       )}

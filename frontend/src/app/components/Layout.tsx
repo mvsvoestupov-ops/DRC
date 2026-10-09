@@ -61,7 +61,7 @@ export function Layout() {
         </div>
       ) : null}
       <header className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-[1440px] mx-auto px-8">
+        <div className="site-wrap" style={{ paddingLeft: "1cm", paddingRight: "1cm" }}>
           <div className="flex justify-between items-center h-20">
             <Link to="/" className="flex items-center gap-4 shrink-0">
               <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
@@ -98,7 +98,7 @@ export function Layout() {
                   placeholder={t("searchPlaceholder")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-[320px] max-w-[32vw] pl-10 pr-4 h-10 border-gray-300 focus-visible:ring-primary"
+                  className="w-[280px] lg:w-[360px] xl:w-[420px] pl-10 pr-4 h-10 border-gray-300 focus-visible:ring-primary"
                 />
                 <Search className="absolute left-3 top-2.5 w-5 h-5 text-gray-400 pointer-events-none" />
               </form>
@@ -145,7 +145,7 @@ export function Layout() {
         </div>
 
         <div className="border-t border-gray-200 bg-nav">
-          <div className="max-w-[1440px] mx-auto px-8">
+          <div className="site-wrap">
             <nav className="flex gap-6 h-14 items-center text-base overflow-x-auto whitespace-nowrap">
               <NavLink to="/">{t("nav.home")}</NavLink>
               <NavLink to="/search">{t("nav.search")}</NavLink>
@@ -194,7 +194,7 @@ export function Layout() {
       </main>
 
       <footer className="bg-footer text-footer-muted">
-        <div className="max-w-[1440px] mx-auto px-8 py-12">
+        <div className="site-wrap py-12">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
             <div>
               <h3 className="font-semibold text-white mb-4">{t("footer.aboutRegistry")}</h3>

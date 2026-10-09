@@ -1,14 +1,31 @@
 export type TfLevelRange = { min: number; max: number };
 
-export function parseTfLevel(otfLevel?: string | null): number | null {
-  const match = String(otfLevel || "").match(/(\d+)/);
+const TF_CODE_LEVEL_RE = /[A-Za-zА-Яа-яЁё]\s*[/.]\s*\d{1,3}\.(\d)/;
+const LEVEL_PHRASE_RE = /(?:уровен[ьяе]\s*(?:\(подуровень\))?\s*квалификации|квалификации)\s*[:\s]*([1-9])/i;
+
+function firstQualificationDigit(text: string): number | null {
+  const phrase = text.match(LEVEL_PHRASE_RE);
+  if (phrase) {
+    const level = Number(phrase[1]);
+    if (Number.isInteger(level) && level >= 1 && level <= 9) return level;
+  }
+  const match = text.match(/(\d+)/);
   if (!match) return null;
   const level = Number(match[1]);
-  return Number.isFinite(level) ? level : null;
+  return Number.isInteger(level) && level >= 1 && level <= 9 ? level : null;
 }
 
-export function formatTfLevel(otfLevel?: string | null): string | null {
-  const level = parseTfLevel(otfLevel);
+export function parseTfLevel(otfLevel?: string | null, tfCode?: string | null): number | null {
+  const fromCode = String(tfCode || "").match(TF_CODE_LEVEL_RE);
+  if (fromCode) {
+    const level = Number(fromCode[1]);
+    if (Number.isInteger(level) && level >= 1 && level <= 9) return level;
+  }
+  return firstQualificationDigit(String(otfLevel || "")) ?? firstQualificationDigit(String(tfCode || ""));
+}
+
+export function formatTfLevel(otfLevel?: string | null, tfCode?: string | null): string | null {
+  const level = parseTfLevel(otfLevel, tfCode);
   return level != null ? String(level) : null;
 }
 

@@ -85,7 +85,7 @@ export function IntegrationPage() {
   return (
     <div>
       <div className="bg-gradient-to-br from-[#1E3A8A] via-[#1E40AF] to-[#3B82F6] text-white">
-        <div className="max-w-[1440px] mx-auto px-8 py-16">
+        <div className="site-wrap py-16">
           <Link
             to="/"
             className="inline-flex items-center gap-2 text-blue-100 hover:text-white mb-6"

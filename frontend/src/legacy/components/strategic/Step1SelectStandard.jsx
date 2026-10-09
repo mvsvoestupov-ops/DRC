@@ -48,7 +48,7 @@ const Step1SelectStandard = ({ data, updateData, goToNext, skipRequired = false 
       <Form.Item
         label="Название компетенции"
         required
-        style={{ maxWidth: 600 }}
+        style={{ maxWidth: '100%' }}
         tooltip="Введите название, которое будет отображаться в паспорте компетенции"
       >
         <Input
