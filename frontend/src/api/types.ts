@@ -185,6 +185,12 @@ export interface Competence {
   ed_technologies?: string[];
   resources?: string[];
   international_mapping?: Record<string, any>;
+  td_zu_mapping?: {
+    confirmed?: boolean;
+    confirmedTfKey?: string;
+    cards?: Array<Record<string, any>>;
+  };
+  wizard_step?: number | null;
   created_at?: string;
   updated_at?: string;
   is_active?: number;
@@ -262,6 +268,12 @@ export interface CreateCompetencePayload {
   resources?: string[];
   expertise?: Record<string, { value?: string; comment?: string }>;
   international_mapping?: Record<string, any>;
+  td_zu_mapping?: {
+    confirmed?: boolean;
+    confirmedTfKey?: string;
+    cards?: Array<Record<string, any>>;
+  };
+  wizard_step?: number | null;
 }
 
 export interface EnrichedStandard extends Standard {

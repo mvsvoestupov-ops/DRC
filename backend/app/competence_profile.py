@@ -104,7 +104,7 @@ def validate_competence_payload(
     kind = competence_kind if competence_kind in COMPETENCE_KINDS else "professional"
     ql_code = normalize_qualification_level_code(qualification_level)
 
-    if kind == "professional":
+    if kind == "professional" and strict:
         if ql_code is None or ql_code < 1 or ql_code > 9:
             errors.append("Укажите уровень квалификации по приказу №148н (1–9)")
         if not labor_functions:

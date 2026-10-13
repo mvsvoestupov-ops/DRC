@@ -12,6 +12,8 @@ export interface LaborFunctionDetail {
   otf_name?: string;
   otf_level?: string | null;
   labor_actions?: LaborActionDetail[];
+  knowledges?: string[];
+  skills?: string[];
   standard_id?: number;
   standard_reg_number?: string;
   standard_name?: string;

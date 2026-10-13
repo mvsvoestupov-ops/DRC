@@ -11,7 +11,7 @@ set "SSH_KEY=%USERPROFILE%\.ssh\id_ed25519_drc"
 set "REMOTE_DIR=/opt/drc"
 set "BRANCH=main"
 set "VITE_API_URL=https://drc.ao-nk.online/api"
-set "COMMIT_MSG=DRC: ОКСО из XML/HTML в списке ПС, деплой без OOM-разбора HTML"
+set "COMMIT_MSG=DRC: З/У с уровня ТФ если enriched пустой; прокси /api; автосохранение черновика по шагам"
 REM ==================================================
 
 REM Запуск из cmd:
@@ -36,6 +36,9 @@ echo   1. git commit текущих правок
 echo   2. git push origin %BRANCH%
 echo   3. ssh: pull, pip без torch/CUDA, ремонт ТФ/ОТФ в существующей БД,
 echo      seed 0019/0020, сборка фронта с VITE_API_URL, nginx
+echo.
+echo В этом коммите: З/У для ТФ без enriched-привязок, Vite /api-прокси,
+echo автосохранение черновика при переходе на шаг, «Мои проекты».
 echo.
 echo Файл базы на сервере не подменяется.
 echo Чаты, пароли, .env, venv, profstandart.db и frontend_old_backup в коммит не попадут.

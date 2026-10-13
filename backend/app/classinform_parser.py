@@ -102,6 +102,15 @@ _KEEP_FIRST_LABELS = {
     "Уровень квалификации",
     "Уровень (подуровень) квалификации",
 }
+_LIST_LABELS = frozenset(
+    {
+        "Трудовые действия",
+        "Необходимые умения",
+        "Необходимы умения",
+        "Необходимые знания",
+        "Возможные наименования должностей, профессий рабочих",
+    }
+)
 _CODE_COLUMN_CONTEXT = {
     "Наименование документа",
     "Справочная информация",
@@ -134,7 +143,12 @@ def _parse_label_blocks(lines: List[str]) -> Dict[str, List[str]]:
                 current = None
                 continue
             current = line
-            blocks[current] = []
+            # Повтор заголовка «Необходимые знания» в следующей строке таблицы
+            # не должен обнулять уже собранный список — иначе З/У пропадают.
+            if line in _LIST_LABELS:
+                blocks.setdefault(current, [])
+            else:
+                blocks[current] = []
             continue
         if current:
             blocks[current].append(line)
@@ -809,25 +823,41 @@ def get_ps_url(ps_code: str, index: dict | None = None) -> str | None:
     return entry["url"] if entry else None
 
 
+def tf_zu_from_html(html: str) -> dict[str, dict[str, list[str]]]:
+    """Знания и умения по коду ТФ (A/01.6) из HTML classinform."""
+    if not (html or "").strip():
+        return {}
+    try:
+        gfs = parse_classinform_html(html).generalized_functions
+    except Exception:
+        try:
+            gfs = _parse_section_iii(_page_lines(html))
+        except Exception:
+            return {}
+    result: dict[str, dict[str, list[str]]] = {}
+    for gf in gfs:
+        for pf in gf.particular_functions:
+            payload = {
+                "skills": list(pf.required_skills or []),
+                "knowledges": list(pf.necessary_knowledges or []),
+            }
+            code = compact_tf_code(pf.code)
+            if code:
+                result[code] = payload
+            if pf.name:
+                result[pf.name] = payload
+    return result
+
+
 def get_tf_data_from_classinform(ps_code: str, index: dict | None = None) -> dict[str, dict]:
-    """Умения и знания по названию ТФ со страницы classinform.ru."""
+    """Умения и знания по названию и коду ТФ со страницы classinform.ru."""
     url = get_ps_url(ps_code, index)
     if not url:
         print(f"  classinform: нет URL для {ps_code}")
         return {}
     print(f"  classinform ТФ: {url}")
     html = fetch_url(url)
-    standard = parse_classinform_html(html)
-    result: dict[str, dict] = {}
-    for gf in standard.generalized_functions:
-        for pf in gf.particular_functions:
-            if not pf.name:
-                continue
-            result[pf.name] = {
-                "skills": list(pf.required_skills or []),
-                "knowledges": list(pf.necessary_knowledges or []),
-            }
-    return result
+    return tf_zu_from_html(html)
 
 
 def load_ps_from_classinform(

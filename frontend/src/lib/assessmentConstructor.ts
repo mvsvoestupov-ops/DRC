@@ -1,3 +1,4 @@
+import { apiBaseUrl } from "@/api/baseUrl";
 import type { FormationLevel } from "@/api/types";
 import {
   DESCRIPTOR_CATEGORIES,
@@ -284,7 +285,7 @@ export function assessmentMediaUrl(url: string): string {
   const value = asString(url);
   if (!value) return "";
   if (/^(https?:|blob:|data:)/i.test(value)) return value;
-  const base = String(import.meta.env.VITE_API_URL || "http://localhost:10000").replace(/\/$/, "");
+  const base = apiBaseUrl();
   return `${base}${value.startsWith("/") ? value : `/${value}`}`;
 }
 

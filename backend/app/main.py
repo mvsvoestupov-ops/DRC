@@ -21,6 +21,7 @@ from .parser import (
     normalize_okpdtr_code,
     extract_okpdtr_codes_from_text,
     okpdtr_matches,
+    tf_zu_from_xml,
 )
 from .db import SessionLocal, Base, engine
 from .db.raw_models import StandardRaw, GeneralizedFunctionRaw, ParticularFunctionRaw
@@ -289,19 +290,21 @@ def warm_level_matrix_cache() -> None:
 class CompetenceCreate(BaseModel):
     name: str
     qualification_name: str
-    qualification_level: str
+    qualification_level: Optional[str] = ""
     prof_standard_id: Optional[int] = None
     qualification_id: Optional[int] = None
     competence_kind: Optional[str] = "professional"
-    labor_functions: List[Dict[str, Any]]
-    structure: Dict[str, List[str]]
+    labor_functions: Optional[List[Dict[str, Any]]] = None
+    structure: Optional[Dict[str, List[str]]] = None
     descriptors: Optional[Dict] = {}
     discipline_mapping: Optional[List[Dict]] = []
     ed_technologies: Optional[List[str]] = []
-    assessment_tools: List[Dict]
+    assessment_tools: Optional[List[Dict]] = None
     resources: Optional[List[str]] = []
     expertise: Optional[Dict[str, Any]] = None
     international_mapping: Optional[Dict[str, Any]] = None
+    td_zu_mapping: Optional[Dict[str, Any]] = None
+    wizard_step: Optional[int] = None
     developer: str
     validator: Optional[str] = None
     status: Optional[str] = "проект"
@@ -338,6 +341,8 @@ class CompetenceUpdate(BaseModel):
     validation_notes: Optional[str] = None
     expertise: Optional[Dict[str, Any]] = None
     international_mapping: Optional[Dict[str, Any]] = None
+    td_zu_mapping: Optional[Dict[str, Any]] = None
+    wizard_step: Optional[int] = None
     status: Optional[str] = None
     description: Optional[str] = None
     industry: Optional[str] = None
@@ -1137,12 +1142,48 @@ async def get_labor_functions(standard_id: int, current_user: User = Depends(get
         except Exception:
             pass
 
+        source_zu_map: dict[str, dict[str, list[str]]] | None = None
+
+        def source_zu_for_tf(code: str) -> tuple[list[str], list[str]]:
+            nonlocal source_zu_map
+            if source_zu_map is None:
+                source_zu_map = {}
+                source_html = getattr(std, "source_html", None) or ""
+                if source_html.strip():
+                    try:
+                        from .classinform_parser import tf_zu_from_html
+                        source_zu_map.update(tf_zu_from_html(source_html))
+                    except Exception:
+                        pass
+                source_xml = getattr(std, "source_xml", None) or ""
+                if source_xml.strip():
+                    try:
+                        for key, payload in tf_zu_from_xml(source_xml).items():
+                            existing = source_zu_map.get(key) or {}
+                            if not (existing.get("knowledges") or existing.get("skills")):
+                                source_zu_map[key] = payload
+                    except Exception:
+                        pass
+            found = source_zu_map.get(code) or {}
+            return list(found.get("knowledges") or []), list(found.get("skills") or [])
+
         result = []
         for gf in std.generalized_functions:
             for pf in gf.particular_functions:
                 tf_code = compact_tf_code(pf.code)
+                pf_knowledges = [k.text for k in (pf.knowledges or []) if k.text]
+                pf_skills = [s.text for s in (pf.skills or []) if s.text]
+                if not pf_knowledges or not pf_skills:
+                    src_k, src_s = source_zu_for_tf(tf_code)
+                    if not pf_knowledges:
+                        pf_knowledges = src_k
+                    if not pf_skills:
+                        pf_skills = src_s
+
                 labor_actions_detail: list[dict[str, Any]] = []
                 enriched_pf = enriched_pf_map.get(pf.code) or enriched_pf_map.get(tf_code)
+                # Enriched ТД без З/У нельзя брать как единственный источник:
+                # enrichment часто создаёт пустые действия и перекрывает списки ТФ.
                 if enriched_pf and enriched_pf.labor_actions:
                     for la in enriched_pf.labor_actions:
                         labor_actions_detail.append({
@@ -1150,9 +1191,7 @@ async def get_labor_functions(standard_id: int, current_user: User = Depends(get
                             "knowledges": [k.text for k in (la.knowledges or []) if k.text],
                             "skills": [s.text for s in (la.skills or []) if s.text],
                         })
-                else:
-                    pf_knowledges = [k.text for k in (pf.knowledges or []) if k.text]
-                    pf_skills = [s.text for s in (pf.skills or []) if s.text]
+                if not labor_actions_detail:
                     if pf.labor_actions:
                         for la in pf.labor_actions:
                             labor_actions_detail.append({
@@ -1166,6 +1205,12 @@ async def get_labor_functions(standard_id: int, current_user: User = Depends(get
                             "knowledges": pf_knowledges,
                             "skills": pf_skills,
                         })
+                elif (pf_knowledges or pf_skills) and not any(
+                    item["knowledges"] or item["skills"] for item in labor_actions_detail
+                ):
+                    for item in labor_actions_detail:
+                        item["knowledges"] = pf_knowledges
+                        item["skills"] = pf_skills
 
                 result.append({
                     "id": pf.id,
@@ -1181,6 +1226,8 @@ async def get_labor_functions(standard_id: int, current_user: User = Depends(get
                     "standard_name": std.name,
                     "okz_codes": getattr(gf, "okz_codes", None) or [],
                     "labor_actions": labor_actions_detail,
+                    "knowledges": pf_knowledges,
+                    "skills": pf_skills,
                 })
         return result
     finally:
@@ -3077,6 +3124,8 @@ def serialize_competence(
         "expertise": raw.get("expertise") or {},
         "international_mapping": raw.get("international_mapping") or {},
         "user_id": comp.user_id,
+        "td_zu_mapping": raw.get("td_zu_mapping") or {},
+        "wizard_step": raw.get("wizard_step") or None,
         "reviewers": reviewers if reviewers is not None else [],
         "collaborators": collaborators if collaborators is not None else [],
         "collaboration_role": collaboration_role,
@@ -3311,10 +3360,12 @@ async def create_competence(data: CompetenceCreate, current_user: User = Depends
         if validation_errors:
             raise HTTPException(400, detail="; ".join(validation_errors))
 
-        if competence_kind == "professional":
+        if competence_kind == "professional" and data.prof_standard_id:
             std = session.query(StandardRaw).filter(StandardRaw.id == data.prof_standard_id).first()
             if not std:
                 raise HTTPException(404, "Профессиональный стандарт не найден")
+        elif competence_kind == "professional" and status != CompetenceStatus.DRAFT:
+            raise HTTPException(400, "Укажите профессиональный стандарт")
         if data.qualification_id:
             qual = session.query(Qualification).filter(Qualification.id == data.qualification_id).first()
             if not qual:
@@ -3342,18 +3393,22 @@ async def create_competence(data: CompetenceCreate, current_user: User = Depends
             raw_data["expertise"] = data.expertise
         if data.international_mapping:
             raw_data["international_mapping"] = data.international_mapping
+        if data.td_zu_mapping:
+            raw_data["td_zu_mapping"] = data.td_zu_mapping
+        if data.wizard_step:
+            raw_data["wizard_step"] = data.wizard_step
         new_comp = Competence(
             name=data.name,
             qualification_name=data.qualification_name,
-            qualification_level=data.qualification_level,
+            qualification_level=data.qualification_level or "",
             prof_standard_id=data.prof_standard_id,
             qualification_id=data.qualification_id,
-            labor_functions=data.labor_functions,
-            structure=data.structure,
+            labor_functions=data.labor_functions or [],
+            structure=data.structure or {},
             descriptors=normalize_descriptors(data.descriptors or {}),
             discipline_mapping=data.discipline_mapping or [],
             ed_technologies=data.ed_technologies or [],
-            assessment_tools=data.assessment_tools,
+            assessment_tools=data.assessment_tools or [],
             resources=data.resources or [],
             developer=data.developer,
             validator=data.validator,
@@ -3762,6 +3817,8 @@ async def update_competence(comp_id: int, data: CompetenceUpdate, current_user: 
             "competence_kind",
             "expertise",
             "international_mapping",
+            "td_zu_mapping",
+            "wizard_step",
         ):
             if key in update_data:
                 raw_fields[key] = update_data.pop(key)
@@ -3815,6 +3872,20 @@ async def update_competence(comp_id: int, data: CompetenceUpdate, current_user: 
         if "international_mapping" in raw_fields:
             raw = dict(comp.raw_data or {})
             raw["international_mapping"] = raw_fields["international_mapping"] or {}
+            comp.raw_data = raw
+            flag_modified(comp, "raw_data")
+        if "td_zu_mapping" in raw_fields:
+            raw = dict(comp.raw_data or {})
+            raw["td_zu_mapping"] = raw_fields["td_zu_mapping"] or {}
+            comp.raw_data = raw
+            flag_modified(comp, "raw_data")
+        if "wizard_step" in raw_fields:
+            raw = dict(comp.raw_data or {})
+            step = raw_fields["wizard_step"]
+            if step:
+                raw["wizard_step"] = int(step)
+            else:
+                raw.pop("wizard_step", None)
             comp.raw_data = raw
             flag_modified(comp, "raw_data")
 

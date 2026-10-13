@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Link, useNavigate, useParams } from "react-router";
-import { ArrowLeft, ArrowRight, Award, ChevronDown, ChevronRight, FileDown, Loader2, Plus, Save, Send, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Award, FileDown, Loader2, Plus, Save, Send, X } from "lucide-react";
 import { DESCRIPTOR_CATEGORIES, FORMATION_LEVELS } from "@/lib/competenceMappers";
 import { PROFESSIONAL_AREAS, areaDisplayCode, findProfessionalArea, formatProfessionalAreaLabel } from "@/lib/professionalAreas";
 import {
@@ -11,6 +11,15 @@ import {
   type LaborFunctionDetail,
   type StructureABC,
 } from "@/lib/structureFromLaborFunctions";
+import {
+  buildStructureFromTdZu,
+  confirmTdZuState,
+  emptyTdZuState,
+  incompleteTdZuCards,
+  parseTdZuState,
+  type TdZuState,
+} from "@/lib/tdZuDistribution";
+import { WorkFunctionsSelectTree } from "@/app/components/WorkFunctionsSelectTree";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { apiClient } from "@/api/client";
@@ -121,33 +130,6 @@ const PROFESSIONAL_EDUCATION_LEVELS = [
   "высшее образование - подготовка кадров высшей квалификации",
 ] as const;
 
-function tfDetails(lf: LaborFunctionDetail) {
-  const tds: string[] = [];
-  const knowledges: string[] = [];
-  const skills: string[] = [];
-  const seenK = new Set<string>();
-  const seenS = new Set<string>();
-  for (const action of lf.labor_actions || []) {
-    const td = (action.text || "").trim();
-    if (td) tds.push(td);
-    for (const raw of action.knowledges || []) {
-      const text = raw.trim();
-      const key = text.toLowerCase();
-      if (!text || seenK.has(key)) continue;
-      seenK.add(key);
-      knowledges.push(text);
-    }
-    for (const raw of action.skills || []) {
-      const text = raw.trim();
-      const key = text.toLowerCase();
-      if (!text || seenS.has(key)) continue;
-      seenS.add(key);
-      skills.push(text);
-    }
-  }
-  return { tds, knowledges, skills };
-}
-
 function PreviewField({ label, value }: { label: string; value?: string | null }) {
   return (
     <div>
@@ -173,10 +155,10 @@ export function NewCompetencyPage() {
   const [laborFunctionsLoading, setLaborFunctionsLoading] = useState(false);
   const [recommendedStandards, setRecommendedStandards] = useState<ProfStandardSearchItem[]>([]);
   const [recommendedLoading, setRecommendedLoading] = useState(false);
-  const [expandedStandardIds, setExpandedStandardIds] = useState<number[]>([]);
   const [expandedTfIds, setExpandedTfIds] = useState<number[]>([]);
   const [qualificationLevels, setQualificationLevels] = useState<QualificationLevelRef[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [autoSaving, setAutoSaving] = useState(false);
   const [applyingMatrix, setApplyingMatrix] = useState(false);
   const [downloadingDocx, setDownloadingDocx] = useState(false);
   const [error, setError] = useState("");
@@ -210,6 +192,7 @@ export function NewCompetencyPage() {
     resources: [] as string[],
     expertise: {} as ExpertiseChecklist,
     internationalMapping: emptyInternationalMapping() as InternationalMapping,
+    tdZu: emptyTdZuState() as TdZuState,
   });
 
   const steps = [
@@ -320,6 +303,7 @@ export function NewCompetencyPage() {
   }, [formData.qualificationLevel, formData.competenceKind, formData.structure, t]);
 
   const toggleLaborFunction = (id: number) => {
+    if (formData.tdZu.confirmed) return;
     const target = laborFunctions.find((lf) => lf.id === id);
     const level = parseTfLevel(target?.otf_level, target?.code);
     const alreadySelected = formData.selectedLaborFunctionIds.includes(id);
@@ -336,8 +320,29 @@ export function NewCompetencyPage() {
         ...prev,
         selectedLaborFunctionIds: ids,
         qualificationLevel: otfLevel != null ? String(otfLevel) : prev.qualificationLevel,
+        tdZu: emptyTdZuState(),
       };
     });
+  };
+
+  const confirmTfSelection = () => {
+    if (selectedLaborFunctions.length === 0) {
+      setError(t("wizard.needTf"));
+      return;
+    }
+    setError("");
+    setExpandedTfIds(selectedLaborFunctions.map((lf) => lf.id));
+    setFormData((prev) => ({
+      ...prev,
+      tdZu: confirmTdZuState(selectedLaborFunctions, selectedTfKey, prev.tdZu),
+    }));
+  };
+
+  const unlockTfSelection = () => {
+    setFormData((prev) => ({
+      ...prev,
+      tdZu: { ...prev.tdZu, confirmed: false },
+    }));
   };
 
   const updateStructure = (structure: StructureABC) => {
@@ -414,7 +419,12 @@ export function NewCompetencyPage() {
           resources: Array.isArray(comp.resources) ? comp.resources : [],
           expertise: (comp.expertise || {}) as ExpertiseChecklist,
           internationalMapping: normalizeInternationalMapping(comp.international_mapping),
+          tdZu: parseTdZuState(comp.td_zu_mapping),
         }));
+        const savedStep = Number(comp.wizard_step);
+        if (Number.isFinite(savedStep) && savedStep >= 1) {
+          setCurrentStep(Math.min(lastStep, Math.floor(savedStep)));
+        }
         if (comp.fgos_id) {
           setSelectedFgos({
             id: comp.fgos_id,
@@ -444,9 +454,11 @@ export function NewCompetencyPage() {
             }));
             setLaborFunctions(tagged);
             const selectedCodes = new Set(lfList.map((item: { code?: string }) => item.code).filter(Boolean));
+            const selectedIds = tagged.filter((item) => selectedCodes.has(item.code)).map((item) => item.id);
+            setExpandedTfIds(selectedIds);
             setFormData((prev) => ({
               ...prev,
-              selectedLaborFunctionIds: tagged.filter((item) => selectedCodes.has(item.code)).map((item) => item.id),
+              selectedLaborFunctionIds: selectedIds,
             }));
           } catch {
             /* структура уже загружена из паспорта */
@@ -466,9 +478,9 @@ export function NewCompetencyPage() {
 
   const handleAddStandard = (standard: ProfStandardSearchItem | null) => {
     if (!standard) return;
+    if (formData.tdZu.confirmed) return;
     if (selectedStandards.some((item) => item.id === standard.id)) return;
     setSelectedStandards((prev) => [...prev, standard]);
-    setExpandedStandardIds((prev) => (prev.includes(standard.id) ? prev : [...prev, standard.id]));
     setFormData((prev) => ({
       ...prev,
       profStandardId: prev.profStandardId ?? standard.id,
@@ -502,7 +514,6 @@ export function NewCompetencyPage() {
       laborFunctions.filter((lf) => lf.standard_id === standardId).map((lf) => lf.id),
     );
     setSelectedStandards((prev) => prev.filter((item) => item.id !== standardId));
-    setExpandedStandardIds((prev) => prev.filter((id) => id !== standardId));
     setExpandedTfIds((prev) => prev.filter((id) => !removedIds.has(id)));
     setLaborFunctions((prev) => prev.filter((lf) => lf.standard_id !== standardId));
     setFormData((prev) => {
@@ -517,6 +528,7 @@ export function NewCompetencyPage() {
         profStandardId: remaining[0]?.id ?? null,
         selectedLaborFunctionIds: ids,
         qualificationLevel: otfLevel != null ? String(otfLevel) : prev.qualificationLevel,
+        tdZu: emptyTdZuState(),
       };
     });
   };
@@ -589,7 +601,9 @@ export function NewCompetencyPage() {
     const selected = laborFunctions.filter((lf) => formData.selectedLaborFunctionIds.includes(lf.id));
     if (selected.length === 0) return;
     setFormData((prev) => {
-      const structure = buildStructureFromLaborFunctions(selected, prev.structure);
+      const structure = prev.tdZu.confirmed
+        ? buildStructureFromTdZu(prev.tdZu.cards, prev.structure)
+        : buildStructureFromLaborFunctions(selected, prev.structure);
       return {
         ...prev,
         structure,
@@ -597,7 +611,7 @@ export function NewCompetencyPage() {
         assessmentByLevel: syncAssessmentByLevel(structure, prev.assessmentByLevel),
       };
     });
-  }, [selectedTfKey, laborFunctions, formData.competenceKind, formData.selectedLaborFunctionIds, hydrating]);
+  }, [selectedTfKey, laborFunctions, formData.competenceKind, formData.selectedLaborFunctionIds, formData.tdZu.confirmed, formData.tdZu.cards, hydrating]);
 
   const buildAssessmentTools = () =>
     flattenAssessmentTools(formData.assessmentByLevel, formData.structure);
@@ -626,6 +640,8 @@ export function NewCompetencyPage() {
     resources: formData.resources.map((item) => item.trim()).filter(Boolean),
     expertise: formData.expertise,
     international_mapping: formData.internationalMapping,
+    td_zu_mapping: formData.tdZu,
+    wizard_step: currentStep,
     universal_skills: formData.matrixContext?.universal_skills,
     status,
     developer: formData.developer || user?.email || t("wizard.notSpecified"),
@@ -677,6 +693,12 @@ export function NewCompetencyPage() {
         }
         if (formData.competenceKind === "professional" && selectedStandards.length === 0) {
           return t("wizard.needPs");
+        }
+        if (formData.competenceKind === "professional") {
+          if (selectedLaborFunctions.length === 0) return t("wizard.needTf");
+          if (!formData.tdZu.confirmed) return t("wizard.needConfirmTf");
+          const incomplete = incompleteTdZuCards(formData.tdZu.cards);
+          if (incomplete.length > 0) return t("wizard.needTdZu", { n: incomplete.length });
         }
         if (formData.qualificationLevel && tfLevelRange) {
           const n = Number(formData.qualificationLevel);
@@ -740,6 +762,19 @@ export function NewCompetencyPage() {
     return null;
   };
 
+  const persistDraft = async (stepToStore: number) => {
+    const payload = { ...buildPayload("проект"), wizard_step: stepToStore };
+    const id = editId || workingCompetence?.id || null;
+    const saved = id
+      ? await apiClient.updateCompetence(id, payload)
+      : await apiClient.createCompetence(payload);
+    if (saved?.id) setWorkingCompetence(saved);
+    if (!editId && saved?.id) {
+      navigate(`/competency/${saved.id}/edit`, { replace: true });
+    }
+    return saved;
+  };
+
   const handleSubmit = async (status: string) => {
     const validationError = validateForm(status);
     if (validationError) {
@@ -750,13 +785,14 @@ export function NewCompetencyPage() {
     setError("");
     try {
       const payload = buildPayload(status);
-      const saved = isEdit && editId
-        ? await apiClient.updateCompetence(editId, payload)
+      const id = editId || workingCompetence?.id || null;
+      const saved = id
+        ? await apiClient.updateCompetence(id, payload)
         : await apiClient.createCompetence(payload);
       if (saved?.id) setWorkingCompetence(saved);
       if (status === "на экспертизе") {
         navigate(`/competency/${saved.id}`);
-      } else if (!isEdit && saved?.id) {
+      } else if (!editId && saved?.id) {
         navigate(`/competency/${saved.id}/edit`, { replace: true });
       }
     } catch (err: unknown) {
@@ -800,15 +836,49 @@ export function NewCompetencyPage() {
     }
   };
 
-  const goToStep = (target: number) => {
-    if (target === currentStep) return;
+  const goToStep = async (target: number) => {
+    if (target === currentStep || autoSaving || submitting) return;
+    if (target > currentStep) {
+      const validationError = validateStepsUpTo(target);
+      if (validationError) {
+        setError(validationError);
+        return;
+      }
+    }
     setError("");
-    setCurrentStep(target);
+    setAutoSaving(true);
+    try {
+      await persistDraft(target);
+      if (editId || workingCompetence?.id) {
+        setCurrentStep(target);
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : t("wizard.saveError"));
+    } finally {
+      setAutoSaving(false);
+    }
   };
 
-  const goNext = () => {
+  const goNext = async () => {
+    if (autoSaving || submitting) return;
+    const validationError = validateStep(currentStep);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+    const next = Math.min(lastStep, currentStep + 1);
     setError("");
-    setCurrentStep((prev) => Math.min(lastStep, prev + 1));
+    setAutoSaving(true);
+    try {
+      await persistDraft(next);
+      if (editId || workingCompetence?.id) {
+        setCurrentStep(next);
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : t("wizard.saveError"));
+    } finally {
+      setAutoSaving(false);
+    }
   };
 
   const selectedQl = qualificationLevels.find(
@@ -894,7 +964,7 @@ export function NewCompetencyPage() {
           <div key={step.number} className="flex items-center min-w-0">
             <button
               type="button"
-              onClick={() => goToStep(step.number)}
+              onClick={() => void goToStep(step.number)}
               title={step.name}
               className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center font-semibold text-sm transition-colors cursor-pointer ${
                 currentStep === step.number
@@ -908,7 +978,7 @@ export function NewCompetencyPage() {
             </button>
             <button
               type="button"
-              onClick={() => goToStep(step.number)}
+              onClick={() => void goToStep(step.number)}
               className={`ml-2 text-base font-medium text-left cursor-pointer hover:text-gray-900 truncate ${
                 currentStep === step.number ? "text-gray-900" : "text-gray-500"
               }`}
@@ -925,19 +995,24 @@ export function NewCompetencyPage() {
               <div className="flex justify-between mb-6 pb-6 border-b border-gray-200">
                 <Button
                   variant="outline"
-                  onClick={() => goToStep(currentStep - 1)}
-                  disabled={currentStep === 1}
+                  onClick={() => void goToStep(currentStep - 1)}
+                  disabled={currentStep === 1 || autoSaving || submitting}
                   className="gap-2 text-gray-700 border-gray-300 hover:bg-gray-50 disabled:opacity-50"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   {t("common.back")}
                 </Button>
 
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
+                  {autoSaving ? (
+                    <span className="text-sm text-gray-500">{t("wizard.autoSaving")}</span>
+                  ) : workingCompetence?.id ? (
+                    <span className="text-sm text-gray-400 hidden sm:inline">{t("wizard.autoSaved")}</span>
+                  ) : null}
                   <Button
                     variant="outline"
                     className="gap-2 text-gray-700 border-gray-300 hover:bg-gray-50"
-                    disabled={submitting}
+                    disabled={submitting || autoSaving}
                     onClick={() => handleSubmit("проект")}
                   >
                     <Save className="w-4 h-4" />
@@ -957,14 +1032,14 @@ export function NewCompetencyPage() {
                   )}
 
                   {currentStep < lastStep ? (
-                    <Button onClick={goNext} className="gap-2">
+                    <Button onClick={() => void goNext()} className="gap-2" disabled={autoSaving || submitting}>
                       {t("common.next")}
                       <ArrowRight className="w-4 h-4" />
                     </Button>
                   ) : canSubmitToReview ? (
                     <Button
                       className="gap-2 bg-green-600 hover:bg-green-700 text-white"
-                      disabled={submitting}
+                      disabled={submitting || autoSaving}
                       onClick={() => handleSubmit("на экспертизе")}
                     >
                       <Send className="w-4 h-4" />
@@ -1283,6 +1358,7 @@ export function NewCompetencyPage() {
                             </p>
                           </div>
                         )}
+                        {!formData.tdZu.confirmed && (
                         <ProfStandardSearchPicker
                           selectedId={null}
                           selected={null}
@@ -1290,178 +1366,63 @@ export function NewCompetencyPage() {
                           allowMultiple
                           onSelect={handleAddStandard}
                         />
+                        )}
                         {selectedStandards.length > 0 && (
-                          <div className="mt-4 space-y-3">
-                            <p className="text-xs text-gray-500">
-                              {tfLevelRangeHint(tfLevelRange)} {t("wizard.clickPs")} {t("wizard.tfDown")}
-                            </p>
+                          <div className="mt-4 space-y-4">
+                            <p className="text-xs text-gray-500">{tfLevelRangeHint(tfLevelRange)}</p>
                             {selectedStandards.map((item) => {
                               const items = laborFunctions.filter((lf) => lf.standard_id === item.id);
                               const selectedCount = items.filter((lf) =>
                                 formData.selectedLaborFunctionIds.includes(lf.id),
                               ).length;
-                              const expanded = expandedStandardIds.includes(item.id);
                               return (
-                                <div
-                                  key={item.id}
-                                  className="rounded-xl border border-primary/20 bg-primary/5 overflow-hidden"
-                                >
-                                  <div className="flex items-stretch">
-                                    <button
+                                <div key={item.id} className="space-y-2">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <p className="text-sm text-primary">
+                                      {selectedCount > 0 ? t("wizard.selectedTf", { n: selectedCount }) : item.reg_number}
+                                    </p>
+                                    <Button
                                       type="button"
-                                      onClick={() =>
-                                        setExpandedStandardIds((prev) =>
-                                          prev.includes(item.id)
-                                            ? prev.filter((id) => id !== item.id)
-                                            : [...prev, item.id],
-                                        )
-                                      }
-                                      className="flex-1 min-w-0 text-left px-3 py-3 flex items-start gap-2 hover:bg-white/40"
+                                      variant="outline"
+                                      size="sm"
+                                      disabled={formData.tdZu.confirmed}
+                                      onClick={() => handleRemoveStandard(item.id)}
+                                      aria-label={t("wizard.removePs")}
                                     >
-                                      {expanded ? (
-                                        <ChevronDown className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
-                                      ) : (
-                                        <ChevronRight className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
-                                      )}
-                                      <div className="min-w-0">
-                                        <p className="text-xs font-semibold text-primary">
-                                          {item.reg_number}
-                                          {item.ps_code ? ` · ${item.ps_code}` : ""}
-                                          {selectedCount > 0 ? ` · ${t("wizard.selectedTf", { n: selectedCount })}` : ""}
-                                        </p>
-                                        <p className="text-sm text-gray-800 leading-snug">{item.name}</p>
-                                      </div>
-                                    </button>
-                                    <div className="flex items-start p-2">
-                                      <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => handleRemoveStandard(item.id)}
-                                        aria-label={t("wizard.removePs")}
-                                      >
-                                        <X className="w-4 h-4" />
-                                      </Button>
-                                    </div>
+                                      <X className="w-4 h-4" />
+                                    </Button>
                                   </div>
-                                  {expanded && (
-                                    <div className="border-t border-primary/15 bg-white p-3 space-y-2">
-                                      {laborFunctionsLoading && items.length === 0 ? (
-                                        <div className="flex items-center gap-2 text-sm text-gray-500 py-2">
-                                          <Loader2 className="h-4 w-4 animate-spin shrink-0" />
-                                          <span>{t("wizard.loadingTf")}</span>
-                                        </div>
-                                      ) : items.length === 0 ? (
-                                        <p className="text-sm text-gray-500 py-1">{t("wizard.tfNotFound")}</p>
-                                      ) : (
-                                        items.map((lf) => {
-                                          const levelLabel = formatTfLevel(lf.otf_level, lf.code);
-                                          const level = parseTfLevel(lf.otf_level, lf.code);
-                                          const selected = formData.selectedLaborFunctionIds.includes(lf.id);
-                                          const reason = selected
-                                            ? null
-                                            : tfDisabledReason(level, tfLevelRange, lockedTfLevel);
-                                          const disabled = Boolean(reason);
-                                          const tfOpen = expandedTfIds.includes(lf.id);
-                                          const details = tfDetails(lf);
-                                          return (
-                                            <div
-                                              key={lf.id}
-                                              className={`rounded-lg border ${
-                                                disabled ? "border-gray-100 bg-gray-50" : "border-gray-200"
-                                              }`}
-                                            >
-                                              <div className="flex items-start gap-2 px-3 py-2">
-                                                <input
-                                                  type="checkbox"
-                                                  checked={selected}
-                                                  disabled={disabled}
-                                                  onChange={() => toggleLaborFunction(lf.id)}
-                                                  className="mt-1 rounded border-gray-300 text-primary focus:ring-primary disabled:opacity-50"
-                                                />
-                                                <div className="min-w-0 flex-1">
-                                                  <p className={`text-sm ${disabled ? "text-gray-400" : "text-gray-800"}`}>
-                                                    <span className="font-medium">{lf.code}</span>
-                                                    {" — "}
-                                                    {lf.name}
-                                                    {levelLabel ? (
-                                                      <span className="text-gray-500"> {t("wizard.tfLevel", { n: levelLabel })}</span>
-                                                    ) : null}
-                                                  </p>
-                                                  {reason ? (
-                                                    <p className="text-xs text-gray-400 mt-1">{reason}</p>
-                                                  ) : null}
-                                                </div>
-                                                <button
-                                                  type="button"
-                                                  onClick={() =>
-                                                    setExpandedTfIds((prev) =>
-                                                      prev.includes(lf.id)
-                                                        ? prev.filter((id) => id !== lf.id)
-                                                        : [...prev, lf.id],
-                                                    )
-                                                  }
-                                                  className="shrink-0 p-1 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-800"
-                                                  aria-label={tfOpen ? t("wizard.hideTf") : t("wizard.showTf")}
-                                                  title={t("wizard.tdZuTitle")}
-                                                >
-                                                  <ChevronDown
-                                                    className={`w-4 h-4 transition-transform ${tfOpen ? "rotate-180" : ""}`}
-                                                  />
-                                                </button>
-                                              </div>
-                                              {tfOpen && (
-                                                <div className="border-t border-gray-100 px-3 py-3 space-y-3 text-sm">
-                                                  <div>
-                                                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">
-                                                      {t("wizard.laborActions")}
-                                                    </p>
-                                                    {details.tds.length ? (
-                                                      <ul className="list-disc list-inside space-y-1 text-gray-700">
-                                                        {details.tds.map((text, idx) => (
-                                                          <li key={`${lf.id}-td-${idx}`}>{text}</li>
-                                                        ))}
-                                                      </ul>
-                                                    ) : (
-                                                      <p className="text-gray-400">{t("common.noData")}</p>
-                                                    )}
-                                                  </div>
-                                                  <div>
-                                                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">
-                                                      {t("wizard.knowledge")}
-                                                    </p>
-                                                    {details.knowledges.length ? (
-                                                      <ul className="list-disc list-inside space-y-1 text-gray-700">
-                                                        {details.knowledges.map((text, idx) => (
-                                                          <li key={`${lf.id}-z-${idx}`}>{text}</li>
-                                                        ))}
-                                                      </ul>
-                                                    ) : (
-                                                      <p className="text-gray-400">{t("common.noData")}</p>
-                                                    )}
-                                                  </div>
-                                                  <div>
-                                                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">
-                                                      {t("wizard.skills")}
-                                                    </p>
-                                                    {details.skills.length ? (
-                                                      <ul className="list-disc list-inside space-y-1 text-gray-700">
-                                                        {details.skills.map((text, idx) => (
-                                                          <li key={`${lf.id}-u-${idx}`}>{text}</li>
-                                                        ))}
-                                                      </ul>
-                                                    ) : (
-                                                      <p className="text-gray-400">{t("common.noData")}</p>
-                                                    )}
-                                                  </div>
-                                                </div>
-                                              )}
-                                            </div>
-                                          );
-                                        })
-                                      )}
-                                    </div>
-                                  )}
+                                  <div className="overflow-x-auto max-w-full">
+                                  <WorkFunctionsSelectTree
+                                    standard={item}
+                                    laborFunctions={items}
+                                    selectedIds={formData.selectedLaborFunctionIds}
+                                    onToggleTf={toggleLaborFunction}
+                                    disableReason={(lf) =>
+                                      tfDisabledReason(
+                                        parseTfLevel(lf.otf_level, lf.code),
+                                        tfLevelRange,
+                                        lockedTfLevel,
+                                      )
+                                    }
+                                    selectionLocked={formData.tdZu.confirmed}
+                                    expandedIds={expandedTfIds}
+                                    onToggleExpand={(id) =>
+                                      setExpandedTfIds((prev) =>
+                                        prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id],
+                                      )
+                                    }
+                                    confirmed={formData.tdZu.confirmed}
+                                    cards={formData.tdZu.cards}
+                                    onChangeCards={(nextCards) =>
+                                      setFormData((prev) => ({
+                                        ...prev,
+                                        tdZu: { ...prev.tdZu, cards: nextCards },
+                                      }))
+                                    }
+                                    loading={laborFunctionsLoading}
+                                  />
+                                  </div>
                                 </div>
                               );
                             })}
@@ -1470,6 +1431,19 @@ export function NewCompetencyPage() {
                                 {t("wizard.selectedTf", { n: formData.selectedLaborFunctionIds.length })}
                                 {lockedTfLevel != null ? ` · ${t("wizard.levelN", { n: lockedTfLevel })}` : ""}.
                               </p>
+                            )}
+                            {formData.selectedLaborFunctionIds.length > 0 && (
+                              <div className="flex flex-wrap gap-2 pt-1">
+                                {formData.tdZu.confirmed ? (
+                                  <Button type="button" variant="outline" onClick={unlockTfSelection}>
+                                    {t("wizard.changeTfSelection")}
+                                  </Button>
+                                ) : (
+                                  <Button type="button" onClick={confirmTfSelection}>
+                                    {t("wizard.confirmTf")}
+                                  </Button>
+                                )}
+                              </div>
                             )}
                           </div>
                         )}
@@ -2094,6 +2068,7 @@ export function NewCompetencyPage() {
             </div>
           </div>
 
+          {currentStep !== 2 ? (
           <div className="xl:w-72 xl:shrink-0 w-full">
             <div className="surface-padded sticky top-6">
               <h3 className="font-semibold text-gray-900 mb-4">{t("wizard.rulesTitle")}</h3>
@@ -2137,6 +2112,7 @@ export function NewCompetencyPage() {
               </ul>
             </div>
           </div>
+          ) : null}
         </div>
     </PageShell>
   );

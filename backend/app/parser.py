@@ -168,6 +168,33 @@ def _xml_texts(node, *tags: str) -> List[str]:
     return values
 
 
+def tf_zu_from_xml(xml: str) -> Dict[str, Dict[str, List[str]]]:
+    """Знания и умения по коду ТФ из сохранённого XML Минтруда."""
+    if not (xml or "").strip():
+        return {}
+    try:
+        root = etree.fromstring(xml.encode("utf-8") if isinstance(xml, str) else xml)
+    except Exception:
+        try:
+            root = etree.fromstring(xml)
+        except Exception:
+            return {}
+    from .tf_codes import compact_tf_code
+    result: Dict[str, Dict[str, List[str]]] = {}
+    for p_node in root.findall(".//ParticularWorkFunction"):
+        payload = {
+            "skills": _xml_texts(p_node, "RequiredSkill", "NecessarySkill"),
+            "knowledges": _xml_texts(p_node, "NecessaryKnowledge", "RequiredKnowledge"),
+        }
+        code = compact_tf_code((p_node.findtext("CodeTF") or "").strip())
+        if code:
+            result[code] = payload
+        name = (p_node.findtext("NameTF") or "").strip()
+        if name:
+            result[name] = payload
+    return result
+
+
 def _parse_classifier_units(parent, list_tag: str, unit_tag: str, code_tag: str, name_tag: str):
     units = []
     codes = []

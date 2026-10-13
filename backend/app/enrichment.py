@@ -8,6 +8,7 @@ from .db.enriched_models import (
     EnrichedLaborAction, EnrichedSkill, EnrichedKnowledge
 )
 from .parser import parse_tf_page, get_tf_links_from_standard_page, normalize_okso_code, find_element_id_by_reg_number
+from .tf_codes import compact_tf_code
 import requests
 from bs4 import BeautifulSoup
 
@@ -117,21 +118,32 @@ def enrich_standard(reg_number: str, session: Session):
                 f"{len(tf_data.get('knowledges', []))} знаний"
             )
 
-    # 5. Обновляем raw: добавляем умения и знания (без изменений)
+    def zu_for_pf(pf_raw) -> tuple[list[str], list[str]]:
+        tf_name = pf_raw.name or ""
+        tf_code = compact_tf_code(pf_raw.code)
+        data = tf_data_map.get(tf_name) or tf_data_map.get(tf_code) or {}
+        skills = list(data.get("skills") or [])
+        knowledges = list(data.get("knowledges") or [])
+        existing_skills = [s.text for s in (pf_raw.skills or []) if s.text]
+        existing_knowledges = [k.text for k in (pf_raw.knowledges or []) if k.text]
+        if not skills:
+            skills = existing_skills
+        if not knowledges:
+            knowledges = existing_knowledges
+        return skills, knowledges
+
+    # 5. Обновляем raw: умения и знания. Пустой ответ источника не затирает уже разобранные списки.
     for gf_raw in raw_std.generalized_functions:
         for pf_raw in gf_raw.particular_functions:
-            tf_name = pf_raw.name
-            skills = tf_data_map.get(tf_name, {}).get('skills', [])
-            knowledges = tf_data_map.get(tf_name, {}).get('knowledges', [])
-            
+            skills, knowledges = zu_for_pf(pf_raw)
+            if not skills and not knowledges:
+                continue
             session.query(SkillRaw).filter(SkillRaw.particular_id == pf_raw.id).delete()
             session.query(KnowledgeRaw).filter(KnowledgeRaw.particular_id == pf_raw.id).delete()
             for skill_text in skills:
-                skill = SkillRaw(particular_id=pf_raw.id, text=skill_text)
-                session.add(skill)
+                session.add(SkillRaw(particular_id=pf_raw.id, text=skill_text))
             for know_text in knowledges:
-                know = KnowledgeRaw(particular_id=pf_raw.id, text=know_text)
-                session.add(know)
+                session.add(KnowledgeRaw(particular_id=pf_raw.id, text=know_text))
     session.commit()
     print("  Raw-данные обновлены (умения и знания добавлены на уровень ТФ)")
 
@@ -184,9 +196,7 @@ def enrich_standard(reg_number: str, session: Session):
             session.flush()
 
             labor_actions = [la.text for la in pf_raw.labor_actions]
-            tf_name = pf_raw.name
-            skills = tf_data_map.get(tf_name, {}).get('skills', [])
-            knowledges = tf_data_map.get(tf_name, {}).get('knowledges', [])
+            skills, knowledges = zu_for_pf(pf_raw)
             print(f"    ТФ {pf_raw.code}: labor_actions={len(labor_actions)}, skills={len(skills)}, knowledges={len(knowledges)}")
 
             if not labor_actions or (not skills and not knowledges):
