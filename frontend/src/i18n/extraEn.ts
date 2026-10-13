@@ -154,11 +154,11 @@ export const extraEn: ExtraMessages = {
     memberHelp:
       "You are a member of the working group. You may jointly edit the draft; only the leader can submit it for expert review.",
     leaderHelp:
-      "You are the leader of this development. Enter the email of a registered user to invite them to the group. After they accept, they will be able to edit the draft with you.",
+      "You are the leader of this development. Search for a registered user by full name and invite them to the group. After they accept, they will be able to edit the draft with you.",
     pending: "awaiting response",
     accepted: "in the group",
     declined: "declined",
-    emailRequired: "Enter the email of a registered user",
+    userRequired: "Select a user from the list",
     saveDraftFirst: "Save the competency draft first",
     invited: "Invitation sent",
     inviteError: "Could not send the invitation",
@@ -170,8 +170,13 @@ export const extraEn: ExtraMessages = {
     leave: "Leave",
     remove: "Remove",
     onlyLeader: "So far only the leader has been invited.",
-    emailPlaceholder: "member email",
+    fioPlaceholder: "Last name, first name or patronymic",
+    searchHint: "Start typing a name — at least 2 characters",
+    searching: "Searching…",
+    noResults: "No user with this name was found",
+    alreadyMember: "already in the group",
     invite: "Invite",
+    openButton: "Working group members",
   },
   detail: {
     notFound: "Competency not found",
@@ -318,6 +323,7 @@ export const extraEn: ExtraMessages = {
     backHome: "Back to home",
     titleNew: "Propose a new competency",
     titleEdit: "Collaborative competency development",
+    nameBar: "Competency",
     memberNotice:
       "You are a member of the working group. You may edit and save the draft; only the group leader can submit the competency for expert review.",
     newName: "New competency",
@@ -664,7 +670,7 @@ export const extraEn: ExtraMessages = {
     groupLead:
       "Whoever created the competency becomes the leader of the working group. They may invite other registered users to refine the draft together.",
     g1: "Open the competency card or the builder. The “Working group” block shows the leader and current members.",
-    g2: "The leader enters the email of an already registered user and clicks “Invite”. The invitee receives a message, and the invitation appears in “My projects”.",
+    g2: "The leader searches for an already registered user by full name and clicks “Invite”. The invitation appears in “My projects”.",
     g3: "After accepting the invitation the member sees the competency in their projects, can open it and continue developing the draft.",
     g4: "Only the leader can submit for expert review and delete the competency. A member saves the draft or leaves the group.",
     reviewLead:
@@ -820,6 +826,8 @@ export const extraEn: ExtraMessages = {
     cancel: "Cancel",
     text: "Text",
     textPlaceholder: "Enter a description...",
+    tdNo: "LA {n}",
+    bindToTd: "Link to a labour action",
   },
   discipline: {
     credit: "pass/fail",

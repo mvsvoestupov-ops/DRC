@@ -154,11 +154,11 @@ export const extraZh: ExtraMessages = {
     memberHelp:
       "您是工作组成员。可以共同编辑草稿；只有负责人可以提交评审。",
     leaderHelp:
-      "您是本项开发的负责人。请填写已注册用户的邮箱以邀请其加入工作组。对方同意后即可与您一起编辑草稿。",
+      "您是本项开发的负责人。请按姓名搜索已注册用户并邀请其加入工作组。对方同意后即可与您一起编辑草稿。",
     pending: "待回复",
     accepted: "已在组内",
     declined: "已拒绝",
-    emailRequired: "请填写已注册用户的邮箱",
+    userRequired: "请从列表中选择用户",
     saveDraftFirst: "请先保存能力草稿",
     invited: "邀请已发送",
     inviteError: "邀请发送失败",
@@ -170,8 +170,13 @@ export const extraZh: ExtraMessages = {
     leave: "退出",
     remove: "移除",
     onlyLeader: "目前仅邀请了负责人。",
-    emailPlaceholder: "成员邮箱",
+    fioPlaceholder: "姓、名或父称",
+    searchHint: "开始输入姓名 — 至少 2 个字符",
+    searching: "搜索中…",
+    noResults: "未找到该姓名的用户",
+    alreadyMember: "已在组内",
     invite: "邀请",
+    openButton: "工作组人员",
   },
   detail: {
     notFound: "未找到该能力",
@@ -318,6 +323,7 @@ export const extraZh: ExtraMessages = {
     backHome: "返回首页",
     titleNew: "提交新能力",
     titleEdit: "能力协同开发",
+    nameBar: "能力",
     memberNotice:
       "您是工作组成员。可以编辑并保存草稿；只有工作组负责人可以提交能力进行评审。",
     newName: "新能力",
@@ -663,7 +669,7 @@ export const extraZh: ExtraMessages = {
     groupLead:
       "创建能力的人成为工作组负责人。负责人可以邀请其他已注册用户共同完善草稿。",
     g1: "打开能力卡片或构造器。“工作组”区块显示负责人和当前成员。",
-    g2: "负责人输入已注册用户的邮箱并点击“邀请”。受邀者会收到邮件，邀请也会出现在“我的项目”中。",
+    g2: "负责人按姓名搜索已注册用户并点击“邀请”。邀请会出现在“我的项目”中。",
     g3: "接受邀请后，成员可在自己的项目中看到该能力，并打开它继续开发草稿。",
     g4: "只有负责人可以提交评审和删除能力。成员可以保存草稿或退出工作组。",
     reviewLead:
@@ -819,6 +825,8 @@ export const extraZh: ExtraMessages = {
     cancel: "取消",
     text: "文本",
     textPlaceholder: "请输入描述...",
+    tdNo: "劳动行动 {n}",
+    bindToTd: "关联到劳动行动",
   },
   discipline: {
     credit: "考查",

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { ArrowLeft, ArrowRight, Award, FileDown, Loader2, Plus, Save, Send, X } from "lucide-react";
 import { DESCRIPTOR_CATEGORIES, FORMATION_LEVELS } from "@/lib/competenceMappers";
@@ -34,9 +34,9 @@ import {
   DESCRIPTOR_I18N_KEYS,
   FORMATION_I18N_KEYS,
 } from "@/i18n/helpers";
-import { WorkingGroupPanel } from "@/app/components/WorkingGroupPanel";
-import { PageHeader } from "@/app/components/PageHeader";
+import { WorkingGroupDialog } from "@/app/components/WorkingGroupPanel";
 import { PageShell } from "@/app/components/PageShell";
+import { cn } from "@/lib/utils";
 import { StructureABCEditor } from "@/app/components/StructureABCEditor";
 import {
   ProfStandardSearchPicker,
@@ -165,6 +165,8 @@ export function NewCompetencyPage() {
   const [canSubmitToReview, setCanSubmitToReview] = useState(true);
   const [hydrating, setHydrating] = useState(Boolean(editId));
   const [workingCompetence, setWorkingCompetence] = useState<Competence | null>(null);
+  const [nameBarStuck, setNameBarStuck] = useState(false);
+  const nameBarSentinelRef = useRef<HTMLDivElement>(null);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -884,6 +886,18 @@ export function NewCompetencyPage() {
   const selectedQl = qualificationLevels.find(
     (item) => String(item.qualification_level) === formData.qualificationLevel,
   );
+  const competenceName = formData.title.trim() || t("wizard.newName");
+
+  useEffect(() => {
+    const sentinel = nameBarSentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setNameBarStuck(!entry.isIntersecting),
+      { threshold: 0 },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hydrating, isAuthenticated]);
 
   if (!isAuthenticated) {
     return (
@@ -906,7 +920,7 @@ export function NewCompetencyPage() {
   }
 
   return (
-    <PageShell>
+    <PageShell className="[--competence-sticky-h:4.25rem]">
       <Link
         to="/"
         className="inline-flex items-center gap-2 text-base text-gray-600 hover:text-gray-900 mb-4"
@@ -915,7 +929,57 @@ export function NewCompetencyPage() {
         {t("wizard.backHome")}
       </Link>
 
-      <PageHeader title={isEdit ? t("wizard.titleEdit") : t("wizard.titleNew")} />
+      <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+        <h1 className="page-title">{isEdit ? t("wizard.titleEdit") : t("wizard.titleNew")}</h1>
+        <WorkingGroupDialog
+          competence={
+            workingCompetence || {
+              id: 0,
+              name: formData.title.trim() || t("wizard.newName"),
+              status: "проект",
+              can_invite: canSubmitToReview,
+              can_edit: true,
+              collaboration_role: canSubmitToReview ? "leader" : "member",
+              collaborators: [
+                {
+                  role: "leader",
+                  status: "accepted",
+                  user_id: user?.id,
+                  user: user,
+                },
+              ],
+            }
+          }
+          onUpdated={(next) => {
+            setWorkingCompetence(next);
+            if (!isEdit && next.id) {
+              navigate(`/competency/${next.id}/edit`, { replace: true });
+            }
+          }}
+          ensureCompetence={async () => {
+            if (workingCompetence?.id) return workingCompetence;
+            const validationError = validateForm("проект");
+            if (validationError) throw new Error(validationError);
+            const saved = await apiClient.createCompetence(buildPayload("проект"));
+            setWorkingCompetence(saved);
+            return saved;
+          }}
+        />
+      </div>
+      <div ref={nameBarSentinelRef} aria-hidden className="h-px" />
+      <div
+        className={cn(
+          "sticky top-0 z-40 mb-6 border transition-shadow",
+          nameBarStuck
+            ? "-mx-[1cm] rounded-none border-x-0 border-t-0 border-b-primary/20 bg-white/95 px-[1cm] py-2.5 shadow-md backdrop-blur-sm"
+            : "rounded-xl border-primary/25 bg-primary/5 px-4 py-2.5",
+        )}
+      >
+        <p className="text-xs font-semibold uppercase tracking-wide text-primary/80">
+          {t("wizard.nameBar")}
+        </p>
+        <p className="text-base font-semibold text-gray-900 leading-snug line-clamp-2">{competenceName}</p>
+      </div>
       {error && (
         <p className="mb-6 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-2">{error}</p>
       )}
@@ -924,40 +988,6 @@ export function NewCompetencyPage() {
           {t("wizard.memberNotice")}
         </p>
       ) : null}
-      <WorkingGroupPanel
-        competence={
-          workingCompetence || {
-            id: 0,
-            name: formData.title.trim() || t("wizard.newName"),
-            status: "проект",
-            can_invite: canSubmitToReview,
-            can_edit: true,
-            collaboration_role: canSubmitToReview ? "leader" : "member",
-            collaborators: [
-              {
-                role: "leader",
-                status: "accepted",
-                user_id: user?.id,
-                user: user,
-              },
-            ],
-          }
-        }
-        onUpdated={(next) => {
-          setWorkingCompetence(next);
-          if (!isEdit && next.id) {
-            navigate(`/competency/${next.id}/edit`, { replace: true });
-          }
-        }}
-        ensureCompetence={async () => {
-          if (workingCompetence?.id) return workingCompetence;
-          const validationError = validateForm("проект");
-          if (validationError) throw new Error(validationError);
-          const saved = await apiClient.createCompetence(buildPayload("проект"));
-          setWorkingCompetence(saved);
-          return saved;
-        }}
-      />
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8 w-full">
         {steps.map((step) => (
@@ -2070,7 +2100,7 @@ export function NewCompetencyPage() {
 
           {currentStep !== 2 ? (
           <div className="xl:w-72 xl:shrink-0 w-full">
-            <div className="surface-padded sticky top-6">
+            <div className="surface-padded sticky top-[var(--competence-sticky-h)]">
               <h3 className="font-semibold text-gray-900 mb-4">{t("wizard.rulesTitle")}</h3>
               <ul className="space-y-2 text-sm text-gray-600">
                 <li className="flex gap-2">

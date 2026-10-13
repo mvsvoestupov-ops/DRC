@@ -295,7 +295,7 @@ class CompetenceCreate(BaseModel):
     qualification_id: Optional[int] = None
     competence_kind: Optional[str] = "professional"
     labor_functions: Optional[List[Dict[str, Any]]] = None
-    structure: Optional[Dict[str, List[str]]] = None
+    structure: Optional[Dict[str, Any]] = None
     descriptors: Optional[Dict] = {}
     discipline_mapping: Optional[List[Dict]] = []
     ed_technologies: Optional[List[str]] = []
@@ -360,7 +360,7 @@ class CompetenceUpdate(BaseModel):
 
 class SuggestProfileRequest(BaseModel):
     qualification_level: str
-    structure: Optional[Dict[str, List[str]]] = None
+    structure: Optional[Dict[str, Any]] = None
     competence_kind: Optional[str] = "professional"
 
 class CoverageRequest(BaseModel):
@@ -425,7 +425,8 @@ class ReviewerAssign(BaseModel):
 
 
 class CollaboratorInvite(BaseModel):
-    email: str
+    email: Optional[str] = None
+    user_id: Optional[int] = None
 
 
 USER_ROLES = ("user", "expert", "moderator", "admin")
@@ -555,6 +556,63 @@ async def list_experts(current_user: User = Depends(get_current_moderator)):
     try:
         rows = session.query(User).filter(func.lower(User.role) == "expert").order_by(User.id.asc()).all()
         return [_serialize_user(row) for row in rows if is_user_active(row)]
+    finally:
+        session.close()
+
+
+def _serialize_user_directory(user: User) -> dict:
+    return {
+        "id": user.id,
+        "email": user.email,
+        "last_name": getattr(user, "last_name", None) or "",
+        "first_name": getattr(user, "first_name", None) or "",
+        "middle_name": getattr(user, "middle_name", None) or "",
+        "organization": getattr(user, "organization", None) or "",
+    }
+
+
+def _user_fio_search_text(user: User) -> str:
+    parts = [
+        (getattr(user, "last_name", None) or "").strip(),
+        (getattr(user, "first_name", None) or "").strip(),
+        (getattr(user, "middle_name", None) or "").strip(),
+    ]
+    return " ".join(part for part in parts if part).lower()
+
+
+@app.get("/users/search")
+async def search_users(
+    q: str = Query("", min_length=0),
+    limit: int = Query(20, ge=1, le=50),
+    current_user: User = Depends(get_current_user),
+):
+    tokens = [part for part in (q or "").strip().lower().split() if part]
+    if len(" ".join(tokens)) < 2:
+        return {"total": 0, "items": []}
+    session = SessionLocal()
+    try:
+        rows = session.query(User).filter(User.id != current_user.id).all()
+        matched = []
+        for row in rows:
+            if not is_user_active(row):
+                continue
+            fio = _user_fio_search_text(row)
+            if not fio:
+                continue
+            if all(token in fio for token in tokens):
+                matched.append(row)
+        matched.sort(
+            key=lambda row: (
+                (getattr(row, "last_name", None) or "").lower(),
+                (getattr(row, "first_name", None) or "").lower(),
+                (getattr(row, "middle_name", None) or "").lower(),
+                row.id,
+            )
+        )
+        return {
+            "total": len(matched),
+            "items": [_serialize_user_directory(row) for row in matched[:limit]],
+        }
     finally:
         session.close()
 
@@ -3669,14 +3727,20 @@ async def invite_competence_collaborator(
             raise HTTPException(403, "Приглашать участников может только руководитель рабочей группы")
         if comp.status == CompetenceStatus.APPROVED:
             raise HTTPException(400, "В утверждённую компетенцию нельзя приглашать участников")
-        email = _normalize_email(data.email)
-        if not email or "@" not in email:
-            raise HTTPException(400, "Укажите корректный email")
-        if email == _normalize_email(current_user.email):
+        target = None
+        if data.user_id is not None:
+            target = session.query(User).filter(User.id == data.user_id).first()
+            if not target:
+                raise HTTPException(404, "Пользователь не найден")
+        else:
+            email = _normalize_email(data.email)
+            if not email or "@" not in email:
+                raise HTTPException(400, "Выберите пользователя из списка")
+            target = session.query(User).filter(func.lower(User.email) == email).first()
+            if not target:
+                raise HTTPException(404, "Пользователь не найден")
+        if target.id == current_user.id:
             raise HTTPException(400, "Нельзя пригласить самого себя")
-        target = session.query(User).filter(func.lower(User.email) == email).first()
-        if not target:
-            raise HTTPException(404, "Пользователь с таким email не зарегистрирован")
         if not is_user_active(target):
             raise HTTPException(400, "Этот пользователь отключён")
         if target.id == comp.user_id:

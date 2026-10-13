@@ -3,6 +3,8 @@ import {
   type StructureABC,
   type StructureItem,
   emptyStructure,
+  enrichStructureItems,
+  wasMovedToC,
 } from "@/lib/structureFromLaborFunctions";
 
 export type ZuOrigin = "ps" | "extra";
@@ -268,10 +270,6 @@ export function moveItemToCard(
   });
 }
 
-function structureItemKey(item: Pick<StructureItem, "text" | "tfCode">): string {
-  return `${item.tfCode || ""}::${item.text.trim().toLowerCase()}`;
-}
-
 export function buildStructureFromTdZu(
   cards: TdZuCard[],
   previous: StructureABC = emptyStructure(),
@@ -280,12 +278,14 @@ export function buildStructureFromTdZu(
   const skills: StructureItem[] = [];
   const seenA = new Set<string>();
   const seenB = new Set<string>();
-  const movedToC = new Set(previous.C.map(structureItemKey));
+  const moved = previous.C;
+  const hints: Array<{ text: string; tfCode: string; tdText: string }> = [];
 
   for (const card of cards) {
     for (const item of card.knowledges) {
       const key = `${card.tfCode}::${item.text.toLowerCase()}`;
-      if (seenA.has(key) || movedToC.has(key)) continue;
+      hints.push({ text: item.text.toLowerCase(), tfCode: card.tfCode, tdText: card.tdText });
+      if (seenA.has(key) || wasMovedToC(item.text, card.tfCode, moved)) continue;
       seenA.add(key);
       knowledge.push({
         id: item.id,
@@ -297,7 +297,8 @@ export function buildStructureFromTdZu(
     }
     for (const item of card.skills) {
       const key = `${card.tfCode}::${item.text.toLowerCase()}`;
-      if (seenB.has(key) || movedToC.has(key)) continue;
+      hints.push({ text: item.text.toLowerCase(), tfCode: card.tfCode, tdText: card.tdText });
+      if (seenB.has(key) || wasMovedToC(item.text, card.tfCode, moved)) continue;
       seenB.add(key);
       skills.push({
         id: item.id,
@@ -312,7 +313,7 @@ export function buildStructureFromTdZu(
   return {
     A: knowledge,
     B: skills,
-    C: previous.C,
+    C: enrichStructureItems(previous.C, hints),
   };
 }
 

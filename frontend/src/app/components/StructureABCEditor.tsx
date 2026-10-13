@@ -2,7 +2,11 @@ import { useMemo, useState } from 'react';
 import { ArrowLeft, ArrowRight, Plus, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { LaborFunctionDetail, StructureABC, StructureItem } from '@/lib/structureFromLaborFunctions';
-import { createStructureItemId, isManualStructureItem } from '@/lib/structureFromLaborFunctions';
+import {
+  createStructureItemId,
+  isManualStructureItem,
+  tdOrdinalWithinTf,
+} from '@/lib/structureFromLaborFunctions';
 import { useI18n } from '@/context/I18nContext';
 
 type Container = 'A' | 'B' | 'C';
@@ -47,14 +51,14 @@ export function StructureABCEditor({ structure, selectedLaborFunctions, onChange
         const tdText = la.text?.trim() || `ТД ${idx + 1}`;
         options.push({
           value: `${tf.code}-${idx}`,
-          label: `${tf.code} – ${tdText}`,
+          label: `${tf.code} – ${t("structure.tdNo", { n: idx + 1 })}: ${tdText}`,
           tfCode: tf.code,
           tdText,
         });
       });
     });
     return options;
-  }, [selectedLaborFunctions]);
+  }, [selectedLaborFunctions, t]);
 
   const updateContainer = (container: Container, items: StructureItem[]) => {
     onChange({ ...structure, [container]: items });
@@ -114,6 +118,19 @@ export function StructureABCEditor({ structure, selectedLaborFunctions, onChange
     setNewText('');
   };
 
+  const affiliationLabel = (item: StructureItem) => {
+    if (!item.tfCode && !item.tdText) return "";
+    const tdNo = tdOrdinalWithinTf(selectedLaborFunctions, item.tfCode, item.tdText);
+    const tdPart = item.tdText
+      ? tdNo != null
+        ? `${t("structure.tdNo", { n: tdNo })}: ${item.tdText}`
+        : `ТД: ${item.tdText}`
+      : tdNo != null
+        ? t("structure.tdNo", { n: tdNo })
+        : "";
+    return [item.tfCode, tdPart].filter(Boolean).join(" · ");
+  };
+
   const renderList = (container: Container) => {
     const items = structure[container];
     const showMoveToC = container === 'B';
@@ -138,10 +155,9 @@ export function StructureABCEditor({ structure, selectedLaborFunctions, onChange
           >
             <div className="flex-1 min-w-0">
               <p className="text-sm text-gray-900">{item.text}</p>
-              {item.tfCode && (
-                <p className="text-xs text-gray-500 mt-1">
-                  {item.tfCode}
-                  {item.tdText ? ` · ТД: ${item.tdText}` : ''}
+              {(item.tfCode || item.tdText) && (
+                <p className="text-xs text-gray-500 mt-1" title={item.tdText || undefined}>
+                  {affiliationLabel(item)}
                 </p>
               )}
             </div>
@@ -250,7 +266,7 @@ export function StructureABCEditor({ structure, selectedLaborFunctions, onChange
             </div>
             {addTarget !== 'C' && laborActionOptions.length > 0 && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Привязать к трудовому действию</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t("structure.bindToTd")}</label>
                 <select
                   value={newTdKey}
                   onChange={(e) => setNewTdKey(e.target.value)}

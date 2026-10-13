@@ -92,7 +92,7 @@
 
 .wf-sticky {
   position: sticky;
-  top: 8px;
+  top: var(--competence-sticky-h, 8px);
   z-index: 1;
 }
 

@@ -154,11 +154,11 @@ export const extraVi: ExtraMessages = {
     memberHelp:
       "Bạn là thành viên nhóm công tác. Có thể cùng chỉnh sửa bản nháp; chỉ trưởng nhóm mới được gửi đi thẩm định.",
     leaderHelp:
-      "Bạn là trưởng nhóm phát triển này. Nhập email người dùng đã đăng ký để mời vào nhóm. Sau khi đồng ý, người đó có thể cùng bạn chỉnh sửa bản nháp.",
+      "Bạn là trưởng nhóm phát triển này. Tìm người dùng đã đăng ký theo họ tên và mời vào nhóm. Sau khi đồng ý, người đó có thể cùng bạn chỉnh sửa bản nháp.",
     pending: "đang chờ phản hồi",
     accepted: "trong nhóm",
     declined: "đã từ chối",
-    emailRequired: "Nhập email người dùng đã đăng ký",
+    userRequired: "Chọn người dùng từ danh sách",
     saveDraftFirst: "Hãy lưu bản nháp năng lực trước",
     invited: "Đã gửi lời mời",
     inviteError: "Không gửi được lời mời",
@@ -170,8 +170,13 @@ export const extraVi: ExtraMessages = {
     leave: "Rời nhóm",
     remove: "Xóa",
     onlyLeader: "Hiện mới chỉ mời trưởng nhóm.",
-    emailPlaceholder: "email thành viên",
+    fioPlaceholder: "Họ, tên hoặc tên đệm",
+    searchHint: "Bắt đầu nhập họ tên — tối thiểu 2 ký tự",
+    searching: "Đang tìm…",
+    noResults: "Không tìm thấy người dùng với họ tên này",
+    alreadyMember: "đã trong nhóm",
     invite: "Mời",
+    openButton: "Thành phần nhóm công tác",
   },
   detail: {
     notFound: "Không tìm thấy năng lực",
@@ -318,6 +323,7 @@ export const extraVi: ExtraMessages = {
     backHome: "Quay lại trang chủ",
     titleNew: "Đề xuất năng lực mới",
     titleEdit: "Phát triển năng lực phối hợp",
+    nameBar: "Năng lực",
     memberNotice:
       "Bạn là thành viên nhóm công tác. Có thể chỉnh sửa và lưu bản nháp; chỉ trưởng nhóm mới được gửi năng lực đi thẩm định.",
     newName: "Năng lực mới",
@@ -663,7 +669,7 @@ export const extraVi: ExtraMessages = {
     groupLead:
       "Người tạo năng lực trở thành trưởng nhóm công tác. Người đó có thể mời người dùng đã đăng ký khác để cùng hoàn thiện bản nháp.",
     g1: "Mở thẻ năng lực hoặc trình dựng. Khối «Nhóm công tác» hiện trưởng nhóm và các thành viên hiện tại.",
-    g2: "Trưởng nhóm nhập email người dùng đã đăng ký và nhấn «Mời». Người được mời nhận thư, và lời mời xuất hiện trong «Dự án của tôi».",
+    g2: "Trưởng nhóm tìm người dùng đã đăng ký theo họ tên và nhấn «Mời». Lời mời xuất hiện trong «Dự án của tôi».",
     g3: "Sau khi chấp nhận lời mời, thành viên thấy năng lực trong dự án của mình, có thể mở và tiếp tục phát triển bản nháp.",
     g4: "Chỉ trưởng nhóm được gửi thẩm định và xóa năng lực. Thành viên lưu bản nháp hoặc rời nhóm.",
     reviewLead:
@@ -819,6 +825,8 @@ export const extraVi: ExtraMessages = {
     cancel: "Hủy",
     text: "Văn bản",
     textPlaceholder: "Nhập mô tả...",
+    tdNo: "TD {n}",
+    bindToTd: "Gắn với hành động lao động",
   },
   discipline: {
     credit: "đạt",

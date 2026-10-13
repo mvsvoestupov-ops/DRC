@@ -11,6 +11,15 @@ export interface User {
   created_at?: string;
 }
 
+export interface UserDirectoryItem {
+  id: number;
+  email?: string;
+  last_name?: string;
+  first_name?: string;
+  middle_name?: string;
+  organization?: string;
+}
+
 export interface CompetenceCollaborator {
   id?: number | null;
   user_id?: number;
@@ -165,7 +174,7 @@ export interface Competence {
   industry?: string;
   professional_area_code?: string;
   hours?: number;
-  structure?: Record<string, string[]>;
+  structure?: Record<string, Array<string | { text: string; tfCode?: string | null; tdText?: string | null; origin?: string }>>;
   descriptors?: CompetenceDescriptors | Record<string, string>;
   matrix_context?: MatrixContext | null;
   assessment_tools?: any[];
@@ -211,7 +220,7 @@ export interface CreateCompetencePayload {
   qualification_id?: number;
   competence_kind?: string;
   labor_functions?: Array<{ code: string; name?: string }>;
-  structure?: Record<string, string[]>;
+  structure?: Record<string, Array<string | { text: string; tfCode?: string | null; tdText?: string | null; origin?: string }>>;
   descriptors?: CompetenceDescriptors;
   assessment_tools?: Array<{
     level: FormationLevel;

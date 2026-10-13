@@ -1,4 +1,4 @@
-import { User } from './types';
+import { User, UserDirectoryItem } from './types';
 import { apiBaseUrl } from './baseUrl';
 
 const BASE_URL = apiBaseUrl();
@@ -251,6 +251,19 @@ class ApiClient {
   }) => this.patch<User>('/users/me', data);
   listUsers = () => this.get<User[]>('/users');
   listExperts = () => this.get<User[]>('/users/experts');
+  searchUsers = (
+    params: { q: string; limit?: number },
+    options?: RequestInit,
+  ) => {
+    const sp = new URLSearchParams();
+    if (params.q) sp.set('q', params.q);
+    if (params.limit != null) sp.set('limit', String(params.limit));
+    const qs = sp.toString();
+    return this.get<{ total: number; items: UserDirectoryItem[] }>(
+      `/users/search${qs ? `?${qs}` : ''}`,
+      options,
+    );
+  };
   createUser = (data: {
     email: string;
     password?: string;
@@ -369,7 +382,7 @@ class ApiClient {
 
   suggestCompetenceProfile = (data: {
     qualification_level: string;
-    structure?: Record<string, string[]>;
+    structure?: Record<string, unknown>;
     competence_kind?: string;
   }) => this.post<any>('/competences/suggest-profile', data);
 
@@ -396,8 +409,8 @@ class ApiClient {
   assignReviewers = (id: number, expertIds: number[]) =>
     this.put<any>(`/competences/${id}/reviewers`, { expert_ids: expertIds });
   listCompetenceInvites = () => this.get<any[]>('/competences/invites');
-  inviteCollaborator = (id: number, email: string) =>
-    this.post<any>(`/competences/${id}/collaborators`, { email });
+  inviteCollaborator = (id: number, payload: { user_id: number } | { email: string }) =>
+    this.post<any>(`/competences/${id}/collaborators`, payload);
   acceptCompetenceInvite = (inviteId: number) =>
     this.post<any>(`/competences/invites/${inviteId}/accept`);
   declineCompetenceInvite = (inviteId: number) =>

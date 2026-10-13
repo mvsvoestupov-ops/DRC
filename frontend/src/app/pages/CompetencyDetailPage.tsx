@@ -15,7 +15,7 @@ import { FormationLevelsPanel } from '@/app/components/FormationLevelsPanel';
 import { CompetenceReviewSection } from '@/app/components/CompetenceReviewSection';
 import { InternationalMappingPreview } from '@/app/components/InternationalMappingStep';
 import { normalizeInternationalMapping } from '@/lib/internationalMapping';
-import { WorkingGroupPanel } from '@/app/components/WorkingGroupPanel';
+import { WorkingGroupDialog } from '@/app/components/WorkingGroupPanel';
 import { groupDisciplineMapping, formatScaleScore } from '@/app/components/DisciplineMappingEditor';
 import { displayAssessmentTools, TEST_ITEM_TYPES } from '@/lib/assessmentConstructor';
 import { FosAttachments } from '@/app/components/AssessmentFosPreview';
@@ -159,15 +159,15 @@ export function CompetencyDetailPage() {
                 {t('detail.continue')}
               </Button>
             ) : null}
+            {isAuthenticated && (comp.collaboration_role || comp.can_invite || (comp.collaborators || []).length > 0) ? (
+              <WorkingGroupDialog competence={comp} onUpdated={setComp} />
+            ) : null}
           </div>
         }
       />
       {docxError && (
         <p className="mb-4 text-sm text-red-600">{docxError}</p>
       )}
-      {isAuthenticated && (comp.collaboration_role || comp.can_invite || (comp.collaborators || []).length > 0) ? (
-        <WorkingGroupPanel competence={comp} onUpdated={setComp} />
-      ) : null}
       <Card>
         <CardContent className="pt-8 pb-8">
           <Tabs defaultValue="main">
@@ -224,9 +224,33 @@ export function CompetencyDetailPage() {
                     <CardContent>
                       {(((comp as any).structure?.[cat])?.length > 0) ? (
                         <ul className="list-disc list-inside text-base space-y-1.5 leading-relaxed">
-                          {((comp as any).structure[cat]).map((item: string, idx: number) => (
-                            <li key={idx}>{item}</li>
-                          ))}
+                          {((comp as any).structure[cat]).map((item: unknown, idx: number) => {
+                            const text =
+                              typeof item === "string"
+                                ? item
+                                : item && typeof item === "object" && "text" in item
+                                  ? String((item as { text?: string }).text || "")
+                                  : String(item || "");
+                            const tfCode =
+                              item && typeof item === "object" && "tfCode" in item
+                                ? String((item as { tfCode?: string }).tfCode || "")
+                                : "";
+                            const tdText =
+                              item && typeof item === "object" && "tdText" in item
+                                ? String((item as { tdText?: string }).tdText || "")
+                                : "";
+                            return (
+                              <li key={idx}>
+                                {text}
+                                {tfCode ? (
+                                  <span className="block text-sm text-muted-foreground">
+                                    {tfCode}
+                                    {tdText ? ` · ТД: ${tdText}` : ""}
+                                  </span>
+                                ) : null}
+                              </li>
+                            );
+                          })}
                         </ul>
                       ) : (
                         <p className="text-muted-foreground text-base">{t('common.noData')}</p>
