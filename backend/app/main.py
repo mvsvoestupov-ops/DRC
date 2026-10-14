@@ -625,12 +625,10 @@ def _user_fio_search_text(user: User) -> str:
 @app.get("/users/search")
 async def search_users(
     q: str = Query("", min_length=0),
-    limit: int = Query(20, ge=1, le=50),
+    limit: int = Query(200, ge=1, le=500),
     current_user: User = Depends(get_current_user),
 ):
     tokens = [part for part in (q or "").strip().lower().split() if part]
-    if len(" ".join(tokens)) < 2:
-        return {"total": 0, "items": []}
     session = SessionLocal()
     try:
         rows = session.query(User).filter(User.id != current_user.id).all()
@@ -639,10 +637,12 @@ async def search_users(
             if not is_user_active(row):
                 continue
             fio = _user_fio_search_text(row)
-            if not fio:
+            email = (row.email or "").lower()
+            org = (getattr(row, "organization", None) or "").lower()
+            haystack = f"{fio} {email} {org}".strip()
+            if tokens and not all(token in haystack for token in tokens):
                 continue
-            if all(token in fio for token in tokens):
-                matched.append(row)
+            matched.append(row)
         matched.sort(
             key=lambda row: (
                 (getattr(row, "last_name", None) or "").lower(),

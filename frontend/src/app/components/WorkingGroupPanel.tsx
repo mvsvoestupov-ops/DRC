@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { CheckCircle2, Loader2, Search, UserPlus, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -83,14 +83,13 @@ export function WorkingGroupPanel({
   const { t } = useI18n();
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<UserDirectoryItem[]>([]);
+  const [directory, setDirectory] = useState<UserDirectoryItem[]>([]);
   const [selected, setSelected] = useState<UserDirectoryItem | null>(null);
-  const [searching, setSearching] = useState(false);
+  const [loadingDirectory, setLoadingDirectory] = useState(false);
   const [searchError, setSearchError] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const STATUS_LABEL: Record<string, string> = {
     pending: t("wg.pending"),
@@ -114,43 +113,43 @@ export function WorkingGroupPanel({
     return ids;
   }, [competence.collaborators, competence.user_id, myId]);
 
-  const visibleResults = results;
+  const visibleResults = useMemo(() => {
+    const tokens = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    if (!tokens.length) return directory;
+    return directory.filter((item) => {
+      const haystack = [formatUserName(item), item.email, item.organization].join(" ").toLowerCase();
+      return tokens.every((token) => haystack.includes(token));
+    });
+  }, [directory, query]);
 
   useEffect(() => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    const q = query.trim();
-    if (q.length < 2) {
-      setResults([]);
-      setSearching(false);
-      setSearchError("");
-      return;
-    }
-
+    if (!canInvite) return;
     let cancelled = false;
     const controller = new AbortController();
-    timerRef.current = setTimeout(async () => {
-      setSearching(true);
-      setSearchError("");
-      try {
-        const data = await apiClient.searchUsers({ q, limit: 20 }, { signal: controller.signal });
+    setLoadingDirectory(true);
+    setSearchError("");
+    apiClient
+      .searchUsers({ q: "", limit: 500 }, { signal: controller.signal })
+      .then((data) => {
         if (cancelled) return;
-        setResults(Array.isArray(data?.items) ? data.items : []);
-      } catch (err: unknown) {
+        setDirectory(Array.isArray(data?.items) ? data.items : []);
+      })
+      .catch((err: unknown) => {
         if (cancelled) return;
         const aborted = err instanceof DOMException && err.name === "AbortError";
-        setResults([]);
-        setSearchError(aborted ? "" : apiErrorMessage(err, t("wg.inviteError")));
-      } finally {
-        if (!cancelled) setSearching(false);
-      }
-    }, 250);
-
+        if (!aborted) {
+          setDirectory([]);
+          setSearchError(apiErrorMessage(err, t("wg.inviteError")));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingDirectory(false);
+      });
     return () => {
       cancelled = true;
       controller.abort();
-      if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [query, t]);
+  }, [canInvite, t]);
 
   const displayName = (row?: CompetenceCollaborator | null) =>
     formatUserName(row?.user) || row?.user?.email || user?.email || "—";
@@ -175,7 +174,6 @@ export function WorkingGroupPanel({
       onUpdated(updated);
       setQuery("");
       setSelected(null);
-      setResults([]);
       setNotice(t("wg.invited"));
     } catch (err) {
       setError(apiErrorMessage(err, t("wg.inviteError")));
@@ -292,7 +290,6 @@ export function WorkingGroupPanel({
                   onClick={() => {
                     setQuery("");
                     setSelected(null);
-                    setResults([]);
                   }}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   aria-label="Очистить поиск"
@@ -307,61 +304,64 @@ export function WorkingGroupPanel({
                 {searchError}
               </p>
             ) : null}
-            {query.trim().length >= 2 ? (
-              <div className="rounded-xl border border-gray-200 max-h-56 overflow-y-auto">
-                {searching ? (
-                  <div className="flex items-center justify-center gap-2 py-6 text-gray-500">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span className="text-sm">{t("wg.searching")}</span>
-                  </div>
-                ) : visibleResults.length === 0 ? (
-                  <p className="text-sm text-gray-500 px-4 py-6 text-center">{t("wg.noResults")}</p>
-                ) : (
-                  <ul className="divide-y divide-gray-100">
-                    {visibleResults.map((item) => {
-                      const name = formatUserName(item);
-                      const alreadyInGroup = takenIds.has(item.id);
-                      const isSelected = selected?.id === item.id && !alreadyInGroup;
-                      return (
-                        <li key={item.id}>
-                          <button
-                            type="button"
-                            disabled={alreadyInGroup}
-                            onClick={() => {
-                              setSelected(item);
-                              setError("");
-                            }}
-                            className={`w-full text-left px-4 py-2.5 transition-colors ${
-                              alreadyInGroup
-                                ? "opacity-60 cursor-not-allowed"
-                                : isSelected
-                                  ? "bg-primary/5"
-                                  : "hover:bg-gray-50"
-                            }`}
-                          >
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="min-w-0">
-                                <p className="text-sm font-medium text-gray-900">{name || item.email}</p>
-                                {item.organization ? (
-                                  <p className="text-xs text-gray-500 mt-0.5 truncate">{item.organization}</p>
-                                ) : null}
-                              </div>
-                              {alreadyInGroup ? (
-                                <span className="text-xs text-gray-500 shrink-0 mt-0.5">
-                                  {t("wg.alreadyMember")}
-                                </span>
-                              ) : isSelected ? (
-                                <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+            <div className="rounded-xl border border-gray-200 h-56 overflow-y-auto overscroll-contain">
+              {loadingDirectory ? (
+                <div className="flex h-full items-center justify-center gap-2 text-gray-500">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span className="text-sm">{t("wg.searching")}</span>
+                </div>
+              ) : visibleResults.length === 0 ? (
+                <p className="text-sm text-gray-500 px-4 py-6 text-center">
+                  {directory.length === 0 ? t("wg.emptyDirectory") : t("wg.noResults")}
+                </p>
+              ) : (
+                <ul className="divide-y divide-gray-100">
+                  {visibleResults.map((item) => {
+                    const name = formatUserName(item);
+                    const alreadyInGroup = takenIds.has(item.id);
+                    const isSelected = selected?.id === item.id && !alreadyInGroup;
+                    return (
+                      <li key={item.id}>
+                        <button
+                          type="button"
+                          disabled={alreadyInGroup}
+                          onClick={() => {
+                            setSelected(item);
+                            setError("");
+                          }}
+                          className={`w-full text-left px-4 py-2.5 transition-colors ${
+                            alreadyInGroup
+                              ? "opacity-60 cursor-not-allowed"
+                              : isSelected
+                                ? "bg-primary/5"
+                                : "hover:bg-gray-50"
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-gray-900">{name || item.email}</p>
+                              {name && item.email ? (
+                                <p className="text-xs text-gray-500 mt-0.5 truncate">{item.email}</p>
+                              ) : null}
+                              {item.organization ? (
+                                <p className="text-xs text-gray-500 mt-0.5 truncate">{item.organization}</p>
                               ) : null}
                             </div>
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </div>
-            ) : null}
+                            {alreadyInGroup ? (
+                              <span className="text-xs text-gray-500 shrink-0 mt-0.5">
+                                {t("wg.alreadyMember")}
+                              </span>
+                            ) : isSelected ? (
+                              <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                            ) : null}
+                          </div>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
             {selected ? (
               <div className="flex items-center justify-between gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">
                 <div className="min-w-0">

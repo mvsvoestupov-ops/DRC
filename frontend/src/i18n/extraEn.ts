@@ -154,7 +154,7 @@ export const extraEn: ExtraMessages = {
     memberHelp:
       "You are a member of the working group. You may jointly edit the draft; only the leader can submit it for expert review.",
     leaderHelp:
-      "You are the leader of this development. Search for a registered user by full name and add them to the group — they can immediately edit the draft on every step with you.",
+      "You are the leader of this development. Pick a user from the list or search by name and add them to the group — they can immediately edit the draft on every step with you.",
     pending: "awaiting response",
     accepted: "in the group",
     declined: "declined",
@@ -171,9 +171,10 @@ export const extraEn: ExtraMessages = {
     remove: "Remove",
     onlyLeader: "So far only the leader has been invited.",
     fioPlaceholder: "Last name, first name or patronymic",
-    searchHint: "Start typing a name — at least 2 characters",
+    searchHint: "Pick from the list or type a name to search",
     searching: "Searching…",
     noResults: "No user with this name was found",
+    emptyDirectory: "No registered users available to invite",
     alreadyMember: "already in the group",
     invite: "Invite",
     openButton: "Working group members",
