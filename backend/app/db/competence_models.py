@@ -93,3 +93,38 @@ class CompetenceCollaborator(Base):
     competence = relationship("Competence", back_populates="collaborator_links")
     user = relationship("User", foreign_keys=[user_id])
     invited_by = relationship("User", foreign_keys=[invited_by_id])
+
+
+class CompetenceStepChat(Base):
+    __tablename__ = "competence_step_chat"
+
+    id = Column(Integer, primary_key=True)
+    competence_id = Column(Integer, ForeignKey("competences.id"), nullable=False, index=True)
+    step = Column(Integer, nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    text = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow, index=True)
+
+    competence = relationship("Competence")
+    user = relationship("User")
+
+
+class CompetenceActivityLog(Base):
+    __tablename__ = "competence_activity_log"
+
+    id = Column(Integer, primary_key=True)
+    competence_id = Column(Integer, ForeignKey("competences.id"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    action = Column(String(32), nullable=False, default="edit")
+    step = Column(Integer, nullable=True)
+    fields = Column(JSON, default=list)
+    changes = Column(JSON, default=list)
+    summary = Column(String(500), nullable=True)
+    reverted_at = Column(DateTime, nullable=True)
+    reverted_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    revert_of_id = Column(Integer, ForeignKey("competence_activity_log.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow, index=True)
+
+    competence = relationship("Competence")
+    user = relationship("User", foreign_keys=[user_id])
+    reverted_by = relationship("User", foreign_keys=[reverted_by_id])

@@ -1,26 +1,16 @@
 import { useMemo, useRef } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { listCatalogItems } from "@/lib/disciplineCatalog";
+import {
+  DISCIPLINE_CONTROL_GROUPS,
+  DISCIPLINE_CONTROL_OPTIONS,
+} from "@/lib/disciplineControl";
 import type { StructureABC } from "@/lib/structureFromLaborFunctions";
 import { DisciplineCatalogPicker } from "@/app/components/DisciplineCatalogPicker";
 import { useI18n } from "@/context/I18nContext";
 import { translateKeyed, DESCRIPTOR_I18N_KEYS } from "@/i18n/helpers";
 
-export const DISCIPLINE_CONTROL_OPTIONS = [
-  "зачёт",
-  "экзамен",
-  "защита проекта",
-  "курсовая работа",
-  "отчёт по практике",
-] as const;
-
-const DISCIPLINE_CONTROL_I18N_KEYS: Record<string, string> = {
-  "зачёт": "discipline.credit",
-  "экзамен": "discipline.exam",
-  "защита проекта": "discipline.project",
-  "курсовая работа": "discipline.coursework",
-  "отчёт по практике": "discipline.practiceReport",
-};
+export { DISCIPLINE_CONTROL_OPTIONS, DISCIPLINE_CONTROL_I18N_KEYS } from "@/lib/disciplineControl";
 
 export const COMPONENT_SCALE_MAX = 10;
 export const COMPONENT_SCALE_VALUES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
@@ -338,7 +328,7 @@ export function DisciplineMappingEditor({
                 {bindings.map((binding, index) => (
                   <div
                     key={`${row.id}-${index}`}
-                    className="grid grid-cols-1 min-[720px]:grid-cols-[minmax(0,1fr)_11rem_auto] gap-2 items-start min-w-0"
+                    className="grid grid-cols-1 min-[720px]:grid-cols-[minmax(0,1fr)_minmax(15rem,22rem)_auto] gap-2 items-start min-w-0"
                   >
                     <div className="min-w-0">
                       <DisciplineCatalogPicker
@@ -349,18 +339,33 @@ export function DisciplineMappingEditor({
                         onChange={(discipline) => updateBinding(row.id, index, { discipline })}
                       />
                     </div>
-                    <select
-                      value={binding.control}
-                      onChange={(e) => updateBinding(row.id, index, { control: e.target.value })}
-                      className="form-control min-w-0 w-full"
-                    >
-                      <option value="">{t("discipline.control")}</option>
-                      {DISCIPLINE_CONTROL_OPTIONS.map((option) => (
-                        <option key={option} value={option}>
-                          {translateKeyed(t, DISCIPLINE_CONTROL_I18N_KEYS, option)}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="min-w-0">
+                      <select
+                        value={binding.control}
+                        onChange={(e) => updateBinding(row.id, index, { control: e.target.value })}
+                        className="form-control min-w-0 w-full"
+                        aria-describedby={index === 0 ? `${row.id}-control-hint` : undefined}
+                      >
+                        <option value="">{t("discipline.control")}</option>
+                        {binding.control && !DISCIPLINE_CONTROL_OPTIONS.includes(binding.control) ? (
+                          <option value={binding.control}>{binding.control}</option>
+                        ) : null}
+                        {DISCIPLINE_CONTROL_GROUPS.map((group) => (
+                          <optgroup key={group.kind} label={t(group.groupKey)}>
+                            {group.options.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {t(option.i18nKey)}
+                              </option>
+                            ))}
+                          </optgroup>
+                        ))}
+                      </select>
+                      {index === 0 ? (
+                        <p id={`${row.id}-control-hint`} className="text-[11px] text-gray-500 mt-1 leading-snug">
+                          {t("discipline.controlHint")}
+                        </p>
+                      ) : null}
+                    </div>
                     <button
                       type="button"
                       className="justify-self-start min-[720px]:justify-self-center mt-1.5 p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50"

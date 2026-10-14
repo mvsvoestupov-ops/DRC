@@ -40,6 +40,30 @@ export interface CompetenceInvite {
   invited_by?: User | null;
 }
 
+export interface CompetencePresenceUser {
+  user_id: number;
+  name: string;
+  email?: string;
+  color: string;
+  step: number;
+  fragment: string;
+  self?: boolean;
+}
+
+export interface CompetenceStepChatMessage {
+  id: number;
+  step: number;
+  text: string;
+  created_at?: string | null;
+  self?: boolean;
+  user?: {
+    id?: number;
+    name?: string;
+    email?: string;
+    color?: string;
+  };
+}
+
 export interface AuthState {
   user: User | null;
   token: string | null;
@@ -192,7 +216,7 @@ export interface Competence {
   labor_functions?: Array<{ code: string; name?: string }>;
   discipline_mapping?: any[];
   ed_technologies?: string[];
-  resources?: string[];
+  resources?: string[] | { A?: string[]; B?: string[]; C?: string[] };
   international_mapping?: Record<string, any>;
   td_zu_mapping?: {
     confirmed?: boolean;
@@ -200,9 +224,67 @@ export interface Competence {
     cards?: Array<Record<string, any>>;
   };
   wizard_step?: number | null;
+  development_due?: string | null;
+  progress?: CompetenceProgress;
+  can_view_activity?: boolean;
   created_at?: string;
   updated_at?: string;
   is_active?: number;
+}
+
+export interface CompetenceProgressStep {
+  step: number;
+  key: string;
+  done: boolean;
+}
+
+export interface CompetenceProgress {
+  percent: number;
+  filled: number;
+  total: number;
+  steps?: CompetenceProgressStep[];
+}
+
+export interface CompetenceActivityChange {
+  key?: string;
+  field?: string;
+  step?: number | null;
+  before_preview?: string;
+  after_preview?: string;
+}
+
+export interface CompetenceActivityEvent {
+  id: number;
+  action: string;
+  step?: number | null;
+  fields?: string[];
+  changes?: CompetenceActivityChange[];
+  summary?: string | null;
+  created_at?: string | null;
+  reverted?: boolean;
+  can_revert?: boolean;
+  user?: { id?: number; name?: string; email?: string; color?: string };
+}
+
+export interface CompetenceContribution {
+  user_id: number;
+  role?: string;
+  name: string;
+  email?: string;
+  color: string;
+  score: number;
+  share: number;
+  edits: number;
+  messages: number;
+  steps: number[];
+  last_at?: string | null;
+}
+
+export interface CompetenceActivity {
+  due_date?: string | null;
+  progress: CompetenceProgress;
+  contributions: CompetenceContribution[];
+  events: CompetenceActivityEvent[];
 }
 
 export interface CompetenceStats {
@@ -274,7 +356,7 @@ export interface CreateCompetencePayload {
   fgos_name?: string;
   fgos_category?: string;
   universal_skills?: Array<{ category: string; description: string }>;
-  resources?: string[];
+  resources?: string[] | { A?: string[]; B?: string[]; C?: string[] };
   expertise?: Record<string, { value?: string; comment?: string }>;
   international_mapping?: Record<string, any>;
   td_zu_mapping?: {

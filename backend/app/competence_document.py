@@ -505,7 +505,25 @@ def build_competence_docx_bytes(data: dict[str, Any]) -> bytes:
         add_para(", ".join(str(t) for t in techs if t), size=11)
 
     resources = data.get("resources") or []
-    if isinstance(resources, list) and resources:
+    resource_groups = [
+        ("A", "Необходимое для формирования знаний"),
+        ("B", "Необходимое для формирования умений / интеллектуальных навыков"),
+        ("C", "Необходимое для формирования практических навыков"),
+    ]
+    if isinstance(resources, dict):
+        grouped = [
+            (title, [str(item).strip() for item in (resources.get(key) or []) if str(item).strip()])
+            for key, title in resource_groups
+        ]
+        if any(items for _, items in grouped):
+            add_heading("7. Ресурсы", 1)
+            for title, items in grouped:
+                if not items:
+                    continue
+                add_para(title, bold=True, size=11, space_after=2)
+                for item in items:
+                    add_para(f"• {item}", size=11, space_after=2)
+    elif isinstance(resources, list) and resources:
         add_heading("7. Ресурсы", 1)
         for item in resources:
             add_para(f"• {item}", size=11, space_after=2)

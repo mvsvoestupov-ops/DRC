@@ -4,6 +4,7 @@ import {
   type StructureItem,
   emptyStructure,
   enrichStructureItems,
+  isManualStructureItem,
   wasMovedToC,
 } from "@/lib/structureFromLaborFunctions";
 
@@ -270,6 +271,94 @@ export function moveItemToCard(
   });
 }
 
+export function findTdZuCard(
+  cards: TdZuCard[],
+  tfCode?: string | null,
+  tdText?: string | null,
+): TdZuCard | undefined {
+  if (!tfCode) return undefined;
+  const ofTf = cards.filter((card) => card.tfCode === tfCode);
+  if (ofTf.length === 0) return undefined;
+  const needle = (tdText || "").trim().toLowerCase();
+  if (needle) {
+    const match = ofTf.find((card) => card.tdText.trim().toLowerCase() === needle);
+    if (match) return match;
+  }
+  if (ofTf.length === 1) return ofTf[0];
+  return undefined;
+}
+
+function extraKey(tfCode: string, tdText: string, kind: ZuKind, text: string): string {
+  return `${tfCode}::${tdText.trim().toLowerCase()}::${kind}::${text.trim().toLowerCase()}`;
+}
+
+/** Step 3 A/B/C extras → step 2 З/У on the same TD (C in PS structure is У). */
+export function syncTdZuCardsFromStructure(cards: TdZuCard[], structure: StructureABC): TdZuCard[] {
+  if (cards.length === 0) return cards;
+
+  const desired = new Map<string, { cardKey: string; kind: ZuKind; text: string }>();
+  const remember = (item: StructureItem, kind: ZuKind) => {
+    if (!isManualStructureItem(item)) return;
+    const text = item.text.trim();
+    if (!text) return;
+    const card = findTdZuCard(cards, item.tfCode, item.tdText);
+    if (!card) return;
+    desired.set(extraKey(card.tfCode, card.tdText, kind, text), {
+      cardKey: card.key,
+      kind,
+      text,
+    });
+  };
+  structure.A.forEach((item) => remember(item, "knowledge"));
+  structure.B.forEach((item) => remember(item, "skill"));
+  structure.C.forEach((item) => remember(item, "skill"));
+
+  const next = cards.map((card) => {
+    const keepKnowledge = card.knowledges.filter((item) => {
+      if (item.origin !== "extra") return true;
+      return desired.has(extraKey(card.tfCode, card.tdText, "knowledge", item.text));
+    });
+    const keepSkills = card.skills.filter((item) => {
+      if (item.origin !== "extra") return true;
+      return desired.has(extraKey(card.tfCode, card.tdText, "skill", item.text));
+    });
+
+    const existingK = new Set(keepKnowledge.map((item) => item.text.trim().toLowerCase()));
+    const existingS = new Set(keepSkills.map((item) => item.text.trim().toLowerCase()));
+    const addK: TdZuItem[] = [];
+    const addS: TdZuItem[] = [];
+    for (const extra of desired.values()) {
+      if (extra.cardKey !== card.key) continue;
+      const needle = extra.text.trim().toLowerCase();
+      if (extra.kind === "knowledge") {
+        if (existingK.has(needle)) continue;
+        existingK.add(needle);
+        addK.push({ id: createZuItemId(), text: extra.text, origin: "extra", kind: "knowledge" });
+      } else {
+        if (existingS.has(needle)) continue;
+        existingS.add(needle);
+        addS.push({ id: createZuItemId(), text: extra.text, origin: "extra", kind: "skill" });
+      }
+    }
+
+    if (
+      addK.length === 0 &&
+      addS.length === 0 &&
+      keepKnowledge.length === card.knowledges.length &&
+      keepSkills.length === card.skills.length
+    ) {
+      return card;
+    }
+    return {
+      ...card,
+      knowledges: [...keepKnowledge, ...addK],
+      skills: [...keepSkills, ...addS],
+    };
+  });
+
+  return next.every((card, index) => card === cards[index]) ? cards : next;
+}
+
 export function buildStructureFromTdZu(
   cards: TdZuCard[],
   previous: StructureABC = emptyStructure(),
@@ -278,7 +367,12 @@ export function buildStructureFromTdZu(
   const skills: StructureItem[] = [];
   const seenA = new Set<string>();
   const seenB = new Set<string>();
-  const moved = previous.C;
+  const moved = previous.C.filter((item) => {
+    if (!isManualStructureItem(item)) return true;
+    const card = findTdZuCard(cards, item.tfCode, item.tdText);
+    if (!card) return true;
+    return card.skills.some((skill) => skill.text.trim().toLowerCase() === item.text.trim().toLowerCase());
+  });
   const hints: Array<{ text: string; tfCode: string; tdText: string }> = [];
 
   for (const card of cards) {
@@ -310,10 +404,23 @@ export function buildStructureFromTdZu(
     }
   }
 
+  previous.A.filter(isManualStructureItem).forEach((item) => {
+    const key = `${item.tfCode || ""}::${item.text.toLowerCase()}`;
+    if (seenA.has(key)) return;
+    seenA.add(key);
+    knowledge.push(item);
+  });
+  previous.B.filter(isManualStructureItem).forEach((item) => {
+    const key = `${item.tfCode || ""}::${item.text.toLowerCase()}`;
+    if (seenB.has(key) || wasMovedToC(item.text, item.tfCode, moved)) return;
+    seenB.add(key);
+    skills.push(item);
+  });
+
   return {
     A: knowledge,
     B: skills,
-    C: enrichStructureItems(previous.C, hints),
+    C: enrichStructureItems(moved, hints),
   };
 }
 

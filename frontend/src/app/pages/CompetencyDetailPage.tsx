@@ -16,7 +16,10 @@ import { CompetenceReviewSection } from '@/app/components/CompetenceReviewSectio
 import { InternationalMappingPreview } from '@/app/components/InternationalMappingStep';
 import { normalizeInternationalMapping } from '@/lib/internationalMapping';
 import { WorkingGroupDialog } from '@/app/components/WorkingGroupPanel';
+import { ProjectActivityPanel } from '@/app/components/ProjectActivityPanel';
 import { groupDisciplineMapping, formatScaleScore } from '@/app/components/DisciplineMappingEditor';
+import { parseCompetenceResources, resourcesHasAny, trimResourceList } from '@/lib/competenceResources';
+import { DISCIPLINE_CONTROL_I18N_KEYS } from '@/lib/disciplineControl';
 import { displayAssessmentTools, TEST_ITEM_TYPES } from '@/lib/assessmentConstructor';
 import { FosAttachments } from '@/app/components/AssessmentFosPreview';
 import {
@@ -59,7 +62,7 @@ async function fetchCompetence(id: number, isAuthenticated: boolean): Promise<Co
 export function CompetencyDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { isAuthenticated, isExpert, isModerator } = useAuth();
+  const { isAuthenticated, isExpert, isModerator, isAdmin } = useAuth();
   const { t, intlLocale } = useI18n();
   const [comp, setComp] = useState<Competence | null>(null);
   const [loading, setLoading] = useState(true);
@@ -179,6 +182,9 @@ export function CompetencyDetailPage() {
               <TabsTrigger value="assessment" className="flex-none px-4">{t('detail.tabAssessment')}</TabsTrigger>
               <TabsTrigger value="resources" className="flex-none px-4">{t('detail.tabResources')}</TabsTrigger>
               <TabsTrigger value="mapping" className="flex-none px-4">{t('detail.tabMapping')}</TabsTrigger>
+              {comp.can_view_activity || isAdmin ? (
+                <TabsTrigger value="activity" className="flex-none px-4">{t('detail.tabActivity')}</TabsTrigger>
+              ) : null}
             </TabsList>
 
             <TabsContent value="main">
@@ -310,7 +316,9 @@ export function CompetencyDetailPage() {
                                   <Badge variant="outline">{t('detail.hours', { n: binding.hours })}</Badge>
                                 ) : null}
                                 {binding.control ? (
-                                  <Badge variant="outline">{binding.control}</Badge>
+                                  <Badge variant="outline">
+                                    {translateKeyed(t, DISCIPLINE_CONTROL_I18N_KEYS, binding.control)}
+                                  </Badge>
                                 ) : null}
                               </li>
                             ))}
@@ -427,12 +435,29 @@ export function CompetencyDetailPage() {
 
             <TabsContent value="resources">
               <h4 className="text-base font-medium mb-3">{t('detail.mtb')}</h4>
-              {((comp as any).resources?.length > 0) ? (
-                <ul className="list-disc list-inside text-base space-y-1.5 leading-relaxed">
-                  {(comp as any).resources.map((item: string, idx: number) => (
-                    <li key={idx}>{item}</li>
-                  ))}
-                </ul>
+              {resourcesHasAny(comp.resources) ? (
+                <div className="space-y-4">
+                  {([
+                    ["A", t("wizard.resourcesForKnowledge")],
+                    ["B", t("wizard.resourcesForSkills")],
+                    ["C", t("wizard.resourcesForPractice")],
+                  ] as const).map(([group, title]) => {
+                    const items = trimResourceList(parseCompetenceResources(comp.resources)[group]);
+                    if (!items.length) return null;
+                    return (
+                      <div key={group}>
+                        <h5 className="text-sm font-medium mb-1.5">
+                          {group} — {title}
+                        </h5>
+                        <ul className="list-disc list-inside text-base space-y-1.5 leading-relaxed">
+                          {items.map((item, idx) => (
+                            <li key={`${group}-${idx}`}>{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    );
+                  })}
+                </div>
               ) : <p className="text-muted-foreground text-base">{t('common.notSpecifiedF')}</p>}
 
               <h4 className="text-base font-medium mt-6 mb-3">{t('detail.meta')}</h4>
@@ -446,6 +471,17 @@ export function CompetencyDetailPage() {
             <TabsContent value="mapping">
               <InternationalMappingPreview value={normalizeInternationalMapping(comp.international_mapping)} />
             </TabsContent>
+
+            {comp.can_view_activity || isAdmin ? (
+              <TabsContent value="activity">
+                <ProjectActivityPanel
+                  competenceId={comp.id}
+                  dueDate={comp.development_due}
+                  progress={comp.progress}
+                  onUpdated={setComp}
+                />
+              </TabsContent>
+            ) : null}
           </Tabs>
         </CardContent>
       </Card>

@@ -147,6 +147,20 @@ def ensure_competence_public_code_column() -> list[str]:
     return added
 
 
+def ensure_competence_activity_columns() -> list[str]:
+    added: list[str] = []
+    specs = (
+        ("changes", "changes JSON"),
+        ("reverted_at", "reverted_at DATETIME"),
+        ("reverted_by_id", "reverted_by_id INTEGER"),
+        ("revert_of_id", "revert_of_id INTEGER"),
+    )
+    for column, ddl in specs:
+        if _add_column_if_missing("competence_activity_log", column, ddl):
+            added.append(f"competence_activity_log.{column}")
+    return added
+
+
 def ensure_assessment_tools_columns() -> list[str]:
     """Статус ревизии ОС: active / inactive."""
     added: list[str] = []

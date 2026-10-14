@@ -32,7 +32,7 @@ const CONTAINER_META: Record<Container, { descriptorKey: string; subtitle: strin
   },
   C: {
     descriptorKey: 'descriptor.c',
-    subtitle: 'Перенесённые из B или добавленные вручную. Можно вернуть в B.',
+    subtitle: 'Перенесённые из B или добавленные вручную с привязкой к ТД (в структуре ПС = умение). Можно вернуть в B.',
     badge: 'C',
     badgeClass: 'bg-purple-100 text-purple-700',
   },
@@ -98,7 +98,7 @@ export function StructureABCEditor({ structure, selectedLaborFunctions, onChange
     if (!addTarget || !newText.trim()) return;
     let tfCode: string | null = null;
     let tdText: string | null = null;
-    if (addTarget !== 'C' && laborActionOptions.length > 0) {
+    if (laborActionOptions.length > 0) {
       const selected = laborActionOptions.find((opt) => opt.value === newTdKey);
       if (!selected) return;
       tfCode = selected.tfCode;
@@ -141,7 +141,7 @@ export function StructureABCEditor({ structure, selectedLaborFunctions, onChange
         <div className="rounded-lg border border-dashed border-gray-200 px-4 py-8 text-center text-sm text-gray-500">
           {container === 'A' || container === 'B'
             ? 'Выберите трудовые функции на предыдущем шаге или добавьте элемент вручную'
-            : 'Перенесите умения из колонки B, верните их обратно или добавьте навык вручную'}
+            : 'Перенесите умения из колонки B или добавьте навык вручную с привязкой к ТД'}
         </div>
       );
     }
@@ -222,7 +222,11 @@ export function StructureABCEditor({ structure, selectedLaborFunctions, onChange
         {(['A', 'B', 'C'] as Container[]).map((container) => {
           const meta = CONTAINER_META[container];
           return (
-            <div key={container} className="surface border border-gray-100 rounded-xl p-4 flex flex-col min-h-[320px]">
+            <div
+              key={container}
+              data-presence-fragment={`structure:${container}`}
+              className="surface border border-gray-100 rounded-xl p-4 flex flex-col min-h-[320px]"
+            >
               <div className="flex items-start justify-between gap-2 mb-3">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
@@ -264,7 +268,7 @@ export function StructureABCEditor({ structure, selectedLaborFunctions, onChange
                 placeholder={t("structure.textPlaceholder")}
               />
             </div>
-            {addTarget !== 'C' && laborActionOptions.length > 0 && (
+            {laborActionOptions.length > 0 && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">{t("structure.bindToTd")}</label>
                 <select
@@ -272,23 +276,22 @@ export function StructureABCEditor({ structure, selectedLaborFunctions, onChange
                   onChange={(e) => setNewTdKey(e.target.value)}
                   className="form-control w-full"
                 >
-                  {laborActionOptions.length === 0 ? (
-                    <option value="">Нет трудовых действий — выберите функции на шаге 2</option>
-                  ) : (
-                    laborActionOptions.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))
-                  )}
+                  {laborActionOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
                 </select>
+                {addTarget === "C" && (
+                  <p className="text-xs text-gray-500 mt-2">{t("structure.cIsSkill")}</p>
+                )}
               </div>
             )}
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setAddTarget(null)}>
                 {t("structure.cancel")}
               </Button>
-              <Button type="button" onClick={confirmAdd} disabled={!newText.trim() || (addTarget !== 'C' && laborActionOptions.length > 0 && !newTdKey)}>
+              <Button type="button" onClick={confirmAdd} disabled={!newText.trim() || (laborActionOptions.length > 0 && !newTdKey)}>
                 {t("structure.add")}
               </Button>
             </div>

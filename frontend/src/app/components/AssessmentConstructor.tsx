@@ -14,11 +14,14 @@ import {
   TEST_ITEM_TYPES,
   assessmentMethodDef,
   assessmentMethodLabel,
+  collectExtraMethods,
+  createCustomAssessmentMethodId,
   emptyAssessmentOption,
   formatAttachmentSize,
   getAssessmentCoverage,
   getDevelopmentProgress,
   isAssessmentTaskComplete,
+  isCustomAssessmentMethodId,
   ASSESSMENT_MEDIA_KIND_LABELS,
   listStructureComponents,
   methodFitsCategory,
@@ -27,11 +30,13 @@ import {
   syncTasksFromPlan,
   togglePlanMethod,
   unassignedComponents,
+  withSharedExtraMethods,
   type AssessmentAttachment,
   type AssessmentByLevel,
   type AssessmentMethodId,
   type AssessmentOption,
   type AssessmentTask,
+  type CustomAssessmentMethod,
   type StructureComponent,
   type TestItemType,
 } from "@/lib/assessmentConstructor";
@@ -46,13 +51,13 @@ const WORKFLOW_STEP_IDS = [1, 2, 3, 4] as const;
 
 type WorkflowStep = (typeof WORKFLOW_STEP_IDS)[number];
 
-const METHOD_SHORT_KEYS: Record<AssessmentMethodId, string> = {
+const METHOD_SHORT_KEYS = {
   testing: "assessment.testingShort",
   case: "assessment.caseShort",
   practical: "assessment.practicalShort",
   business_game: "assessment.gameShort",
   project: "assessment.projectShort",
-};
+} as const;
 
 type Props = {
   structure: StructureABC;
@@ -72,6 +77,7 @@ export function AssessmentConstructor({ structure, value, onChange }: Props) {
   const coverage = useMemo(() => getAssessmentCoverage(structure, byLevel), [structure, byLevel]);
   const progress = useMemo(() => getDevelopmentProgress(structure, byLevel), [structure, byLevel]);
   const block = byLevel[level];
+  const extraMethods = useMemo(() => collectExtraMethods(byLevel), [byLevel]);
   const activeTask = block.tasks.find((task) => task.id === activeTaskId) || null;
 
   useEffect(() => {
@@ -182,16 +188,58 @@ export function AssessmentConstructor({ structure, value, onChange }: Props) {
           onLevelChange={setLevel}
           components={components}
           plan={block.plan}
+          extraMethods={extraMethods}
           onToggle={(componentId, method) =>
             setLevelPlan(togglePlanMethod(block.plan, componentId, method))
           }
           onRecommend={() => setLevelPlan(recommendedPlan(components))}
+          onAddMethod={() => {
+            const extra: CustomAssessmentMethod = {
+              id: createCustomAssessmentMethodId(),
+              label: t("assessment.extraMethod", { n: extraMethods.length + 1 }),
+            };
+            commit((current) =>
+              withSharedExtraMethods(current, [...collectExtraMethods(current), extra]),
+            );
+          }}
+          onRenameMethod={(id, label) => {
+            commit((current) =>
+              withSharedExtraMethods(
+                current,
+                collectExtraMethods(current).map((item) =>
+                  item.id === id ? { ...item, label } : item,
+                ),
+              ),
+            );
+          }}
+          onRemoveMethod={(id) => {
+            commit((current) => {
+              const extras = collectExtraMethods(current).filter((item) => item.id !== id);
+              const next = { ...current };
+              FORMATION_LEVELS.forEach((item) => {
+                const blockItem = current[item];
+                const plan: typeof blockItem.plan = {};
+                Object.entries(blockItem.plan || {}).forEach(([componentId, methods]) => {
+                  const filtered = methods.filter((method) => method !== id);
+                  if (filtered.length) plan[componentId] = filtered;
+                });
+                next[item] = {
+                  ...blockItem,
+                  extraMethods: extras,
+                  plan,
+                  tasks: blockItem.tasks.filter((task) => task.method !== id),
+                };
+              });
+              return next;
+            });
+          }}
           onCopyToAll={() => {
             const plan = block.plan;
+            const extras = extraMethods;
             commit((current) => {
               const next = { ...current };
               FORMATION_LEVELS.forEach((item) => {
-                next[item] = { ...current[item], plan: { ...plan } };
+                next[item] = { ...current[item], plan: { ...plan }, extraMethods: extras };
               });
               return next;
             });
@@ -210,6 +258,7 @@ export function AssessmentConstructor({ structure, value, onChange }: Props) {
           byLevel={byLevel}
           components={components}
           tasks={block.tasks}
+          extraMethods={extraMethods}
           activeTask={activeTask}
           editorStage={editorStage}
           onEditorStage={setEditorStage}
@@ -227,6 +276,7 @@ export function AssessmentConstructor({ structure, value, onChange }: Props) {
       {workflowStep === 3 && (
         <ProgressStep
           progress={progress}
+          extraMethods={extraMethods}
           onOpen={(targetLevel, taskId) => openTask(taskId, targetLevel)}
         />
       )}
@@ -314,16 +364,24 @@ function AllocationStep({
   onLevelChange,
   components,
   plan,
+  extraMethods,
   onToggle,
   onRecommend,
+  onAddMethod,
+  onRenameMethod,
+  onRemoveMethod,
   onCopyToAll,
 }: {
   level: FormationLevel;
   onLevelChange: (level: FormationLevel) => void;
   components: StructureComponent[];
   plan: Record<string, AssessmentMethodId[]>;
+  extraMethods: CustomAssessmentMethod[];
   onToggle: (componentId: string, method: AssessmentMethodId) => void;
   onRecommend: () => void;
+  onAddMethod: () => void;
+  onRenameMethod: (id: string, label: string) => void;
+  onRemoveMethod: (id: string) => void;
   onCopyToAll: () => void;
 }) {
   const { t } = useI18n();
@@ -359,6 +417,37 @@ function AllocationStep({
                     {t(METHOD_SHORT_KEYS[method.id])}
                   </th>
                 ))}
+                {extraMethods.map((method) => (
+                  <th key={method.id} className="px-2 py-2 font-medium text-center min-w-[8.5rem]">
+                    <div className="flex items-center justify-center gap-1">
+                      <input
+                        value={method.label}
+                        onChange={(e) => onRenameMethod(method.id, e.target.value)}
+                        className="w-24 rounded border border-gray-200 bg-white px-1.5 py-0.5 text-[11px] font-medium text-gray-700 normal-case"
+                        aria-label={t("assessment.extraMethodName")}
+                      />
+                      <button
+                        type="button"
+                        className="p-0.5 rounded text-gray-400 hover:text-red-600"
+                        aria-label={t("assessment.removeMethod")}
+                        onClick={() => onRemoveMethod(method.id)}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </th>
+                ))}
+                <th className="px-2 py-2 font-medium text-center w-12">
+                  <button
+                    type="button"
+                    onClick={onAddMethod}
+                    className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-dashed border-primary/40 text-primary hover:bg-primary/10"
+                    aria-label={t("assessment.addMethod")}
+                    title={t("assessment.addMethod")}
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -390,6 +479,18 @@ function AllocationStep({
                       </td>
                     );
                   })}
+                  {extraMethods.map((method) => (
+                    <td key={method.id} className="px-2 py-2 text-center">
+                      <input
+                        type="checkbox"
+                        checked={(plan[component.id] || []).includes(method.id)}
+                        onChange={() => onToggle(component.id, method.id)}
+                        className="rounded border-gray-300 text-primary focus:ring-primary"
+                        aria-label={`${method.label} для ${component.code}`}
+                      />
+                    </td>
+                  ))}
+                  <td className="px-2 py-2" />
                 </tr>
               ))}
             </tbody>
@@ -417,6 +518,7 @@ function DevelopStep({
   byLevel,
   components,
   tasks,
+  extraMethods,
   activeTask,
   editorStage,
   onEditorStage,
@@ -429,6 +531,7 @@ function DevelopStep({
   byLevel: AssessmentByLevel;
   components: StructureComponent[];
   tasks: AssessmentTask[];
+  extraMethods: CustomAssessmentMethod[];
   activeTask: AssessmentTask | null;
   editorStage: "content" | "criteria";
   onEditorStage: (stage: "content" | "criteria") => void;
@@ -436,7 +539,9 @@ function DevelopStep({
   onChange: (patch: Partial<AssessmentTask>) => void;
   onNokChange: (value: boolean) => void;
 }) {
+  const { t } = useI18n();
   const byId = new Map(components.map((item) => [item.id, item]));
+  const customActive = Boolean(activeTask && isCustomAssessmentMethodId(activeTask.method));
 
   return (
     <div className="space-y-4">
@@ -479,7 +584,7 @@ function DevelopStep({
                     className={`w-full text-left px-3 py-2 ${active ? "bg-blue-50" : "hover:bg-gray-50"}`}
                   >
                     <div className="text-sm font-medium text-gray-900">
-                      {index + 1}. {assessmentMethodLabel(task.method)}
+                      {index + 1}. {assessmentMethodLabel(task.method, extraMethods)}
                     </div>
                     <div className="text-[11px] text-gray-500 mt-0.5">
                       {codes || "нет компонентов"} · {complete ? "готово" : "черновик"}
@@ -493,7 +598,7 @@ function DevelopStep({
             <div className="rounded-xl border border-gray-200 p-4 space-y-4">
               <div>
                 <h3 className="text-base font-semibold text-gray-900">
-                  {assessmentMethodLabel(activeTask.method)}
+                  {assessmentMethodLabel(activeTask.method, extraMethods)}
                 </h3>
                 <div className="flex flex-wrap gap-1 mt-2">
                   {activeTask.componentIds.map((id) => {
@@ -511,6 +616,25 @@ function DevelopStep({
                 </div>
                 <p className="text-xs text-gray-500 mt-2">{assessmentMethodDef(activeTask.method).short}</p>
               </div>
+              {customActive ? (
+                <div className="space-y-4">
+                  <MethodFields task={activeTask} onChange={onChange} />
+                  <TaskAttachments
+                    attachments={activeTask.attachments || []}
+                    onChange={(attachments) => onChange({ attachments })}
+                  />
+                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={activeTask.forNok}
+                      onChange={(e) => onChange({ forNok: e.target.checked })}
+                      className="rounded border-gray-300 text-primary focus:ring-primary"
+                    />
+                    Задание пригодно для НОК
+                  </label>
+                </div>
+              ) : (
+                <>
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -542,7 +666,7 @@ function DevelopStep({
               ) : (
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Критерии оценки</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t("assessment.taskCriteria")}</label>
                     <textarea
                       value={activeTask.criteria}
                       onChange={(e) => onChange({ criteria: e.target.value })}
@@ -561,6 +685,8 @@ function DevelopStep({
                     Задание пригодно для НОК
                   </label>
                 </div>
+              )}
+                </>
               )}
             </div>
           ) : (
@@ -585,13 +711,22 @@ function MethodFraction({ complete, planned }: { complete: number; planned: numb
 
 function ProgressStep({
   progress,
+  extraMethods,
   onOpen,
 }: {
   progress: ReturnType<typeof getDevelopmentProgress>;
+  extraMethods: CustomAssessmentMethod[];
   onOpen: (level: FormationLevel, taskId: string) => void;
 }) {
   const { t } = useI18n();
-  const methodsInUse = ASSESSMENT_METHODS.filter((method) => progress.byMethod[method.id].planned > 0);
+  const methodColumns = [
+    ...ASSESSMENT_METHODS.map((method) => ({
+      id: method.id as AssessmentMethodId,
+      label: t(METHOD_SHORT_KEYS[method.id]),
+    })),
+    ...extraMethods.map((method) => ({ id: method.id as AssessmentMethodId, label: method.label })),
+  ];
+  const methodsInUse = methodColumns.filter((method) => (progress.byMethod[method.id]?.planned || 0) > 0);
   const openFirst = (level: FormationLevel, methodId?: AssessmentMethodId) => {
     const row = progress.byLevel[level];
     const item = methodId ? row.incomplete.find((slot) => slot.method === methodId) : row.incomplete[0];
@@ -636,8 +771,8 @@ function ProgressStep({
           />
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-          {ASSESSMENT_METHODS.map((method) => {
-            const stat = progress.byMethod[method.id];
+          {methodColumns.map((method) => {
+            const stat = progress.byMethod[method.id] || { planned: 0, complete: 0 };
             const idle = stat.planned === 0;
             const done = !idle && stat.complete >= stat.planned;
             return (
@@ -655,7 +790,7 @@ function ProgressStep({
                 }`}
               >
                 <div className="text-[11px] uppercase tracking-wide text-gray-500">
-                  {t(METHOD_SHORT_KEYS[method.id])}
+                  {method.label}
                 </div>
                 <div className="mt-1 text-lg leading-none">
                   {idle ? (
@@ -688,9 +823,9 @@ function ProgressStep({
           <thead>
             <tr className="bg-gray-50 text-left text-[11px] uppercase tracking-wide text-gray-500">
               <th className="px-3 py-2 font-medium">Уровень</th>
-              {(methodsInUse.length ? methodsInUse : ASSESSMENT_METHODS).map((method) => (
+              {(methodsInUse.length ? methodsInUse : methodColumns).map((method) => (
                 <th key={method.id} className="px-3 py-2 font-medium text-center">
-                  {t(METHOD_SHORT_KEYS[method.id])}
+                  {method.label}
                 </th>
               ))}
               <th className="px-3 py-2 font-medium text-center">Всего</th>
@@ -699,7 +834,7 @@ function ProgressStep({
           <tbody>
             {FORMATION_LEVELS.map((level) => {
               const row = progress.byLevel[level];
-              const columns = methodsInUse.length ? methodsInUse : ASSESSMENT_METHODS;
+              const columns = methodsInUse.length ? methodsInUse : methodColumns;
               return (
                 <tr key={level} className="border-t border-gray-100">
                   <td className="px-3 py-2 font-medium text-gray-900 whitespace-nowrap">
@@ -711,7 +846,7 @@ function ProgressStep({
                     ) : null}
                   </td>
                   {columns.map((method) => {
-                    const stat = row.byMethod[method.id];
+                    const stat = row.byMethod[method.id] || { planned: 0, complete: 0 };
                     const canOpen = stat.planned > stat.complete;
                     return (
                       <td key={method.id} className="px-3 py-2 text-center">
@@ -848,6 +983,28 @@ function MethodFields({
   task: AssessmentTask;
   onChange: (patch: Partial<AssessmentTask>) => void;
 }) {
+  const { t } = useI18n();
+  if (isCustomAssessmentMethodId(task.method)) {
+    return (
+      <div className="space-y-3">
+        <Field
+          label={t("assessment.taskDescription")}
+          value={task.prompt}
+          onChange={(prompt) => onChange({ prompt })}
+          rows={4}
+          placeholder="Сформулируйте задание: что должен сделать обучающийся…"
+        />
+        <Field
+          label={t("assessment.taskCriteria")}
+          value={task.criteria}
+          onChange={(criteria) => onChange({ criteria })}
+          rows={4}
+          placeholder="Наблюдаемые признаки, порог, что считается выполненным…"
+        />
+      </div>
+    );
+  }
+
   if (task.method === "testing") {
     return (
       <div className="space-y-3">

@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, type SyntheticEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { ArrowLeft, ArrowRight, Award, FileDown, Loader2, Plus, Save, Send, X } from "lucide-react";
-import { DESCRIPTOR_CATEGORIES, FORMATION_LEVELS } from "@/lib/competenceMappers";
+import { DESCRIPTOR_CATEGORIES, FORMATION_LEVELS, formationLevelsForEducation } from "@/lib/competenceMappers";
+import { DISCIPLINE_CONTROL_I18N_KEYS } from "@/lib/disciplineControl";
 import { PROFESSIONAL_AREAS, areaDisplayCode, findProfessionalArea, formatProfessionalAreaLabel } from "@/lib/professionalAreas";
 import {
   buildStructureFromLaborFunctions,
@@ -17,9 +18,19 @@ import {
   emptyTdZuState,
   incompleteTdZuCards,
   parseTdZuState,
+  syncTdZuCardsFromStructure,
   type TdZuState,
 } from "@/lib/tdZuDistribution";
 import { WorkFunctionsSelectTree } from "@/app/components/WorkFunctionsSelectTree";
+import { ResourcesMtoEditor } from "@/app/components/ResourcesMtoEditor";
+import {
+  emptyCompetenceResources,
+  parseCompetenceResources,
+  resourcesFilled,
+  resourcesPayload,
+  trimResourceList,
+  type CompetenceResources,
+} from "@/lib/competenceResources";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { apiClient } from "@/api/client";
@@ -35,6 +46,15 @@ import {
   FORMATION_I18N_KEYS,
 } from "@/i18n/helpers";
 import { WorkingGroupDialog } from "@/app/components/WorkingGroupPanel";
+import {
+  CollaborationCursors,
+  CollaborationPresenceBar,
+  CollaborationStepDots,
+  readPresenceFragment,
+} from "@/app/components/CollaborationPresence";
+import { StepChatBadge, StepChatPanel } from "@/app/components/StepChatPanel";
+import { DevelopmentDeadlineCard, DevelopmentProgressBar } from "@/app/components/ProjectActivityPanel";
+import { useCollaborationPresence } from "@/lib/collaborationPresence";
 import { PageShell } from "@/app/components/PageShell";
 import { cn } from "@/lib/utils";
 import { StructureABCEditor } from "@/app/components/StructureABCEditor";
@@ -64,6 +84,7 @@ import {
   DescriptorEditor,
   createEmptyDescriptors,
   normalizeDescriptorMap,
+  stripBlockedExpertDescriptors,
   type DescriptorMap,
 } from "@/app/components/DescriptorEditor";
 import {
@@ -115,14 +136,6 @@ const EDUCATION_KINDS = [
 
 type EducationKind = (typeof EDUCATION_KINDS)[number] | "";
 
-const DISCIPLINE_CONTROL_I18N_KEYS: Record<string, string> = {
-  "зачёт": "discipline.credit",
-  "экзамен": "discipline.exam",
-  "защита проекта": "discipline.project",
-  "курсовая работа": "discipline.coursework",
-  "отчёт по практике": "discipline.practiceReport",
-};
-
 const PROFESSIONAL_EDUCATION_LEVELS = [
   "среднее профессиональное образование",
   "высшее образование - бакалавриат",
@@ -166,7 +179,9 @@ export function NewCompetencyPage() {
   const [hydrating, setHydrating] = useState(Boolean(editId));
   const [workingCompetence, setWorkingCompetence] = useState<Competence | null>(null);
   const [nameBarStuck, setNameBarStuck] = useState(false);
+  const [chatCounts, setChatCounts] = useState<Record<number, number>>({});
   const nameBarSentinelRef = useRef<HTMLDivElement>(null);
+  const wizardSurfaceRef = useRef<HTMLDivElement>(null);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -191,7 +206,7 @@ export function NewCompetencyPage() {
     matrixContext: null as MatrixContext | null,
     assessmentByLevel: emptyAssessmentByLevel(),
     disciplineMapping: [] as DisciplineMappingRow[],
-    resources: [] as string[],
+    resources: emptyCompetenceResources() as CompetenceResources,
     expertise: {} as ExpertiseChecklist,
     internationalMapping: emptyInternationalMapping() as InternationalMapping,
     tdZu: emptyTdZuState() as TdZuState,
@@ -210,6 +225,15 @@ export function NewCompetencyPage() {
     { number: 10, name: t("wizard.step10") },
   ];
   const lastStep = steps.length;
+  const competenceId = editId || workingCompetence?.id || null;
+  const { peers, setFragment: setPresenceFragment } = useCollaborationPresence({
+    competenceId,
+    step: currentStep,
+    enabled: isAuthenticated && Boolean(competenceId),
+  });
+  const markPresenceFragment = (event: SyntheticEvent) => {
+    setPresenceFragment(readPresenceFragment(event, `step:${currentStep}`));
+  };
 
   const educationLevels = [...PROFESSIONAL_EDUCATION_LEVELS];
   const needsFgosSearch =
@@ -294,7 +318,10 @@ export function NewCompetencyPage() {
       });
       setFormData((prev) => ({
         ...prev,
-        descriptors: normalizeDescriptorMap(result.descriptors),
+        descriptors: stripBlockedExpertDescriptors(
+          normalizeDescriptorMap(result.descriptors),
+          prev.educationLevel,
+        ),
         matrixContext: result.matrix_context,
       }));
     } catch (err: unknown) {
@@ -351,6 +378,9 @@ export function NewCompetencyPage() {
     setFormData((prev) => ({
       ...prev,
       structure,
+      tdZu: prev.tdZu.confirmed
+        ? { ...prev.tdZu, cards: syncTdZuCardsFromStructure(prev.tdZu.cards, structure) }
+        : prev.tdZu,
       disciplineMapping: syncDisciplineMapping(structure, prev.disciplineMapping),
       assessmentByLevel: syncAssessmentByLevel(structure, prev.assessmentByLevel),
     }));
@@ -418,7 +448,7 @@ export function NewCompetencyPage() {
           matrixContext: comp.matrix_context || null,
           assessmentByLevel,
           disciplineMapping,
-          resources: Array.isArray(comp.resources) ? comp.resources : [],
+          resources: parseCompetenceResources(comp.resources),
           expertise: (comp.expertise || {}) as ExpertiseChecklist,
           internationalMapping: normalizeInternationalMapping(comp.international_mapping),
           tdZu: parseTdZuState(comp.td_zu_mapping),
@@ -639,7 +669,7 @@ export function NewCompetencyPage() {
     discipline_mapping: flattenDisciplineMapping(formData.disciplineMapping),
     assessment_tools: buildAssessmentTools(),
     ed_technologies: uniqueAssessmentMethodLabels(formData.assessmentByLevel),
-    resources: formData.resources.map((item) => item.trim()).filter(Boolean),
+    resources: resourcesPayload(formData.resources),
     expertise: formData.expertise,
     international_mapping: formData.internationalMapping,
     td_zu_mapping: formData.tdZu,
@@ -718,7 +748,7 @@ export function NewCompetencyPage() {
         }
         return null;
       case 7:
-        if (formData.resources.map((item) => item.trim()).filter(Boolean).length < 3) {
+        if (!resourcesFilled(formData.resources)) {
           return t("wizard.needResources");
         }
         return null;
@@ -750,7 +780,9 @@ export function NewCompetencyPage() {
     if (stepError) return stepError;
     if (status === "на экспертизе") {
       const missingDescriptor = (["A", "B", "C"] as const).some((cat) =>
-        FORMATION_LEVELS.some((level) => !formData.descriptors[cat][level]?.trim()),
+        formationLevelsForEducation(formData.educationLevel).some(
+          (level) => !formData.descriptors[cat][level]?.trim(),
+        ),
       );
       if (missingDescriptor) {
         return t("wizard.needDescriptors");
@@ -766,6 +798,9 @@ export function NewCompetencyPage() {
 
   const persistDraft = async (stepToStore: number) => {
     const payload = { ...buildPayload("проект"), wizard_step: stepToStore };
+    if (workingCompetence?.collaboration_role === "member") {
+      delete payload.status;
+    }
     const id = editId || workingCompetence?.id || null;
     const saved = id
       ? await apiClient.updateCompetence(id, payload)
@@ -787,6 +822,9 @@ export function NewCompetencyPage() {
     setError("");
     try {
       const payload = buildPayload(status);
+      if (workingCompetence?.collaboration_role === "member" && status === "проект") {
+        delete payload.status;
+      }
       const id = editId || workingCompetence?.id || null;
       const saved = id
         ? await apiClient.updateCompetence(id, payload)
@@ -840,20 +878,11 @@ export function NewCompetencyPage() {
 
   const goToStep = async (target: number) => {
     if (target === currentStep || autoSaving || submitting) return;
-    if (target > currentStep) {
-      const validationError = validateStepsUpTo(target);
-      if (validationError) {
-        setError(validationError);
-        return;
-      }
-    }
     setError("");
     setAutoSaving(true);
     try {
       await persistDraft(target);
-      if (editId || workingCompetence?.id) {
-        setCurrentStep(target);
-      }
+      setCurrentStep(target);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : t("wizard.saveError"));
     } finally {
@@ -863,19 +892,12 @@ export function NewCompetencyPage() {
 
   const goNext = async () => {
     if (autoSaving || submitting) return;
-    const validationError = validateStep(currentStep);
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
     const next = Math.min(lastStep, currentStep + 1);
     setError("");
     setAutoSaving(true);
     try {
       await persistDraft(next);
-      if (editId || workingCompetence?.id) {
-        setCurrentStep(next);
-      }
+      setCurrentStep(next);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : t("wizard.saveError"));
     } finally {
@@ -920,7 +942,7 @@ export function NewCompetencyPage() {
   }
 
   return (
-    <PageShell className="[--competence-sticky-h:4.25rem]">
+    <PageShell className="[--competence-sticky-h:7.25rem]">
       <Link
         to="/"
         className="inline-flex items-center gap-2 text-base text-gray-600 hover:text-gray-900 mb-4"
@@ -979,6 +1001,7 @@ export function NewCompetencyPage() {
           {t("wizard.nameBar")}
         </p>
         <p className="text-base font-semibold text-gray-900 leading-snug line-clamp-2">{competenceName}</p>
+        {competenceId ? <CollaborationPresenceBar peers={peers} currentStep={currentStep} /> : null}
       </div>
       {error && (
         <p className="mb-6 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-2">{error}</p>
@@ -996,7 +1019,7 @@ export function NewCompetencyPage() {
               type="button"
               onClick={() => void goToStep(step.number)}
               title={step.name}
-              className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center font-semibold text-sm transition-colors cursor-pointer ${
+              className={`relative w-10 h-10 shrink-0 rounded-full flex items-center justify-center font-semibold text-sm transition-colors cursor-pointer ${
                 currentStep === step.number
                   ? "bg-primary text-white ring-2 ring-primary/30"
                   : currentStep > step.number
@@ -1005,6 +1028,8 @@ export function NewCompetencyPage() {
               }`}
             >
               {step.number}
+              <StepChatBadge count={chatCounts[step.number]} />
+              <CollaborationStepDots step={step.number} peers={peers} />
             </button>
             <button
               type="button"
@@ -1021,7 +1046,13 @@ export function NewCompetencyPage() {
 
       <div className="flex flex-col xl:flex-row gap-6 xl:gap-8 w-full">
         <div className="flex-1 min-w-0">
-          <div className="surface p-6 lg:p-8 w-full min-w-0">
+          <div
+            ref={wizardSurfaceRef}
+            className="surface relative p-6 lg:p-8 w-full min-w-0"
+            onFocusCapture={markPresenceFragment}
+            onPointerDownCapture={markPresenceFragment}
+          >
+            <CollaborationCursors peers={peers} containerRef={wizardSurfaceRef} />
               <div className="flex justify-between mb-6 pb-6 border-b border-gray-200">
                 <Button
                   variant="outline"
@@ -1079,12 +1110,12 @@ export function NewCompetencyPage() {
                 </div>
               </div>
               {currentStep === 1 && (
-                <div className="space-y-6">
+                <div className="space-y-6" data-presence-fragment="step:1">
                   <h2 className="text-xl font-semibold text-gray-900 mb-6">
                     {t("wizard.step1Title")}
                   </h2>
 
-                  <div>
+                  <div data-presence-fragment="title">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       {t("wizard.name")} <span className="text-red-500">{t("common.required")}</span>
                     </label>
@@ -1097,7 +1128,7 @@ export function NewCompetencyPage() {
                     />
                   </div>
 
-                  <div>
+                  <div data-presence-fragment="description">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       {t("wizard.description")} <span className="text-red-500">{t("common.required")}</span>
                     </label>
@@ -1110,7 +1141,7 @@ export function NewCompetencyPage() {
                     />
                   </div>
 
-                  <div>
+                  <div data-presence-fragment="area">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       {t("wizard.area")} <span className="text-red-500">{t("common.required")}</span>
                     </label>
@@ -1130,7 +1161,7 @@ export function NewCompetencyPage() {
                     </select>
                   </div>
 
-                  <div>
+                  <div data-presence-fragment="educationKind">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       {t("wizard.educationKind")} <span className="text-red-500">{t("common.required")}</span>
                     </label>
@@ -1176,7 +1207,7 @@ export function NewCompetencyPage() {
 
                   {(formData.educationKind === "профессиональное образование" ||
                     formData.educationKind === "дополнительное образование") && (
-                    <div>
+                    <div data-presence-fragment="educationLevel">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         {t("wizard.educationLevel")}
                         {formData.educationKind === "профессиональное образование" && (
@@ -1210,7 +1241,7 @@ export function NewCompetencyPage() {
                   )}
 
                   {showFgosPicker && (
-                    <div>
+                    <div data-presence-fragment="fgos">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         {t("wizard.fgos")} <span className="text-red-500">{t("common.required")}</span>
                       </label>
@@ -1237,7 +1268,7 @@ export function NewCompetencyPage() {
                   )}
 
                   {formData.educationKind === "профессиональное обучение" && (
-                    <div>
+                    <div data-presence-fragment="profession">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         {t("wizard.profession")}{" "}
                         <span className="text-red-500">{t("common.required")}</span>
@@ -1258,7 +1289,7 @@ export function NewCompetencyPage() {
                     </div>
                   )}
 
-                  <div>
+                  <div data-presence-fragment="competenceType">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       {t("wizard.competenceType")}
                     </label>
@@ -1277,7 +1308,7 @@ export function NewCompetencyPage() {
                     </select>
                   </div>
 
-                  <div>
+                  <div data-presence-fragment="developer">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       {t("wizard.developer")}
                     </label>
@@ -1293,14 +1324,14 @@ export function NewCompetencyPage() {
               )}
 
               {currentStep === 2 && (
-                <div className="space-y-6">
+                <div className="space-y-6" data-presence-fragment="step:2">
                   <h2 className="text-xl font-semibold text-gray-900 mb-6">
                     {t("wizard.step2Title")}
                   </h2>
 
                   {formData.competenceKind === "professional" && (
                     <>
-                      <div>
+                      <div data-presence-fragment="ps">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           {t("wizard.profStandard")} <span className="text-red-500">{t("common.required")}</span>
                         </label>
@@ -1422,7 +1453,7 @@ export function NewCompetencyPage() {
                                       <X className="w-4 h-4" />
                                     </Button>
                                   </div>
-                                  <div className="overflow-x-auto max-w-full">
+                                  <div className="overflow-x-auto max-w-full" data-presence-fragment="tf">
                                   <WorkFunctionsSelectTree
                                     standard={item}
                                     laborFunctions={items}
@@ -1532,8 +1563,8 @@ export function NewCompetencyPage() {
               )}
 
               {currentStep === 3 && (
-                <div className="space-y-6">
-                  <div>
+                <div className="space-y-6" data-presence-fragment="step:3">
+                  <div data-presence-fragment="workload">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       {t("wizard.workload")}
                     </label>
@@ -1554,8 +1585,10 @@ export function NewCompetencyPage() {
               )}
 
               {currentStep === 4 && (
+                <div data-presence-fragment="descriptors">
                 <DescriptorEditor
                   descriptors={formData.descriptors}
+                  educationLevel={formData.educationLevel}
                   matrixContext={formData.matrixContext}
                   qualificationLevelLabel={
                     selectedQl?.qualification_level_label ||
@@ -1568,10 +1601,11 @@ export function NewCompetencyPage() {
                   onApplyMatrix={applyMatrixProfile}
                   applying={applyingMatrix}
                 />
+                </div>
               )}
 
               {currentStep === 5 && (
-                <div className="space-y-4">
+                <div className="space-y-4" data-presence-fragment="discipline">
                   <div>
                     <h2 className="text-xl font-semibold text-gray-900 mb-2">
                       {t("wizard.step5Title")}
@@ -1595,6 +1629,7 @@ export function NewCompetencyPage() {
               )}
 
               {currentStep === 6 && (
+                <div data-presence-fragment="assessment">
                 <AssessmentConstructor
                   structure={formData.structure}
                   value={formData.assessmentByLevel}
@@ -1606,64 +1641,24 @@ export function NewCompetencyPage() {
                     }))
                   }
                 />
+                </div>
               )}
 
               {currentStep === 7 && (
-                <div className="space-y-6">
+                <div className="space-y-6" data-presence-fragment="resources">
                   <div>
                     <h2 className="text-xl font-semibold text-gray-900">{t("wizard.step7Title")}</h2>
                     <p className="text-sm text-gray-500 mt-1">{t("wizard.step7Lead")}</p>
                   </div>
-                  <div className="space-y-3">
-                    {formData.resources.map((item, index) => (
-                      <div key={index} className="flex gap-2">
-                        <Input
-                          value={item}
-                          placeholder={t("wizard.resourcePlaceholder")}
-                          onChange={(e) =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              resources: prev.resources.map((row, i) =>
-                                i === index ? e.target.value : row,
-                              ),
-                            }))
-                          }
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="shrink-0 text-red-600 border-gray-300 hover:bg-red-50"
-                          onClick={() =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              resources: prev.resources.filter((_, i) => i !== index),
-                            }))
-                          }
-                        >
-                          {t("wizard.removeResource")}
-                        </Button>
-                      </div>
-                    ))}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="gap-2 border-dashed"
-                      onClick={() =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          resources: [...prev.resources, ""],
-                        }))
-                      }
-                    >
-                      <Plus className="w-4 h-4" />
-                      {t("wizard.addResource")}
-                    </Button>
-                  </div>
+                  <ResourcesMtoEditor
+                    value={formData.resources}
+                    onChange={(resources) => setFormData((prev) => ({ ...prev, resources }))}
+                  />
                 </div>
               )}
 
               {currentStep === 8 && (
-                <div className="space-y-6">
+                <div className="space-y-6" data-presence-fragment="expertise">
                   <div>
                     <h2 className="text-xl font-semibold text-gray-900">{t("wizard.step8Title")}</h2>
                     <p className="text-sm text-gray-500 mt-1">{t("wizard.step8Lead")}</p>
@@ -1678,6 +1673,7 @@ export function NewCompetencyPage() {
               )}
 
               {currentStep === 9 && (
+                <div data-presence-fragment="international">
                 <InternationalMappingStep
                   value={formData.internationalMapping}
                   onChange={(internationalMapping) =>
@@ -1685,10 +1681,11 @@ export function NewCompetencyPage() {
                   }
                   onRecalculate={runInternationalMapping}
                 />
+                </div>
               )}
 
               {currentStep === lastStep && (
-                <div className="space-y-6">
+                <div className="space-y-6" data-presence-fragment="preview">
                   <div>
                     <h2 className="text-xl font-semibold text-gray-900">{t("wizard.previewTitle")}</h2>
                     <p className="text-sm text-gray-500 mt-1">
@@ -1869,8 +1866,8 @@ export function NewCompetencyPage() {
                         <h4 className="text-sm font-semibold text-gray-900">
                           {t("detail.category", { cat })} ({translateKeyed(t, DESCRIPTOR_I18N_KEYS, cat)})
                         </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                          {FORMATION_LEVELS.map((level) => {
+                        <div className={`grid grid-cols-1 gap-3 ${formationLevelsForEducation(formData.educationLevel).length > 2 ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
+                          {formationLevelsForEducation(formData.educationLevel).map((level) => {
                             const text = formData.descriptors[cat][level]?.trim();
                             return (
                               <div
@@ -2041,15 +2038,37 @@ export function NewCompetencyPage() {
                     <h3 className="text-sm font-semibold uppercase tracking-wide text-primary">
                       7. {t("wizard.sectionResources")}
                     </h3>
-                    {formData.resources.map((item) => item.trim()).filter(Boolean).length ? (
-                      <ul className="list-disc list-inside text-sm text-gray-800 space-y-1">
-                        {formData.resources
-                          .map((item) => item.trim())
-                          .filter(Boolean)
-                          .map((item, index) => (
-                            <li key={index}>{item}</li>
-                          ))}
-                      </ul>
+                    {resourcesFilled(formData.resources) ||
+                    ["A", "B", "C"].some((group) =>
+                      trimResourceList(formData.resources[group as "A" | "B" | "C"]).length,
+                    ) ? (
+                      <div className="space-y-4">
+                        {(["A", "B", "C"] as const).map((group) => {
+                          const items = trimResourceList(formData.resources[group]);
+                          const title =
+                            group === "A"
+                              ? t("wizard.resourcesForKnowledge")
+                              : group === "B"
+                                ? t("wizard.resourcesForSkills")
+                                : t("wizard.resourcesForPractice");
+                          return (
+                            <div key={group}>
+                              <h4 className="text-sm font-medium text-gray-900 mb-1">
+                                {group} — {title}
+                              </h4>
+                              {items.length ? (
+                                <ul className="list-disc list-inside text-sm text-gray-800 space-y-1">
+                                  {items.map((item, index) => (
+                                    <li key={`${group}-${index}`}>{item}</li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <p className="text-sm text-gray-500">{t("wizard.empty")}</p>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
                     ) : (
                       <p className="text-sm text-gray-500">{t("wizard.empty")}</p>
                     )}
@@ -2098,9 +2117,35 @@ export function NewCompetencyPage() {
             </div>
           </div>
 
+          <div className="xl:w-80 xl:shrink-0 w-full">
+            <div className="sticky top-[var(--competence-sticky-h)] space-y-4">
+              {competenceId && (workingCompetence?.can_view_activity || workingCompetence?.collaboration_role === "leader") ? (
+                <div className="surface-padded space-y-3">
+                  <h3 className="font-semibold text-gray-900">{t("activity.planTitle")}</h3>
+                  <DevelopmentDeadlineCard
+                    competenceId={competenceId}
+                    dueDate={workingCompetence?.development_due}
+                    progress={workingCompetence?.progress}
+                    onUpdated={setWorkingCompetence}
+                  />
+                </div>
+              ) : competenceId && workingCompetence?.progress ? (
+                <div className="surface-padded">
+                  <DevelopmentProgressBar
+                    progress={workingCompetence.progress}
+                    dueDate={workingCompetence.development_due}
+                    compact
+                  />
+                </div>
+              ) : null}
+              <StepChatPanel
+                competenceId={competenceId}
+                step={currentStep}
+                stepName={steps.find((item) => item.number === currentStep)?.name || ""}
+                onCounts={setChatCounts}
+              />
           {currentStep !== 2 ? (
-          <div className="xl:w-72 xl:shrink-0 w-full">
-            <div className="surface-padded sticky top-[var(--competence-sticky-h)]">
+            <div className="surface-padded">
               <h3 className="font-semibold text-gray-900 mb-4">{t("wizard.rulesTitle")}</h3>
               <ul className="space-y-2 text-sm text-gray-600">
                 <li className="flex gap-2">
@@ -2141,8 +2186,9 @@ export function NewCompetencyPage() {
                 </li>
               </ul>
             </div>
+              ) : null}
+            </div>
           </div>
-          ) : null}
         </div>
     </PageShell>
   );

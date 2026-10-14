@@ -11,6 +11,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useI18n } from '@/context/I18nContext';
 import { translateKeyed, API_STATUS_KEYS } from '@/i18n/helpers';
 import { formatUserName } from '@/lib/userDisplay';
+import { DevelopmentProgressBar } from '@/app/components/ProjectActivityPanel';
 
 export function MyProjectsPage() {
   const navigate = useNavigate();
@@ -75,7 +76,7 @@ export function MyProjectsPage() {
       if (accept) {
         const updated = await apiClient.acceptCompetenceInvite(invite.id);
         setMessage({ type: 'success', text: t('projects.joined') });
-        if (updated?.id) navigate(`/competency/${updated.id}`);
+        if (updated?.id) navigate(`/competency/${updated.id}/edit`);
         else loadProjects();
       } else {
         await apiClient.declineCompetenceInvite(invite.id);
@@ -164,6 +165,15 @@ export function MyProjectsPage() {
                       </span>
                     )}
                   </div>
+                  {project.progress ? (
+                    <div className="mt-2 max-w-md">
+                      <DevelopmentProgressBar
+                        progress={project.progress}
+                        dueDate={project.development_due}
+                        compact
+                      />
+                    </div>
+                  ) : null}
                 </div>
                 <div className="flex items-center gap-2">
                   <Button

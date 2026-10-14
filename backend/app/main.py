@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.responses import HTMLResponse, Response
 from pydantic import BaseModel
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Union
 import os
 import datetime
 import re
@@ -27,7 +27,14 @@ from .db import SessionLocal, Base, engine
 from .db.raw_models import StandardRaw, GeneralizedFunctionRaw, ParticularFunctionRaw
 from .db.qualifications_models import Qualification
 from .db.assessment_tools_models import AssessmentTool
-from .db.competence_models import Competence, CompetenceStatus, CompetenceReviewer, CompetenceCollaborator
+from .db.competence_models import (
+    Competence,
+    CompetenceStatus,
+    CompetenceReviewer,
+    CompetenceCollaborator,
+    CompetenceStepChat,
+    CompetenceActivityLog,
+)
 from .db.feedback_models import Feedback
 from .db.user_models import User
 from .db.registration_models import Registration
@@ -98,6 +105,7 @@ from .db.schema import (
     ensure_users_columns,
     ensure_assessment_tools_columns,
     ensure_competence_public_code_column,
+    ensure_competence_activity_columns,
 )
 from .level_matrix import load_matrix, load_structured_matrix, matrix_summary, DOCX_PATH
 from .reference_data import (
@@ -125,6 +133,24 @@ from .prof_training_registry import (
     list_prof_training_professions,
     prof_training_sections,
 )
+from .presence import (
+    drop_presence,
+    list_presence,
+    presence_color,
+    sanitize_step,
+    upsert_presence,
+)
+from .activity import (
+    JSON_COLUMNS,
+    action_weight,
+    apply_field_values,
+    before_values,
+    change_field_labels,
+    compute_progress,
+    diff_snapshots,
+    public_changes,
+    snapshot_competence,
+)
 
 Base.metadata.create_all(bind=engine)
 for col in ensure_ps_status_columns():
@@ -140,6 +166,8 @@ for col in ensure_users_columns():
 for col in ensure_assessment_tools_columns():
     print(f"DB migration: added column {col}")
 for col in ensure_competence_public_code_column():
+    print(f"DB migration: added column {col}")
+for col in ensure_competence_activity_columns():
     print(f"DB migration: added column {col}")
 
 
@@ -300,7 +328,7 @@ class CompetenceCreate(BaseModel):
     discipline_mapping: Optional[List[Dict]] = []
     ed_technologies: Optional[List[str]] = []
     assessment_tools: Optional[List[Dict]] = None
-    resources: Optional[List[str]] = []
+    resources: Optional[Union[List[str], Dict[str, Any]]] = []
     expertise: Optional[Dict[str, Any]] = None
     international_mapping: Optional[Dict[str, Any]] = None
     td_zu_mapping: Optional[Dict[str, Any]] = None
@@ -335,7 +363,7 @@ class CompetenceUpdate(BaseModel):
     discipline_mapping: Optional[List[Dict]] = None
     ed_technologies: Optional[List[str]] = None
     assessment_tools: Optional[List[Dict]] = None
-    resources: Optional[List[str]] = None
+    resources: Optional[Union[List[str], Dict[str, Any]]] = None
     developer: Optional[str] = None
     validator: Optional[str] = None
     validation_notes: Optional[str] = None
@@ -427,6 +455,20 @@ class ReviewerAssign(BaseModel):
 class CollaboratorInvite(BaseModel):
     email: Optional[str] = None
     user_id: Optional[int] = None
+
+
+class CompetencePresenceUpdate(BaseModel):
+    step: Optional[int] = None
+    fragment: Optional[str] = None
+    online: bool = True
+
+
+class CompetenceStepChatCreate(BaseModel):
+    text: str
+
+
+class CompetenceDevelopmentUpdate(BaseModel):
+    due_date: Optional[str] = None
 
 
 USER_ROLES = ("user", "expert", "moderator", "admin")
@@ -3022,13 +3064,16 @@ def _collaborator_link(session, competence_id: int, user_id: int) -> CompetenceC
     )
 
 
+_GROUP_MEMBER_STATUSES = (COLLABORATOR_ACCEPTED, COLLABORATOR_PENDING)
+
+
 def _accepted_collaborator_ids(session, user_id: int) -> list[int]:
     return [
         row[0]
         for row in session.query(CompetenceCollaborator.competence_id)
         .filter(
             CompetenceCollaborator.user_id == user_id,
-            CompetenceCollaborator.status == COLLABORATOR_ACCEPTED,
+            CompetenceCollaborator.status.in_(_GROUP_MEMBER_STATUSES),
         )
         .all()
     ]
@@ -3039,8 +3084,10 @@ def _is_group_leader(comp: Competence, user) -> bool:
 
 
 def _is_accepted_collaborator(session, competence_id: int, user_id: int) -> bool:
+    if not user_id:
+        return False
     link = _collaborator_link(session, competence_id, user_id)
-    return bool(link and link.status == COLLABORATOR_ACCEPTED)
+    return bool(link and link.status in _GROUP_MEMBER_STATUSES)
 
 
 def _user_display_name(user: User | None) -> str:
@@ -3105,6 +3152,45 @@ def _collaboration_role(session, user, comp: Competence) -> str | None:
     if _is_accepted_collaborator(session, comp.id, getattr(user, "id", None)):
         return "member"
     return None
+
+
+def _can_chat_competence(session, user, comp: Competence) -> bool:
+    if user_role(user) == "admin":
+        return True
+    return bool(
+        _is_group_leader(comp, user)
+        or _is_accepted_collaborator(session, comp.id, getattr(user, "id", None))
+    )
+
+
+def _can_view_activity(session, user, comp: Competence) -> bool:
+    return user_role(user) == "admin" or _is_group_leader(comp, user)
+
+
+def _log_activity(
+    session,
+    *,
+    competence_id: int,
+    user_id: int | None,
+    action: str,
+    step: int | None = None,
+    fields: list | None = None,
+    changes: list | None = None,
+    summary: str | None = None,
+    revert_of_id: int | None = None,
+) -> None:
+    session.add(
+        CompetenceActivityLog(
+            competence_id=competence_id,
+            user_id=user_id,
+            action=action,
+            step=step,
+            fields=fields or [],
+            changes=changes or [],
+            summary=(summary or "")[:500] or None,
+            revert_of_id=revert_of_id,
+        )
+    )
 
 
 def _can_view_competence(session, user, comp: Competence) -> bool:
@@ -3184,11 +3270,14 @@ def serialize_competence(
         "user_id": comp.user_id,
         "td_zu_mapping": raw.get("td_zu_mapping") or {},
         "wizard_step": raw.get("wizard_step") or None,
+        "development_due": raw.get("development_due") or None,
+        "progress": compute_progress(comp),
         "reviewers": reviewers if reviewers is not None else [],
         "collaborators": collaborators if collaborators is not None else [],
         "collaboration_role": collaboration_role,
         "can_invite": can_invite,
         "can_edit": can_edit,
+        "can_view_activity": False,
         "description": raw.get("description", ""),
         "industry": raw.get("industry", ""),
         "professional_area_code": _competence_area_code(comp),
@@ -3221,7 +3310,7 @@ def _serialize_competence_for_user(
     status = comp.status
     can_invite = (admin or role == "leader") and status != CompetenceStatus.APPROVED
     can_edit = admin or role == "leader" or (role == "member" and status == CompetenceStatus.DRAFT)
-    return serialize_competence(
+    payload = serialize_competence(
         comp,
         include_matrix=include_matrix,
         reviewers=reviewers,
@@ -3230,6 +3319,8 @@ def _serialize_competence_for_user(
         can_invite=can_invite,
         can_edit=can_edit,
     )
+    payload["can_view_activity"] = admin or role == "leader"
+    return payload
 
 
 @app.get("/competences/public")
@@ -3481,6 +3572,14 @@ async def create_competence(data: CompetenceCreate, current_user: User = Depends
             new_comp.public_code = f"RUS-PK-{int(new_comp.id):04d}"
             session.commit()
             session.refresh(new_comp)
+        _log_activity(
+            session,
+            competence_id=new_comp.id,
+            user_id=current_user.id,
+            action="create",
+            summary=new_comp.name,
+        )
+        session.commit()
         return _serialize_competence_for_user(session, new_comp, current_user, include_matrix=True)
     except HTTPException:
         session.rollback()
@@ -3748,23 +3847,29 @@ async def invite_competence_collaborator(
         existing = _collaborator_link(session, comp.id, target.id)
         if existing and existing.status == COLLABORATOR_ACCEPTED:
             raise HTTPException(400, "Пользователь уже в рабочей группе")
-        if existing and existing.status == COLLABORATOR_PENDING:
+        now = datetime.datetime.utcnow()
+        if existing:
+            existing.status = COLLABORATOR_ACCEPTED
+            existing.invited_by_id = current_user.id
+            existing.invited_at = now
+            existing.responded_at = now
             link = existing
         else:
-            if existing:
-                existing.status = COLLABORATOR_PENDING
-                existing.invited_by_id = current_user.id
-                existing.invited_at = datetime.datetime.utcnow()
-                existing.responded_at = None
-                link = existing
-            else:
-                link = CompetenceCollaborator(
-                    competence_id=comp.id,
-                    user_id=target.id,
-                    invited_by_id=current_user.id,
-                    status=COLLABORATOR_PENDING,
-                )
-                session.add(link)
+            link = CompetenceCollaborator(
+                competence_id=comp.id,
+                user_id=target.id,
+                invited_by_id=current_user.id,
+                status=COLLABORATOR_ACCEPTED,
+                responded_at=now,
+            )
+            session.add(link)
+        _log_activity(
+            session,
+            competence_id=comp.id,
+            user_id=current_user.id,
+            action="invite",
+            summary=_user_display_name(target) or target.email,
+        )
         session.commit()
         session.refresh(link)
         projects_url = f"{frontend_base_url(request).rstrip('/')}/my-projects"
@@ -3806,10 +3911,443 @@ async def remove_competence_collaborator(
         link = _collaborator_link(session, comp.id, user_id)
         if not link:
             raise HTTPException(404, "Участник не найден")
+        removed = session.query(User).filter(User.id == user_id).first()
+        _log_activity(
+            session,
+            competence_id=comp.id,
+            user_id=current_user.id,
+            action="remove",
+            summary=_user_display_name(removed) or (removed.email if removed else str(user_id)),
+        )
         session.delete(link)
         session.commit()
         if is_self and not is_leader:
             return {"status": "ok"}
+        reviewers = _reviewers_map(session, [comp.id]).get(comp.id, [])
+        return _serialize_competence_for_user(
+            session, comp, current_user, include_matrix=False, reviewers=reviewers
+        )
+    except HTTPException:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+
+def _presence_users_payload(session, competence_id: int, current_user_id: int) -> list[dict]:
+    entries = list_presence(competence_id)
+    if not entries:
+        return []
+    users = session.query(User).filter(User.id.in_([row.user_id for row in entries])).all()
+    by_id = {row.id: row for row in users}
+    payload = []
+    for entry in entries:
+        person = by_id.get(entry.user_id)
+        if not person:
+            continue
+        payload.append(
+            {
+                "user_id": person.id,
+                "name": _user_display_name(person) or person.email,
+                "email": person.email,
+                "color": presence_color(person.id),
+                "step": entry.step,
+                "fragment": entry.fragment,
+                "self": person.id == current_user_id,
+            }
+        )
+    payload.sort(key=lambda row: (not row["self"], row["name"].lower()))
+    return payload
+
+
+@app.post("/competences/{comp_id}/presence")
+async def update_competence_presence(
+    comp_id: int,
+    data: CompetencePresenceUpdate,
+    current_user: User = Depends(get_current_user),
+):
+    session = SessionLocal()
+    try:
+        comp = session.query(Competence).filter(Competence.id == comp_id).first()
+        if not comp:
+            raise HTTPException(404, "Компетенция не найдена")
+        if not _can_view_competence(session, current_user, comp):
+            raise HTTPException(403, "Доступ запрещён")
+        if data.online:
+            upsert_presence(comp.id, current_user.id, data.step or 1, data.fragment)
+        else:
+            drop_presence(comp.id, current_user.id)
+        return {"users": _presence_users_payload(session, comp.id, current_user.id)}
+    finally:
+        session.close()
+
+
+@app.get("/competences/{comp_id}/presence")
+async def get_competence_presence(comp_id: int, current_user: User = Depends(get_current_user)):
+    session = SessionLocal()
+    try:
+        comp = session.query(Competence).filter(Competence.id == comp_id).first()
+        if not comp:
+            raise HTTPException(404, "Компетенция не найдена")
+        if not _can_view_competence(session, current_user, comp):
+            raise HTTPException(403, "Доступ запрещён")
+        return {"users": _presence_users_payload(session, comp.id, current_user.id)}
+    finally:
+        session.close()
+
+
+CHAT_TEXT_MAX = 2000
+
+
+def _serialize_step_chat(row: CompetenceStepChat, current_user_id: int) -> dict:
+    person = row.user
+    name = _user_display_name(person) if person else ""
+    return {
+        "id": row.id,
+        "step": row.step,
+        "text": row.text,
+        "created_at": row.created_at.isoformat() if row.created_at else None,
+        "self": row.user_id == current_user_id,
+        "user": {
+            "id": row.user_id,
+            "name": name or (person.email if person else ""),
+            "email": person.email if person else "",
+            "color": presence_color(row.user_id),
+        },
+    }
+
+
+def _load_chat_competence(session, comp_id: int, current_user: User) -> Competence:
+    comp = session.query(Competence).filter(Competence.id == comp_id).first()
+    if not comp:
+        raise HTTPException(404, "Компетенция не найдена")
+    if not _can_chat_competence(session, current_user, comp):
+        raise HTTPException(403, "Обсуждение шага доступно только участникам рабочей группы")
+    return comp
+
+
+@app.get("/competences/{comp_id}/chat/summary")
+async def get_competence_chat_summary(comp_id: int, current_user: User = Depends(get_current_user)):
+    session = SessionLocal()
+    try:
+        _load_chat_competence(session, comp_id, current_user)
+        rows = (
+            session.query(CompetenceStepChat.step, func.count(CompetenceStepChat.id))
+            .filter(CompetenceStepChat.competence_id == comp_id)
+            .group_by(CompetenceStepChat.step)
+            .all()
+        )
+        counts = {int(step): int(count) for step, count in rows}
+        return {"counts": counts}
+    finally:
+        session.close()
+
+
+@app.get("/competences/{comp_id}/chat/{step}")
+async def list_competence_step_chat(
+    comp_id: int,
+    step: int,
+    current_user: User = Depends(get_current_user),
+):
+    session = SessionLocal()
+    try:
+        _load_chat_competence(session, comp_id, current_user)
+        step_n = sanitize_step(step)
+        rows = (
+            session.query(CompetenceStepChat)
+            .options(joinedload(CompetenceStepChat.user))
+            .filter(
+                CompetenceStepChat.competence_id == comp_id,
+                CompetenceStepChat.step == step_n,
+            )
+            .order_by(CompetenceStepChat.created_at.asc(), CompetenceStepChat.id.asc())
+            .limit(200)
+            .all()
+        )
+        return {"step": step_n, "messages": [_serialize_step_chat(row, current_user.id) for row in rows]}
+    finally:
+        session.close()
+
+
+@app.post("/competences/{comp_id}/chat/{step}")
+async def create_competence_step_chat(
+    comp_id: int,
+    step: int,
+    data: CompetenceStepChatCreate,
+    current_user: User = Depends(get_current_user),
+):
+    session = SessionLocal()
+    try:
+        _load_chat_competence(session, comp_id, current_user)
+        text = "\n".join(line.rstrip() for line in (data.text or "").splitlines()).strip()
+        if not text:
+            raise HTTPException(400, "Введите текст сообщения")
+        if len(text) > CHAT_TEXT_MAX:
+            raise HTTPException(400, f"Сообщение слишком длинное (максимум {CHAT_TEXT_MAX} символов)")
+        row = CompetenceStepChat(
+            competence_id=comp_id,
+            step=sanitize_step(step),
+            user_id=current_user.id,
+            text=text,
+        )
+        session.add(row)
+        _log_activity(
+            session,
+            competence_id=comp_id,
+            user_id=current_user.id,
+            action="chat",
+            step=sanitize_step(step),
+        )
+        session.commit()
+        session.refresh(row)
+        if not row.user:
+            row.user = current_user
+        return _serialize_step_chat(row, current_user.id)
+    except HTTPException:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+
+def _parse_due_date(value: Optional[str]) -> Optional[str]:
+    text = (value or "").strip()
+    if not text:
+        return None
+    try:
+        datetime.date.fromisoformat(text[:10])
+    except ValueError:
+        raise HTTPException(400, "Укажите срок в формате ГГГГ-ММ-ДД")
+    return text[:10]
+
+
+def _activity_event_payload(row: CompetenceActivityLog) -> dict:
+    person = row.user
+    changes = row.changes or []
+    visible = public_changes(changes)
+    fields = change_field_labels(visible) or ([] if changes else (row.fields or []))
+    reversible = row.action in ("edit", "status", "deadline") and bool(changes) and not row.reverted_at
+    return {
+        "id": row.id,
+        "action": row.action,
+        "step": row.step,
+        "fields": fields,
+        "changes": visible,
+        "summary": row.summary,
+        "created_at": row.created_at.isoformat() if row.created_at else None,
+        "reverted": bool(row.reverted_at),
+        "can_revert": reversible,
+        "user": {
+            "id": row.user_id,
+            "name": _user_display_name(person) or (person.email if person else ""),
+            "email": person.email if person else "",
+            "color": presence_color(row.user_id or 0),
+        },
+    }
+
+
+@app.get("/competences/{comp_id}/activity")
+async def get_competence_activity(comp_id: int, current_user: User = Depends(get_current_user)):
+    session = SessionLocal()
+    try:
+        comp = session.query(Competence).filter(Competence.id == comp_id).first()
+        if not comp:
+            raise HTTPException(404, "Компетенция не найдена")
+        if not _can_view_activity(session, current_user, comp):
+            raise HTTPException(403, "Журнал доступен руководителю рабочей группы и администратору")
+        events = (
+            session.query(CompetenceActivityLog)
+            .options(joinedload(CompetenceActivityLog.user))
+            .filter(CompetenceActivityLog.competence_id == comp.id)
+            .order_by(CompetenceActivityLog.created_at.desc(), CompetenceActivityLog.id.desc())
+            .limit(300)
+            .all()
+        )
+        scores: dict[int, dict] = {}
+        for row in events:
+            if not row.user_id:
+                continue
+            bucket = scores.setdefault(
+                row.user_id,
+                {"user_id": row.user_id, "score": 0, "edits": 0, "messages": 0, "last_at": None, "steps": set()},
+            )
+            bucket["score"] += action_weight(row.action)
+            if row.action in ("edit", "create", "status"):
+                bucket["edits"] += 1
+            if row.action == "chat":
+                bucket["messages"] += 1
+            if row.step:
+                bucket["steps"].add(int(row.step))
+            stamp = row.created_at.isoformat() if row.created_at else None
+            if stamp and (not bucket["last_at"] or stamp > bucket["last_at"]):
+                bucket["last_at"] = stamp
+        members = _collaborators_payload(session, comp)
+        total = sum(item["score"] for item in scores.values()) or 0
+        contributions = []
+        for member in members:
+            uid = member.get("user_id")
+            if not uid:
+                continue
+            bucket = scores.pop(uid, None) or {
+                "user_id": uid,
+                "score": 0,
+                "edits": 0,
+                "messages": 0,
+                "last_at": None,
+                "steps": set(),
+            }
+            person = member.get("user") or {}
+            name = " ".join(
+                part
+                for part in (
+                    person.get("last_name"),
+                    person.get("first_name"),
+                    person.get("middle_name"),
+                )
+                if part
+            ) or person.get("email") or ""
+            contributions.append(
+                {
+                    "user_id": uid,
+                    "role": member.get("role"),
+                    "name": name,
+                    "email": person.get("email") or "",
+                    "color": presence_color(uid),
+                    "score": bucket["score"],
+                    "share": round(100 * bucket["score"] / total, 1) if total else 0,
+                    "edits": bucket["edits"],
+                    "messages": bucket["messages"],
+                    "steps": sorted(bucket["steps"]),
+                    "last_at": bucket["last_at"],
+                }
+            )
+        for uid, bucket in scores.items():
+            user_row = session.query(User).filter(User.id == uid).first()
+            contributions.append(
+                {
+                    "user_id": uid,
+                    "role": "member",
+                    "name": _user_display_name(user_row) or (user_row.email if user_row else str(uid)),
+                    "email": user_row.email if user_row else "",
+                    "color": presence_color(uid),
+                    "score": bucket["score"],
+                    "share": round(100 * bucket["score"] / total, 1) if total else 0,
+                    "edits": bucket["edits"],
+                    "messages": bucket["messages"],
+                    "steps": sorted(bucket["steps"]),
+                    "last_at": bucket["last_at"],
+                }
+            )
+        contributions.sort(key=lambda row: (-row["score"], row["name"].lower()))
+        due = (comp.raw_data or {}).get("development_due") or None
+        return {
+            "due_date": due,
+            "progress": compute_progress(comp),
+            "contributions": contributions,
+            "events": [_activity_event_payload(row) for row in events],
+        }
+    finally:
+        session.close()
+
+
+@app.post("/competences/{comp_id}/activity/{event_id}/revert")
+async def revert_competence_activity(
+    comp_id: int,
+    event_id: int,
+    current_user: User = Depends(get_current_user),
+):
+    session = SessionLocal()
+    try:
+        comp = session.query(Competence).filter(Competence.id == comp_id).first()
+        if not comp:
+            raise HTTPException(404, "Компетенция не найдена")
+        if not _can_view_activity(session, current_user, comp):
+            raise HTTPException(403, "Отменить изменение может руководитель рабочей группы или администратор")
+        event = (
+            session.query(CompetenceActivityLog)
+            .filter(
+                CompetenceActivityLog.id == event_id,
+                CompetenceActivityLog.competence_id == comp.id,
+            )
+            .first()
+        )
+        if not event:
+            raise HTTPException(404, "Запись журнала не найдена")
+        if event.reverted_at:
+            raise HTTPException(400, "Это изменение уже отменено")
+        if event.action not in ("edit", "status", "deadline") or not event.changes:
+            raise HTTPException(400, "Эту запись нельзя отменить: нет сохранённых значений «до»")
+        values = before_values(event.changes)
+        if not values:
+            raise HTTPException(400, "Нет данных для восстановления")
+        before = snapshot_competence(comp)
+        apply_field_values(comp, values)
+        flag_modified(comp, "raw_data")
+        for column in JSON_COLUMNS:
+            if column in values:
+                flag_modified(comp, column)
+        after = snapshot_competence(comp)
+        restore_changes = diff_snapshots(before, after)
+        event.reverted_at = datetime.datetime.utcnow()
+        event.reverted_by_id = current_user.id
+        _log_activity(
+            session,
+            competence_id=comp.id,
+            user_id=current_user.id,
+            action="revert",
+            step=event.step,
+            fields=change_field_labels(restore_changes) or (event.fields or []),
+            changes=restore_changes,
+            summary=str(event.id),
+            revert_of_id=event.id,
+        )
+        session.commit()
+        session.refresh(comp)
+        reviewers = _reviewers_map(session, [comp.id]).get(comp.id, [])
+        return _serialize_competence_for_user(
+            session, comp, current_user, include_matrix=False, reviewers=reviewers
+        )
+    except HTTPException:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+
+@app.put("/competences/{comp_id}/development")
+async def update_competence_development(
+    comp_id: int,
+    data: CompetenceDevelopmentUpdate,
+    current_user: User = Depends(get_current_user),
+):
+    session = SessionLocal()
+    try:
+        comp = session.query(Competence).filter(Competence.id == comp_id).first()
+        if not comp:
+            raise HTTPException(404, "Компетенция не найдена")
+        if not _can_view_activity(session, current_user, comp):
+            raise HTTPException(403, "Срок разработки задаёт руководитель рабочей группы или администратор")
+        due = _parse_due_date(data.due_date)
+        before = snapshot_competence(comp)
+        raw = dict(comp.raw_data or {})
+        if due:
+            raw["development_due"] = due
+        else:
+            raw.pop("development_due", None)
+        comp.raw_data = raw
+        flag_modified(comp, "raw_data")
+        changes = diff_snapshots(before, snapshot_competence(comp))
+        _log_activity(
+            session,
+            competence_id=comp.id,
+            user_id=current_user.id,
+            action="deadline",
+            fields=change_field_labels(changes),
+            changes=changes,
+            summary=due or "",
+        )
+        session.commit()
+        session.refresh(comp)
         reviewers = _reviewers_map(session, [comp.id]).get(comp.id, [])
         return _serialize_competence_for_user(
             session, comp, current_user, include_matrix=False, reviewers=reviewers
@@ -3831,18 +4369,23 @@ async def update_competence(comp_id: int, data: CompetenceUpdate, current_user: 
         if not _can_view_competence(session, current_user, comp):
             raise HTTPException(403, "Доступ запрещён")
 
+        before_snapshot = snapshot_competence(comp)
         update_data = data.dict(exclude_unset=True)
         incoming_keys = set(update_data.keys())
         role = user_role(current_user)
         assigned = _is_assigned_reviewer(session, comp.id, current_user.id)
         is_owner = _is_group_leader(comp, current_user)
         is_collab = _is_accepted_collaborator(session, comp.id, current_user.id)
-        if "status" in update_data and update_data["status"]:
+        changing_status = bool("status" in update_data and update_data["status"])
+        if changing_status:
             try:
                 target_status = CompetenceStatus(update_data["status"])
             except ValueError:
                 raise HTTPException(400, "Некорректный статус")
-            if role == "admin":
+            if target_status == comp.status:
+                update_data.pop("status", None)
+                changing_status = False
+            elif role == "admin":
                 pass
             elif role == "expert":
                 if not assigned:
@@ -3858,11 +4401,12 @@ async def update_competence(comp_id: int, data: CompetenceUpdate, current_user: 
                     raise HTTPException(403, "Доступ запрещён")
                 if target_status not in (CompetenceStatus.DRAFT, CompetenceStatus.REVIEW):
                     raise HTTPException(403, "Недостаточно прав для утверждения компетенции")
-        elif role not in ("admin",) and not is_owner and not assigned:
-            if not is_collab:
-                raise HTTPException(403, "Доступ запрещён")
-            if comp.status != CompetenceStatus.DRAFT:
-                raise HTTPException(403, "Участник рабочей группы может править только черновик")
+        if not changing_status:
+            if role not in ("admin",) and not is_owner and not assigned:
+                if not is_collab:
+                    raise HTTPException(403, "Доступ запрещён")
+                if comp.status != CompetenceStatus.DRAFT:
+                    raise HTTPException(403, "Участник рабочей группы может править только черновик")
         raw_fields: dict[str, Any] = {}
         for key in (
             "description",
@@ -3967,6 +4511,20 @@ async def update_competence(comp_id: int, data: CompetenceUpdate, current_user: 
             if validation_errors:
                 raise HTTPException(400, detail="; ".join(validation_errors))
 
+        changes = diff_snapshots(before_snapshot, snapshot_competence(comp))
+        if changes:
+            labels = change_field_labels(changes)
+            action = "status" if labels == ["status"] else "edit"
+            raw_step = (comp.raw_data or {}).get("wizard_step")
+            _log_activity(
+                session,
+                competence_id=comp.id,
+                user_id=current_user.id,
+                action=action,
+                step=int(raw_step) if raw_step else None,
+                fields=labels,
+                changes=changes,
+            )
         session.commit()
         session.refresh(comp)
         reviewers = _reviewers_map(session, [comp.id]).get(comp.id, [])

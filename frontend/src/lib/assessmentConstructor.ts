@@ -7,12 +7,29 @@ import {
 } from "@/lib/competenceMappers";
 import type { StructureABC } from "@/lib/structureFromLaborFunctions";
 
-export type AssessmentMethodId =
+export type BuiltinAssessmentMethodId =
   | "testing"
   | "practical"
   | "case"
   | "business_game"
   | "project";
+
+export type AssessmentMethodId = BuiltinAssessmentMethodId | (string & {});
+
+export type CustomAssessmentMethod = {
+  id: string;
+  label: string;
+};
+
+export const CUSTOM_METHOD_PREFIX = "custom:";
+
+export function isCustomAssessmentMethodId(id: string): boolean {
+  return id.startsWith(CUSTOM_METHOD_PREFIX);
+}
+
+export function createCustomAssessmentMethodId(): string {
+  return `${CUSTOM_METHOD_PREFIX}${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
 
 export type TestItemType = "single" | "multiple" | "match" | "sequence" | "open";
 
@@ -62,6 +79,7 @@ export type AssessmentLevelBlock = {
   tasks: AssessmentTask[];
   forNok: boolean;
   plan: ComponentMethodPlan;
+  extraMethods: CustomAssessmentMethod[];
 };
 
 export type PlanSlot = {
@@ -154,18 +172,41 @@ const LEGACY_TYPE_TO_METHOD: Record<string, AssessmentMethodId> = {
   project: "project",
 };
 
+const CUSTOM_METHOD_DEF: Omit<AssessmentMethodDef, "id" | "label"> = {
+  miller: "Показывает",
+  recommended: ["A", "B", "C"],
+  suitable: ["A", "B", "C"],
+  short: "Свободное задание: описание и критерии оценки.",
+};
+
 export function assessmentMethodDef(id: AssessmentMethodId): AssessmentMethodDef {
-  return METHOD_BY_ID.get(id) || ASSESSMENT_METHODS[0];
+  const found = METHOD_BY_ID.get(id);
+  if (found) return found;
+  if (isCustomAssessmentMethodId(id)) {
+    return {
+      id,
+      label: "Дополнительный метод",
+      ...CUSTOM_METHOD_DEF,
+    };
+  }
+  return ASSESSMENT_METHODS[0];
 }
 
-export function assessmentMethodLabel(id: AssessmentMethodId): string {
+export function assessmentMethodLabel(
+  id: AssessmentMethodId,
+  extras: CustomAssessmentMethod[] = [],
+): string {
+  if (isCustomAssessmentMethodId(id)) {
+    return extras.find((item) => item.id === id)?.label?.trim() || "Дополнительный метод";
+  }
   return assessmentMethodDef(id).label;
 }
 
 export function resolveAssessmentMethod(value: unknown): AssessmentMethodId | null {
   const raw = String(value || "").trim();
   if (!raw) return null;
-  if (METHOD_BY_ID.has(raw as AssessmentMethodId)) return raw as AssessmentMethodId;
+  if (METHOD_BY_ID.has(raw as BuiltinAssessmentMethodId)) return raw as BuiltinAssessmentMethodId;
+  if (isCustomAssessmentMethodId(raw)) return raw;
   const byType = LEGACY_TYPE_TO_METHOD[raw.toLowerCase()];
   if (byType) return byType;
   return METHOD_BY_LABEL.get(raw.toLowerCase())?.id ?? null;
@@ -223,7 +264,7 @@ export function emptyAssessmentTask(
 }
 
 export function emptyAssessmentLevelBlock(): AssessmentLevelBlock {
-  return { tasks: [], forNok: false, plan: {} };
+  return { tasks: [], forNok: false, plan: {}, extraMethods: [] };
 }
 
 export function emptyAssessmentByLevel(): AssessmentByLevel {
@@ -232,6 +273,55 @@ export function emptyAssessmentByLevel(): AssessmentByLevel {
     продвинутый: emptyAssessmentLevelBlock(),
     экспертный: emptyAssessmentLevelBlock(),
   };
+}
+
+export function normalizeExtraMethods(raw: unknown): CustomAssessmentMethod[] {
+  if (!Array.isArray(raw)) return [];
+  const items: CustomAssessmentMethod[] = [];
+  const seen = new Set<string>();
+  raw.forEach((entry, index) => {
+    if (!entry || typeof entry !== "object") return;
+    const row = entry as Record<string, unknown>;
+    const id = asString(row.id) || createCustomAssessmentMethodId();
+    if (!isCustomAssessmentMethodId(id) || seen.has(id)) return;
+    seen.add(id);
+    const label = asString(row.label || row.name || row.title) || `Метод ${index + 1}`;
+    items.push({ id, label });
+  });
+  return items;
+}
+
+export function collectExtraMethods(byLevel: AssessmentByLevel): CustomAssessmentMethod[] {
+  const map = new Map<string, CustomAssessmentMethod>();
+  for (const level of FORMATION_LEVELS) {
+    (byLevel[level]?.extraMethods || []).forEach((item) => {
+      if (item?.id && !map.has(item.id)) map.set(item.id, item);
+    });
+    (byLevel[level]?.tasks || []).forEach((task) => {
+      if (isCustomAssessmentMethodId(task.method) && !map.has(task.method)) {
+        map.set(task.method, { id: task.method, label: "Дополнительный метод" });
+      }
+    });
+    Object.values(byLevel[level]?.plan || {}).forEach((methods) => {
+      methods.forEach((method) => {
+        if (isCustomAssessmentMethodId(method) && !map.has(method)) {
+          map.set(method, { id: method, label: "Дополнительный метод" });
+        }
+      });
+    });
+  }
+  return [...map.values()];
+}
+
+export function withSharedExtraMethods(
+  byLevel: AssessmentByLevel,
+  extraMethods: CustomAssessmentMethod[],
+): AssessmentByLevel {
+  const next = { ...byLevel };
+  FORMATION_LEVELS.forEach((level) => {
+    next[level] = { ...next[level], extraMethods };
+  });
+  return next;
 }
 
 function asString(value: unknown): string {
@@ -368,9 +458,11 @@ export function normalizeAssessmentByLevel(raw: unknown): AssessmentByLevel {
       tasks,
       forNok: Boolean(row.forNok ?? row.for_nok),
       plan: normalizeComponentPlan(row.plan, tasks),
+      extraMethods: normalizeExtraMethods(row.extraMethods || row.extra_methods),
     };
   }
-  return next;
+  const extras = collectExtraMethods(next);
+  return extras.length ? withSharedExtraMethods(next, extras) : next;
 }
 
 export function listStructureComponents(structure: StructureABC): StructureComponent[] {
@@ -415,7 +507,7 @@ export function isAssessmentTaskComplete(task: AssessmentTask): boolean {
     case "project":
       return Boolean(task.context.trim() && task.product.trim() && task.prompt.trim());
     default:
-      return Boolean(task.prompt.trim());
+      return Boolean(task.prompt.trim() && task.criteria.trim());
   }
 }
 
@@ -606,7 +698,7 @@ export function syncTasksFromPlan(
   return { ...block, tasks };
 }
 
-export type MethodCounts = Record<AssessmentMethodId, { planned: number; complete: number }>;
+export type MethodCounts = Record<string, { planned: number; complete: number }>;
 
 export function emptyMethodCounts(): MethodCounts {
   return {
@@ -616,6 +708,15 @@ export function emptyMethodCounts(): MethodCounts {
     business_game: { planned: 0, complete: 0 },
     project: { planned: 0, complete: 0 },
   };
+}
+
+function bumpMethodCount(
+  counts: MethodCounts,
+  method: AssessmentMethodId,
+  key: "planned" | "complete",
+) {
+  if (!counts[method]) counts[method] = { planned: 0, complete: 0 };
+  counts[method][key] += 1;
 }
 
 export type IncompleteSlot = {
@@ -664,8 +765,8 @@ export function getDevelopmentProgress(
     const levelMethods = emptyMethodCounts();
     let complete = 0;
     slots.forEach((slot) => {
-      levelMethods[slot.method].planned += 1;
-      byMethod[slot.method].planned += 1;
+      bumpMethodCount(levelMethods, slot.method, "planned");
+      bumpMethodCount(byMethod, slot.method, "planned");
       const task =
         tasksByKey.get(slot.planKey) ||
         block.tasks.find(
@@ -675,8 +776,8 @@ export function getDevelopmentProgress(
         );
       if (task && isAssessmentTaskComplete(task)) {
         complete += 1;
-        levelMethods[slot.method].complete += 1;
-        byMethod[slot.method].complete += 1;
+        bumpMethodCount(levelMethods, slot.method, "complete");
+        bumpMethodCount(byMethod, slot.method, "complete");
         return;
       }
       incomplete.push({
@@ -730,6 +831,7 @@ export function syncAssessmentByLevel(
     });
     const pruned: AssessmentLevelBlock = {
       forNok: Boolean(block.forNok),
+      extraMethods: collectExtraMethods(existing),
       plan,
       tasks: (block.tasks || []).map((task) => ({
         ...normalizeAssessmentTask(task),
@@ -776,7 +878,7 @@ export function flattenAssessmentTools(
       tools.push({
         id: task.id,
         level,
-        tool: assessmentMethodLabel(task.method),
+        tool: assessmentMethodLabel(task.method, block.extraMethods),
         method: task.method,
         item_type: task.method === "testing" ? task.itemType : undefined,
         prompt: task.prompt.trim(),
@@ -842,11 +944,12 @@ export function assessmentToolsToByLevel(raw: unknown, structure: StructureABC):
 
 export function uniqueAssessmentMethodLabels(byLevel: AssessmentByLevel): string[] {
   const normalized = normalizeAssessmentByLevel(byLevel);
+  const extras = collectExtraMethods(normalized);
   const labels: string[] = [];
   const seen = new Set<string>();
   for (const level of FORMATION_LEVELS) {
     (normalized[level]?.tasks || []).forEach((task) => {
-      const label = assessmentMethodLabel(task.method);
+      const label = assessmentMethodLabel(task.method, extras);
       if (seen.has(label)) return;
       seen.add(label);
       labels.push(label);

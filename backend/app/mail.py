@@ -252,9 +252,9 @@ def send_collaboration_invite_email(
     safe_name = html.escape(competence_name or "компетенции")
     text = (
         "Здравствуйте!\n\n"
-        f"{leader_name or 'Руководитель рабочей группы'} приглашает вас в рабочую группу "
+        f"{leader_name or 'Руководитель рабочей группы'} добавил вас в рабочую группу "
         f"по разработке компетенции «{competence_name}».\n\n"
-        "Войдите в реестр и откройте раздел «Мои проекты», чтобы принять приглашение:\n"
+        "Войдите в реестр и откройте раздел «Мои проекты», чтобы совместно править черновик на всех шагах:\n"
         f"{projects_url}\n"
     )
     html_body = f"""\
@@ -262,8 +262,8 @@ def send_collaboration_invite_email(
   <body style="font-family: Arial, sans-serif; color: #212529; line-height: 1.5;">
     <p>Здравствуйте!</p>
     <p>
-      <strong>{safe_leader}</strong> приглашает вас в рабочую группу по разработке компетенции
-      «<strong>{safe_name}</strong>».
+      <strong>{safe_leader}</strong> добавил вас в рабочую группу по разработке компетенции
+      «<strong>{safe_name}</strong>». Вы можете совместно править черновик на всех шагах.
     </p>
     <p>
       <a href="{safe_url}" style="display:inline-block;background:#1E40AF;color:#fff;padding:10px 16px;text-decoration:none;border-radius:6px;">

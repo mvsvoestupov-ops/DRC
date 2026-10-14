@@ -90,6 +90,19 @@ export const defaultIndustries = [
 export const FORMATION_LEVELS: FormationLevel[] = ['базовый', 'продвинутый', 'экспертный'];
 export type { FormationLevel };
 
+/** Expert attainment level is not used for СПО and бакалавриат. */
+export function expertFormationAllowed(educationLevel?: string | null): boolean {
+  const text = String(educationLevel || "").toLowerCase();
+  if (text.includes("среднее профессиональное") || /\bспо\b/.test(text)) return false;
+  if (text.includes("бакалавр")) return false;
+  return true;
+}
+
+export function formationLevelsForEducation(educationLevel?: string | null): FormationLevel[] {
+  if (expertFormationAllowed(educationLevel)) return FORMATION_LEVELS;
+  return FORMATION_LEVELS.filter((level) => level !== "экспертный");
+}
+
 export const FORMATION_LEVEL_LABELS: Record<FormationLevel, string> = {
   базовый: 'Базовый',
   продвинутый: 'Продвинутый',

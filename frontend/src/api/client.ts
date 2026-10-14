@@ -1,4 +1,4 @@
-import { User, UserDirectoryItem } from './types';
+import { CompetenceActivity, CompetencePresenceUser, CompetenceStepChatMessage, User, UserDirectoryItem } from './types';
 import { apiBaseUrl } from './baseUrl';
 
 const BASE_URL = apiBaseUrl();
@@ -417,6 +417,32 @@ class ApiClient {
     this.post<any>(`/competences/invites/${inviteId}/decline`);
   removeCollaborator = (competenceId: number, userId: number) =>
     this.delete<any>(`/competences/${competenceId}/collaborators/${userId}`);
+  updateCompetencePresence = (
+    competenceId: number,
+    payload: { step?: number; fragment?: string; online?: boolean },
+    options?: RequestInit,
+  ) =>
+    this.post<{ users: CompetencePresenceUser[] }>(
+      `/competences/${competenceId}/presence`,
+      payload,
+      options,
+    );
+  getCompetencePresence = (competenceId: number) =>
+    this.get<{ users: CompetencePresenceUser[] }>(`/competences/${competenceId}/presence`);
+  getCompetenceChatSummary = (competenceId: number) =>
+    this.get<{ counts: Record<string, number> }>(`/competences/${competenceId}/chat/summary`);
+  getCompetenceStepChat = (competenceId: number, step: number) =>
+    this.get<{ step: number; messages: CompetenceStepChatMessage[] }>(
+      `/competences/${competenceId}/chat/${step}`,
+    );
+  sendCompetenceStepChat = (competenceId: number, step: number, text: string) =>
+    this.post<CompetenceStepChatMessage>(`/competences/${competenceId}/chat/${step}`, { text });
+  getCompetenceActivity = (competenceId: number) =>
+    this.get<CompetenceActivity>(`/competences/${competenceId}/activity`);
+  updateCompetenceDevelopment = (competenceId: number, due_date: string | null) =>
+    this.put(`/competences/${competenceId}/development`, { due_date });
+  revertCompetenceActivity = (competenceId: number, eventId: number) =>
+    this.post(`/competences/${competenceId}/activity/${eventId}/revert`);
   deleteCompetence = (id: number) => this.delete(`/competences/${id}`);
   getCompetenceStats = () => this.get<{ total: number; active: number; review: number; archived: number }>('/competences/stats');
 
