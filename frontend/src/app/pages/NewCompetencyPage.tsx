@@ -7,6 +7,7 @@ import { PROFESSIONAL_AREAS, areaDisplayCode, findProfessionalArea, formatProfes
 import {
   buildStructureFromLaborFunctions,
   emptyStructure,
+  pruneStructureToSelectedTfs,
   structureFromPayload,
   structureToPayload,
   type LaborFunctionDetail,
@@ -711,19 +712,70 @@ export function NewCompetencyPage() {
 
   useEffect(() => {
     if (hydrating) return;
-    if (formData.competenceKind !== "professional" || !selectedTfKey) return;
+    if (formData.competenceKind !== "professional") return;
+
     const selected = laborFunctions.filter((lf) => formData.selectedLaborFunctionIds.includes(lf.id));
-    if (selected.length === 0) return;
+    if (!selectedTfKey || selected.length === 0) {
+      setFormData((prev) => {
+        const hasRemnants =
+          prev.structure.A.length > 0 ||
+          prev.structure.B.length > 0 ||
+          prev.structure.C.length > 0 ||
+          prev.disciplineMapping.length > 0 ||
+          prev.internationalMapping.analyzedAt ||
+          prev.harmoniBrics.analyzedAt ||
+          prev.harmoniBrics.targetCountry;
+        if (!hasRemnants) return prev;
+        return {
+          ...prev,
+          structure: emptyStructure(),
+          disciplineMapping: [],
+          assessmentByLevel: emptyAssessmentByLevel(),
+          internationalMapping: emptyInternationalMapping(),
+          harmoniBrics: emptyHarmoniBricsMapping(),
+          tdZu: emptyTdZuState(),
+        };
+      });
+      return;
+    }
+
     setFormData((prev) => {
+      const selectedCodes = selected.map((lf) => lf.code);
+      const codeSet = new Set(selectedCodes);
+      const prevCodes = new Set(
+        [...prev.structure.A, ...prev.structure.B, ...prev.structure.C]
+          .map((item) => (item.tfCode || "").trim())
+          .filter(Boolean),
+      );
+      const removedTfCodes = [...prevCodes].some((code) => !codeSet.has(code));
+      const pruned = pruneStructureToSelectedTfs(prev.structure, selectedCodes);
       const structure = prev.tdZu.confirmed
-        ? buildStructureFromTdZu(prev.tdZu.cards, prev.structure)
-        : buildStructureFromLaborFunctions(selected, prev.structure);
-      return {
+        ? buildStructureFromTdZu(prev.tdZu.cards, pruned)
+        : buildStructureFromLaborFunctions(selected, pruned);
+
+      const next = {
         ...prev,
         structure,
-        disciplineMapping: syncDisciplineMapping(structure, prev.disciplineMapping),
-        assessmentByLevel: syncAssessmentByLevel(structure, prev.assessmentByLevel),
+        disciplineMapping: syncDisciplineMapping(
+          structure,
+          removedTfCodes ? [] : prev.disciplineMapping,
+        ),
+        assessmentByLevel: syncAssessmentByLevel(
+          structure,
+          removedTfCodes ? emptyAssessmentByLevel() : prev.assessmentByLevel,
+        ),
       };
+
+      // Смена/снятие ТФ сбрасывает международные сопоставления, собранные по старой структуре.
+      if (
+        removedTfCodes ||
+        (prev.tdZu.confirmedTfKey && prev.tdZu.confirmedTfKey !== selectedTfKey)
+      ) {
+        next.internationalMapping = emptyInternationalMapping();
+        next.harmoniBrics = emptyHarmoniBricsMapping();
+      }
+
+      return next;
     });
   }, [selectedTfKey, laborFunctions, formData.competenceKind, formData.selectedLaborFunctionIds, formData.tdZu.confirmed, formData.tdZu.cards, hydrating]);
 

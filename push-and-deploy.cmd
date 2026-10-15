@@ -11,15 +11,16 @@ set "SSH_KEY=%USERPROFILE%\.ssh\id_ed25519_drc"
 set "REMOTE_DIR=/opt/drc"
 set "BRANCH=main"
 set "VITE_API_URL=https://drc.ao-nk.online/api"
-set "COMMIT_MSG=Harmoni-BRICS шаг 9.1, методика и ИИ-агент"
+set "COMMIT_MSG=Harmoni-BRICS, ИИ-агент и очистка A/B/C при смене ТФ"
 REM ==================================================
 
-REM Запуск из cmd.exe (не из PowerShell-обёртки Cursor):
+REM Запуск из cmd.exe (не из PowerShell Cursor):
 REM   C:\IT\DRC\push-and-deploy.cmd
 REM Без подтверждения:
 REM   C:\IT\DRC\push-and-deploy.cmd /y
 REM Только деплой уже запушенной ветки:
 REM   C:\IT\DRC\push-and-deploy.cmd /deploy
+REM   или: C:\IT\DRC\deploy-only.cmd
 REM Свой текст коммита:
 REM   C:\IT\DRC\push-and-deploy.cmd "свой текст коммита"
 
@@ -39,14 +40,17 @@ echo   2. git push origin %BRANCH%
 echo   3. ssh: pull, pip без torch/CUDA, ремонт ТФ/ОТФ,
 echo      seed примеров, сборка фронта, restart backend, nginx
 echo.
+echo В этом коммите ^(ожидаемо^):
+echo   - шаг 9.1 Harmoni-BRICS + методика
+echo   - ИИ-агент ^(ключ только в backend/.env^)
+echo   - при смене ТФ на шаге 2 рудименты A/B/C и зависимые шаги очищаются
+echo.
 echo Не попадёт в коммит:
 echo   backend/.env, frontend/.env, venv, profstandart.db,
 echo   пароли, чаты, PassForDRC_mail.txt, frontend_old_backup
 echo.
-echo На сервере нужен свой backend/.env ^(в т.ч. DEEPSEEK_API_KEY для ИИ-агента^).
-echo Локальный .env на VPS не копируется.
-echo.
-echo Файл базы на сервере не подменяется.
+echo На сервере нужен свой backend/.env ^(DEEPSEEK_API_KEY уже задавали^).
+echo Локальный .env на VPS не копируется. База на сервере не подменяется.
 echo SSH спросит пароль, если ключа нет.
 echo.
 git status

@@ -111,6 +111,31 @@ export const createStructureItemId = () => `si-${++idCounter}-${Date.now()}`;
 
 export const emptyStructure = (): StructureABC => ({ A: [], B: [], C: [] });
 
+/** Убрать из A/B/C элементы, привязанные к ТФ, которых больше нет в выборе. */
+export function pruneStructureToSelectedTfs(
+  structure: StructureABC,
+  selectedTfCodes: Iterable<string>,
+): StructureABC {
+  const codes = new Set(
+    Array.from(selectedTfCodes)
+      .map((code) => String(code || "").trim())
+      .filter(Boolean),
+  );
+  const keep = (item: StructureItem) => {
+    const tfCode = (item.tfCode || "").trim();
+    if (!tfCode) {
+      // Без кода ТФ оставляем только явно ручные строки; PS-рудименты без привязки отбрасываем.
+      return isManualStructureItem(item);
+    }
+    return codes.has(tfCode);
+  };
+  return {
+    A: structure.A.filter(keep),
+    B: structure.B.filter(keep),
+    C: structure.C.filter(keep),
+  };
+}
+
 export function structureToPayload(structure: StructureABC) {
   const toRow = (item: StructureItem) => {
     const text = item.text.trim();

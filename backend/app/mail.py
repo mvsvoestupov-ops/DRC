@@ -19,11 +19,11 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 
 
-def _load_env_file(path: Path) -> None:
+def _load_env_file(path: Path, *, override_empty: bool = True) -> None:
     if not path.is_file():
         return
     try:
-        text = path.read_text(encoding="utf-8")
+        text = path.read_text(encoding="utf-8-sig")
     except OSError:
         return
     for raw in text.splitlines():
@@ -31,9 +31,12 @@ def _load_env_file(path: Path) -> None:
         if not line or line.startswith("#") or "=" not in line:
             continue
         key, value = line.split("=", 1)
-        key = key.strip()
+        key = key.strip().lstrip("\ufeff")
         value = value.strip().strip('"').strip("'")
-        if key and key not in os.environ:
+        if not key:
+            continue
+        current = os.environ.get(key)
+        if current is None or (override_empty and not str(current).strip()):
             os.environ[key] = value
 
 
