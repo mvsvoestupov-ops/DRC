@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useI18n } from "@/context/I18nContext";
+import { EscoSearchPicker } from "@/app/components/EscoSearchPicker";
 import {
   COVERAGE_TYPES,
   RELATION_TYPES,
@@ -75,16 +76,26 @@ export function InternationalMappingStep({ value, onChange, onRecalculate }: Pro
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <label className="rounded-2xl border border-gray-200 bg-white p-4 space-y-2">
+        <div className="rounded-2xl border border-gray-200 bg-white p-4 space-y-2 md:col-span-1">
           <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 flex items-center gap-2">
             <Briefcase className="w-4 h-4" /> {t("wizard.imapOccupation")}
           </span>
-          <Input
-            value={value.escoOccupation}
-            onChange={(event) => patch({ escoOccupation: event.target.value })}
-            placeholder="lawyer"
+          <EscoSearchPicker
+            kind="occupation"
+            selectedTitle={value.escoOccupation}
+            selectedUri={value.escoOccupationUri}
+            iscoHint={value.isco || value.okz}
+            placeholder={t("wizard.escoOccupationPh")}
+            onSelect={(item) =>
+              patch({
+                escoOccupation: item?.title || "",
+                escoOccupationUri: item?.uri || "",
+                escoVersion: value.escoVersion || "ESCO v1.2",
+                isco: item?.isco || value.isco,
+              })
+            }
           />
-        </label>
+        </div>
         <label className="rounded-2xl border border-gray-200 bg-white p-4 space-y-2">
           <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">{t("wizard.imapOccType")}</span>
           <select
@@ -161,12 +172,26 @@ export function InternationalMappingStep({ value, onChange, onRecalculate }: Pro
                   <tr key={row.id}>
                     <td className="text-xs font-semibold text-primary whitespace-nowrap">{row.component}</td>
                     <td className="text-sm text-gray-800 leading-snug">{row.text}</td>
-                    <td>
-                      <Input
-                        value={row.escoTerm}
-                        onChange={(event) => {
-                          const skills = value.skills.map((item, i) =>
-                            i === index ? { ...item, escoTerm: event.target.value } : item,
+                    <td className="min-w-[16rem]">
+                      <EscoSearchPicker
+                        kind="skill"
+                        selectedTitle={row.escoTerm}
+                        selectedUri={row.escoUri}
+                        occupationUri={value.escoOccupationUri}
+                        placeholder={t("wizard.escoSkillPh")}
+                        onSelect={(item) => {
+                          const skills = value.skills.map((entry, i) =>
+                            i === index
+                              ? {
+                                  ...entry,
+                                  escoTerm: item?.title || "",
+                                  escoUri: item?.uri || "",
+                                  coverage:
+                                    item && (entry.coverage === "absent" || entry.coverage === "national-only")
+                                      ? "full"
+                                      : entry.coverage,
+                                }
+                              : entry,
                           );
                           patch({ skills });
                         }}

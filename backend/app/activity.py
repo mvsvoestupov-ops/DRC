@@ -66,7 +66,8 @@ FIELD_STEPS = {
     "resources": 7,
     "expertise": 8,
     "international_mapping": 9,
-    "status": 10,
+    "harmoni_brics": 10,
+    "status": 11,
 }
 
 # Internal identifiers — never shown in the journal.
@@ -126,6 +127,7 @@ RAW_KEYS = {
     "td_zu_mapping",
     "expertise",
     "international_mapping",
+    "harmoni_brics",
     "professional_area_code",
     "hours",
     "development_due",
@@ -461,6 +463,17 @@ def _human_expertise(value: Any) -> str:
     return "\n".join(lines)
 
 
+def _human_harmoni_brics(value: Any) -> str:
+    if not isinstance(value, dict) or not value:
+        return "—"
+    country = value.get("targetCountry") or value.get("target_country") or "—"
+    level = value.get("partnerNqfLevel") or value.get("partner_nqf_level") or "—"
+    relation = value.get("relationType") or value.get("relation_type") or "—"
+    confirmed = value.get("expertConfirmed") or value.get("expert_confirmed")
+    flag = "утверждено" if confirmed else "черновик"
+    return f"{country} · NQF {level} · {relation} · {flag}"
+
+
 def _human_international(value: Any) -> str:
     if not isinstance(value, dict):
         return _generic_human(value)
@@ -518,6 +531,7 @@ HUMANIZERS = {
     "td_zu_mapping": _human_td_zu,
     "expertise": _human_expertise,
     "international_mapping": _human_international,
+    "harmoni_brics": _human_harmoni_brics,
 }
 
 

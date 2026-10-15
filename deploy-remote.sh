@@ -111,6 +111,11 @@ cd "$ROOT"
 if [ -f backend/profstandart.db ]; then
   echo "==> keeping existing backend/profstandart.db (not overwritten)"
 fi
+if [ -f backend/.env ]; then
+  echo "==> keeping existing backend/.env (secrets not overwritten)"
+else
+  echo "WARNING: $ROOT/backend/.env отсутствует — ИИ-агент и почта могут не работать"
+fi
 
 echo "==> backend deps (без torch/CUDA)"
 cd "$ROOT/backend"
@@ -130,6 +135,12 @@ venv/bin/python -u scripts/repair_tf_levels.py
 
 echo "==> seed example competences RUS-PK-0019 / RUS-PK-0020"
 venv/bin/python scripts/seed_example_competences.py
+
+if [ -f "$ROOT/backend/.env" ] && grep -qE '^DEEPSEEK_API_KEY=.+' "$ROOT/backend/.env"; then
+  echo "==> ИИ-агент: DEEPSEEK_API_KEY задан в backend/.env"
+else
+  echo "WARNING: ИИ-агент без ключа — задайте DEEPSEEK_API_KEY в $ROOT/backend/.env"
+fi
 
 SERVICE="$(detect_service || true)"
 if [ -n "${SERVICE:-}" ]; then

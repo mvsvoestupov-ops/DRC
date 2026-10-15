@@ -8,6 +8,7 @@ import { VolumeModelPassport } from "@/app/components/VolumeModelPassport";
 import { ComponentScoringGuide } from "@/app/components/ComponentScoringGuide";
 import { AssessmentFosGuide } from "@/app/components/AssessmentFosGuide";
 import { HarmonizationGuide } from "@/app/components/HarmonizationGuide";
+import { HarmoniBricsGuide } from "@/app/components/HarmoniBricsGuide";
 import { useI18n } from "@/context/I18nContext";
 import { isMethodologyTopicId, METHODOLOGY_TOPICS, type MethodologyTopicId } from "@/lib/methodologyTopics";
 
@@ -15,6 +16,11 @@ const TOPIC_CONTENT: Record<MethodologyTopicId, () => ReactNode> = {
   harmonization: () => (
     <div className="surface p-6 md:p-8">
       <HarmonizationGuide />
+    </div>
+  ),
+  "harmoni-brics": () => (
+    <div className="surface p-6 md:p-8">
+      <HarmoniBricsGuide />
     </div>
   ),
   scoring: () => (
@@ -55,7 +61,7 @@ export function MethodologyTopicPage() {
         <ArrowLeft className="w-4 h-4" />
         {t("methodology.backToIndex")}
       </Link>
-      {topicId === "harmonization" && topic ? (
+      {(topicId === "harmonization" || topicId === "harmoni-brics") && topic ? (
         <PageHeader title={t(topic.titleKey)} />
       ) : topicId !== "matrix" && topic ? (
         <PageHeader title={t(topic.titleKey)} description={t(topic.descKey)} />

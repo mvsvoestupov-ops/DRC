@@ -102,11 +102,21 @@ import {
   InternationalMappingStep,
 } from "@/app/components/InternationalMappingStep";
 import {
+  HarmoniBricsPreview,
+  HarmoniBricsStep,
+} from "@/app/components/HarmoniBricsStep";
+import {
   analyzeInternationalMapping,
   emptyInternationalMapping,
   normalizeInternationalMapping,
   type InternationalMapping,
 } from "@/lib/internationalMapping";
+import {
+  applySuggestToMapping,
+  emptyHarmoniBricsMapping,
+  normalizeHarmoniBricsMapping,
+  type HarmoniBricsMapping,
+} from "@/lib/harmoniBrics";
 import {
   EXPERTISE_CRITERIA,
   criterionKey,
@@ -209,20 +219,25 @@ export function NewCompetencyPage() {
     resources: emptyCompetenceResources() as CompetenceResources,
     expertise: {} as ExpertiseChecklist,
     internationalMapping: emptyInternationalMapping() as InternationalMapping,
+    harmoniBrics: emptyHarmoniBricsMapping() as HarmoniBricsMapping,
     tdZu: emptyTdZuState() as TdZuState,
   });
+  const [hbBusy, setHbBusy] = useState(false);
+  const [hbError, setHbError] = useState<string | null>(null);
+  const [aiAgentConfigured, setAiAgentConfigured] = useState<boolean | null>(null);
 
   const steps = [
-    { number: 1, name: t("wizard.step1") },
-    { number: 2, name: t("wizard.step2") },
-    { number: 3, name: t("wizard.step3") },
-    { number: 4, name: t("wizard.step4") },
-    { number: 5, name: t("wizard.step5") },
-    { number: 6, name: t("wizard.step6") },
-    { number: 7, name: t("wizard.step7") },
-    { number: 8, name: t("wizard.step8") },
-    { number: 9, name: t("wizard.step9") },
-    { number: 10, name: t("wizard.step10") },
+    { number: 1, name: t("wizard.step1"), label: "1" },
+    { number: 2, name: t("wizard.step2"), label: "2" },
+    { number: 3, name: t("wizard.step3"), label: "3" },
+    { number: 4, name: t("wizard.step4"), label: "4" },
+    { number: 5, name: t("wizard.step5"), label: "5" },
+    { number: 6, name: t("wizard.step6"), label: "6" },
+    { number: 7, name: t("wizard.step7"), label: "7" },
+    { number: 8, name: t("wizard.step8"), label: "8" },
+    { number: 9, name: t("wizard.step9"), label: "9" },
+    { number: 10, name: t("wizard.step91"), label: "9.1" },
+    { number: 11, name: t("wizard.step10"), label: "10" },
   ];
   const lastStep = steps.length;
   const competenceId = editId || workingCompetence?.id || null;
@@ -300,6 +315,72 @@ export function NewCompetencyPage() {
     if (formData.internationalMapping.analyzedAt) return;
     runInternationalMapping();
   }, [currentStep, formData.internationalMapping.analyzedAt, runInternationalMapping]);
+
+  const askHarmoniBrics = useCallback(async () => {
+    if (!formData.harmoniBrics.targetCountry) {
+      setHbError(t("wizard.hbNeedCountry"));
+      return;
+    }
+    setHbBusy(true);
+    setHbError(null);
+    try {
+      const texts = (items: { text: string }[]) =>
+        items.map((item) => item.text.trim()).filter(Boolean);
+      const mapping = formData.internationalMapping;
+      const result = await apiClient.suggestHarmoniBrics({
+        target_country: formData.harmoniBrics.targetCountry,
+        title: formData.title,
+        description: formData.description,
+        competence_kind: formData.competenceKind,
+        qualification_level: formData.qualificationLevel,
+        education_kind: formData.educationKind,
+        education_level: formData.educationLevel,
+        professional_area_code: formData.professionalAreaCode,
+        fgos_code: formData.fgosCode,
+        okz: mapping.okz,
+        isco: mapping.isco || formData.harmoniBrics.isco,
+        eqf_occupational: mapping.eqfOccupational,
+        eqf_educational: mapping.eqfEducational,
+        admitted_garm: mapping.admitted,
+        esco_occupation: mapping.escoOccupation,
+        labor_functions: selectedLaborFunctions.map((lf) => ({
+          code: lf.code,
+          name: lf.name,
+          otf_level: lf.otf_level,
+          okz_codes: lf.okz_codes,
+        })),
+        structure_a: texts(formData.structure.A),
+        structure_b: texts(formData.structure.B),
+        structure_c: texts(formData.structure.C),
+      });
+      const configured = Boolean((result as { status?: { configured?: boolean } }).status?.configured);
+      setAiAgentConfigured(configured);
+      setFormData((prev) => ({
+        ...prev,
+        harmoniBrics: applySuggestToMapping(prev.harmoniBrics, result as never),
+      }));
+    } catch (err) {
+      setHbError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setHbBusy(false);
+    }
+  }, [formData, selectedLaborFunctions, t]);
+
+  useEffect(() => {
+    if (currentStep !== 10) return;
+    let cancelled = false;
+    apiClient
+      .getHarmoniBricsStatus()
+      .then((status) => {
+        if (!cancelled) setAiAgentConfigured(Boolean(status.configured));
+      })
+      .catch(() => {
+        if (!cancelled) setAiAgentConfigured(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [currentStep]);
 
   const selectedTfKey = formData.selectedLaborFunctionIds.slice().sort((a, b) => a - b).join(",");
 
@@ -451,6 +532,7 @@ export function NewCompetencyPage() {
           resources: parseCompetenceResources(comp.resources),
           expertise: (comp.expertise || {}) as ExpertiseChecklist,
           internationalMapping: normalizeInternationalMapping(comp.international_mapping),
+          harmoniBrics: normalizeHarmoniBricsMapping(comp.harmoni_brics),
           tdZu: parseTdZuState(comp.td_zu_mapping),
         }));
         const savedStep = Number(comp.wizard_step);
@@ -672,6 +754,7 @@ export function NewCompetencyPage() {
     resources: resourcesPayload(formData.resources),
     expertise: formData.expertise,
     international_mapping: formData.internationalMapping,
+    harmoni_brics: formData.harmoniBrics,
     td_zu_mapping: formData.tdZu,
     wizard_step: currentStep,
     universal_skills: formData.matrixContext?.universal_skills,
@@ -1027,7 +1110,7 @@ export function NewCompetencyPage() {
                   : "bg-gray-200 text-gray-600 hover:bg-gray-300"
               }`}
             >
-              {step.number}
+              {step.label}
               <StepChatBadge count={chatCounts[step.number]} />
               <CollaborationStepDots step={step.number} peers={peers} />
             </button>
@@ -1684,6 +1767,19 @@ export function NewCompetencyPage() {
                 </div>
               )}
 
+              {currentStep === 10 && (
+                <div data-presence-fragment="harmoni-brics">
+                  <HarmoniBricsStep
+                    value={formData.harmoniBrics}
+                    onChange={(harmoniBrics) => setFormData((prev) => ({ ...prev, harmoniBrics }))}
+                    onAskAssistant={askHarmoniBrics}
+                    assistantBusy={hbBusy}
+                    assistantError={hbError}
+                    aiAgentConfigured={aiAgentConfigured}
+                  />
+                </div>
+              )}
+
               {currentStep === lastStep && (
                 <div className="space-y-6" data-presence-fragment="preview">
                   <div>
@@ -2104,6 +2200,13 @@ export function NewCompetencyPage() {
                       9. {t("wizard.sectionMapping")}
                     </h3>
                     <InternationalMappingPreview value={formData.internationalMapping} />
+                  </section>
+
+                  <section className="rounded-xl border border-gray-200 bg-white p-5 space-y-4">
+                    <h3 className="text-sm font-semibold uppercase tracking-wide text-primary">
+                      {t("wizard.section91")}
+                    </h3>
+                    <HarmoniBricsPreview value={formData.harmoniBrics} />
                   </section>
 
                   <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">

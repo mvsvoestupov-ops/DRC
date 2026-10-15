@@ -1,4 +1,5 @@
 import type { DocsMessages } from "./docsRu";
+import { docsEn } from "./docsEn";
 
 export const docsZh: DocsMessages = {
   areas: {
@@ -651,4 +652,5 @@ export const docsZh: DocsMessages = {
     closeP1: "GARM-ESCO 方法版本 1.0-draft 规定人工专家对照算法。按能力名称自动检索仅可作为第 4–5 步提示，不是协调结果。",
     closeP2: "公布国际等价本身不是互认决定，也不取代联邦教育标准与职业标准要求。它建立可对照基础——职业、技能、EQF 等级——没有这一基础，金砖+与欧亚经济联盟空间内的资格承认、网络培养和律师劳动力流动无法形式化。对照表变更作为方法新版本办理。",
   },
+  harmoniBrics: docsEn.harmoniBrics,
 };

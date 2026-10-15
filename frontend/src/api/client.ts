@@ -1,4 +1,4 @@
-import { CompetenceActivity, CompetencePresenceUser, CompetenceStepChatMessage, User, UserDirectoryItem } from './types';
+import { CompetenceActivity, CompetencePresenceUser, CompetenceStepChatMessage, EscoSearchResponse, User, UserDirectoryItem } from './types';
 import { apiBaseUrl } from './baseUrl';
 
 const BASE_URL = apiBaseUrl();
@@ -380,11 +380,55 @@ class ApiClient {
     }>(`/fgos/search${qs ? `?${qs}` : ''}`, options);
   };
 
+  searchEscoOccupations = (
+    params?: { q?: string; isco?: string; limit?: number },
+    options?: RequestInit,
+  ) => {
+    const sp = new URLSearchParams();
+    if (params?.q) sp.set("q", params.q);
+    if (params?.isco) sp.set("isco", params.isco);
+    if (params?.limit != null) sp.set("limit", String(params.limit));
+    const qs = sp.toString();
+    return this.get<EscoSearchResponse>(`/esco/occupations${qs ? `?${qs}` : ""}`, options);
+  };
+
+  searchEscoSkills = (
+    params?: { q?: string; occupation_uri?: string; limit?: number },
+    options?: RequestInit,
+  ) => {
+    const sp = new URLSearchParams();
+    if (params?.q) sp.set("q", params.q);
+    if (params?.occupation_uri) sp.set("occupation_uri", params.occupation_uri);
+    if (params?.limit != null) sp.set("limit", String(params.limit));
+    const qs = sp.toString();
+    return this.get<EscoSearchResponse>(`/esco/skills${qs ? `?${qs}` : ""}`, options);
+  };
+
   suggestCompetenceProfile = (data: {
     qualification_level: string;
     structure?: Record<string, unknown>;
     competence_kind?: string;
   }) => this.post<any>('/competences/suggest-profile', data);
+
+  getHarmoniBricsCountries = () =>
+    this.get<{
+      countries: Array<{
+        code: string;
+        name_ru: string;
+        name_en: string;
+        nqf: string;
+        nqf_levels: string;
+        bridge: string;
+      }>;
+      ai_agent?: { configured?: boolean; model?: string; base_url?: string };
+      deepseek?: { configured?: boolean; model?: string; base_url?: string };
+    }>('/harmonize/brics/countries');
+
+  getHarmoniBricsStatus = () =>
+    this.get<{ configured?: boolean; model?: string; base_url?: string }>('/harmonize/brics/status');
+
+  suggestHarmoniBrics = (data: Record<string, unknown>) =>
+    this.post<Record<string, unknown>>('/harmonize/brics/suggest', data);
 
   // Competences — публичный реестр (без авторизации)
   getPublicCompetences = (params?: { q?: string; industry?: string; status?: string }) => {

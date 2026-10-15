@@ -39,6 +39,14 @@ from .db.feedback_models import Feedback
 from .db.user_models import User
 from .db.registration_models import Registration
 from .db.fgos_models import FgosSpo
+from .esco_registry import (
+    occupation_skills,
+    search_occupations,
+    search_skills,
+    status as esco_status,
+)
+from .harmoni_brics import list_countries as harmoni_brics_countries, suggest_mapping as harmoni_brics_suggest
+from .deepseek_client import deepseek_status
 from .fgos_registry import FGOS_CATEGORIES, FGOS_CATEGORY_BY_ID, FGOS_CATEGORY_IDS
 from .db_operations import save_raw_standard
 from .tf_codes import compact_otf_code, compact_tf_code, tf_qualification_level
@@ -331,6 +339,7 @@ class CompetenceCreate(BaseModel):
     resources: Optional[Union[List[str], Dict[str, Any]]] = []
     expertise: Optional[Dict[str, Any]] = None
     international_mapping: Optional[Dict[str, Any]] = None
+    harmoni_brics: Optional[Dict[str, Any]] = None
     td_zu_mapping: Optional[Dict[str, Any]] = None
     wizard_step: Optional[int] = None
     developer: str
@@ -369,6 +378,7 @@ class CompetenceUpdate(BaseModel):
     validation_notes: Optional[str] = None
     expertise: Optional[Dict[str, Any]] = None
     international_mapping: Optional[Dict[str, Any]] = None
+    harmoni_brics: Optional[Dict[str, Any]] = None
     td_zu_mapping: Optional[Dict[str, Any]] = None
     wizard_step: Optional[int] = None
     status: Optional[str] = None
@@ -385,6 +395,29 @@ class CompetenceUpdate(BaseModel):
     fgos_name: Optional[str] = None
     fgos_category: Optional[str] = None
     universal_skills: Optional[List[Dict[str, Any]]] = None
+
+
+class HarmoniBricsSuggestRequest(BaseModel):
+    target_country: str
+    title: Optional[str] = ""
+    description: Optional[str] = ""
+    competence_kind: Optional[str] = "professional"
+    qualification_level: Optional[str] = ""
+    education_kind: Optional[str] = ""
+    education_level: Optional[str] = ""
+    professional_area_code: Optional[str] = ""
+    fgos_code: Optional[str] = ""
+    okz: Optional[str] = ""
+    isco: Optional[str] = ""
+    eqf_occupational: Optional[int] = None
+    eqf_educational: Optional[int] = None
+    admitted_garm: Optional[bool] = True
+    esco_occupation: Optional[str] = ""
+    labor_functions: Optional[List[Dict[str, Any]]] = None
+    structure_a: Optional[List[str]] = None
+    structure_b: Optional[List[str]] = None
+    structure_c: Optional[List[str]] = None
+
 
 class SuggestProfileRequest(BaseModel):
     qualification_level: str
@@ -2441,6 +2474,88 @@ async def reference_bundle(refresh: bool = False):
     return get_reference_bundle(force_refresh=refresh)
 
 
+@app.get("/esco/status")
+async def get_esco_status(current_user: User = Depends(get_current_user)):
+    session = SessionLocal()
+    try:
+        return esco_status(session)
+    finally:
+        session.close()
+
+
+@app.get("/esco/occupations")
+async def get_esco_occupations(
+    q: str = "",
+    isco: str = "",
+    limit: int = 20,
+    current_user: User = Depends(get_current_user),
+):
+    session = SessionLocal()
+    try:
+        return search_occupations(session, q=q, isco=isco, limit=limit)
+    except Exception as exc:
+        raise HTTPException(502, f"Не удалось получить занятия ESCO: {exc}") from exc
+    finally:
+        session.close()
+
+
+@app.get("/esco/skills")
+async def get_esco_skills(
+    q: str = "",
+    occupation_uri: str = "",
+    limit: int = 20,
+    current_user: User = Depends(get_current_user),
+):
+    session = SessionLocal()
+    try:
+        return search_skills(session, q=q, occupation_uri=occupation_uri, limit=limit)
+    except Exception as exc:
+        raise HTTPException(502, f"Не удалось получить навыки ESCO: {exc}") from exc
+    finally:
+        session.close()
+
+
+@app.get("/esco/occupations/skills")
+async def get_esco_occupation_skills(
+    uri: str,
+    q: str = "",
+    limit: int = 40,
+    current_user: User = Depends(get_current_user),
+):
+    if not (uri or "").strip():
+        raise HTTPException(400, "Укажите URI занятия ESCO")
+    session = SessionLocal()
+    try:
+        return occupation_skills(session, uri, q=q, limit=limit)
+    except Exception as exc:
+        raise HTTPException(502, f"Не удалось получить навыки занятия ESCO: {exc}") from exc
+    finally:
+        session.close()
+
+
+@app.get("/harmonize/brics/countries")
+async def get_harmoni_brics_countries(current_user: User = Depends(get_current_user)):
+    return {"countries": harmoni_brics_countries(), "ai_agent": deepseek_status()}
+
+
+@app.get("/harmonize/brics/status")
+async def get_harmoni_brics_status(current_user: User = Depends(get_current_user)):
+    return deepseek_status()
+
+
+@app.post("/harmonize/brics/suggest")
+async def post_harmoni_brics_suggest(
+    data: HarmoniBricsSuggestRequest,
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        return harmoni_brics_suggest(data.model_dump())
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(502, f"Не удалось получить черновик Harmoni-BRICS: {exc}") from exc
+
+
 @app.get("/reference/matrix-context")
 async def reference_matrix_context(level: str):
     """Контекст матрицы для указанного уровня квалификации (например level=6 или 6.1)."""
@@ -3267,6 +3382,7 @@ def serialize_competence(
         "validation_notes": comp.validation_notes,
         "expertise": raw.get("expertise") or {},
         "international_mapping": raw.get("international_mapping") or {},
+        "harmoni_brics": raw.get("harmoni_brics") or {},
         "user_id": comp.user_id,
         "td_zu_mapping": raw.get("td_zu_mapping") or {},
         "wizard_step": raw.get("wizard_step") or None,
@@ -3542,6 +3658,8 @@ async def create_competence(data: CompetenceCreate, current_user: User = Depends
             raw_data["expertise"] = data.expertise
         if data.international_mapping:
             raw_data["international_mapping"] = data.international_mapping
+        if data.harmoni_brics:
+            raw_data["harmoni_brics"] = data.harmoni_brics
         if data.td_zu_mapping:
             raw_data["td_zu_mapping"] = data.td_zu_mapping
         if data.wizard_step:
@@ -4425,6 +4543,7 @@ async def update_competence(comp_id: int, data: CompetenceUpdate, current_user: 
             "competence_kind",
             "expertise",
             "international_mapping",
+            "harmoni_brics",
             "td_zu_mapping",
             "wizard_step",
         ):
@@ -4480,6 +4599,11 @@ async def update_competence(comp_id: int, data: CompetenceUpdate, current_user: 
         if "international_mapping" in raw_fields:
             raw = dict(comp.raw_data or {})
             raw["international_mapping"] = raw_fields["international_mapping"] or {}
+            comp.raw_data = raw
+            flag_modified(comp, "raw_data")
+        if "harmoni_brics" in raw_fields:
+            raw = dict(comp.raw_data or {})
+            raw["harmoni_brics"] = raw_fields["harmoni_brics"] or {}
             comp.raw_data = raw
             flag_modified(comp, "raw_data")
         if "td_zu_mapping" in raw_fields:

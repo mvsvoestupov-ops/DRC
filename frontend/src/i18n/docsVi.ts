@@ -1,4 +1,5 @@
 import type { DocsMessages } from "./docsRu";
+import { docsEn } from "./docsEn";
 
 export const docsVi: DocsMessages = {
   areas: {
@@ -651,4 +652,5 @@ export const docsVi: DocsMessages = {
     closeP1: "Phương pháp GARM-ESCO phiên bản 1.0-draft đặt thuật toán đối chiếu thủ công của chuyên gia. Tìm kiếm tự động theo tên năng lực chỉ được dùng như gợi ý cho bước 4–5 và không phải kết quả hài hòa.",
     closeP2: "Công bố tương đương quốc tế tự nó không phải quyết định công nhận lẫn nhau và không thay yêu cầu FSES cùng tiêu chuẩn nghề. Nó tạo cơ sở so sánh được — nghề, kỹ năng, bậc EQF — nếu không có thì công nhận trình độ, chương trình mạng và lưu động lao động luật sư trong không gian BRICS+ và EAEU không thể được hình thức hóa. Thay đổi bảng đối chiếu được lập thành phiên bản mới của phương pháp.",
   },
+  harmoniBrics: docsEn.harmoniBrics,
 };

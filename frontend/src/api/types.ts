@@ -11,6 +11,24 @@ export interface User {
   created_at?: string;
 }
 
+export interface EscoConcept {
+  uri: string;
+  title: string;
+  code?: string;
+  isco?: string;
+  description?: string;
+  skill_type?: string;
+  relation?: string;
+  kind?: "occupation" | "skill";
+}
+
+export interface EscoSearchResponse {
+  total: number;
+  source?: string;
+  version?: string;
+  items: EscoConcept[];
+}
+
 export interface UserDirectoryItem {
   id: number;
   email?: string;
@@ -218,6 +236,7 @@ export interface Competence {
   ed_technologies?: string[];
   resources?: string[] | { A?: string[]; B?: string[]; C?: string[] };
   international_mapping?: Record<string, any>;
+  harmoni_brics?: Record<string, any>;
   td_zu_mapping?: {
     confirmed?: boolean;
     confirmedTfKey?: string;
@@ -359,6 +378,7 @@ export interface CreateCompetencePayload {
   resources?: string[] | { A?: string[]; B?: string[]; C?: string[] };
   expertise?: Record<string, { value?: string; comment?: string }>;
   international_mapping?: Record<string, any>;
+  harmoni_brics?: Record<string, any>;
   td_zu_mapping?: {
     confirmed?: boolean;
     confirmedTfKey?: string;
