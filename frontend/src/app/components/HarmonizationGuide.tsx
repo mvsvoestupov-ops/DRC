@@ -5,6 +5,7 @@ import {
   Award,
   Ban,
   BookOpen,
+  Bot,
   Briefcase,
   Check,
   Equal,
@@ -174,6 +175,37 @@ export function HarmonizationGuide() {
 
   return (
     <article className="space-y-12">
+      <header className="space-y-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-primary">{t("harmonization.kicker")}</p>
+        <p className="text-base text-gray-600 leading-relaxed max-w-3xl">{t("harmonization.lead")}</p>
+      </header>
+
+      <section className="rounded-2xl border border-gray-200 overflow-hidden">
+        <div className="bg-slate-50 px-4 py-3 text-sm font-semibold text-gray-900">{t("harmonization.requisites")}</div>
+        <table className="w-full text-sm">
+          <tbody>
+            {(
+              [
+                ["rId", "rIdV"],
+                ["rVer", "rVerV"],
+                ["rStatus", "rStatusV"],
+                ["rScope", "rScopeV"],
+                ["rUnit", "rUnitV"],
+                ["rAnchor", "rAnchorV"],
+                ["rAi", "rAiV"],
+              ] as const
+            ).map(([k, v]) => (
+              <tr key={k} className="border-t border-gray-100">
+                <th className="text-left font-medium text-gray-500 px-4 py-2.5 w-1/3 align-top">
+                  {t(`harmonization.${k}`)}
+                </th>
+                <td className="px-4 py-2.5 text-gray-900">{t(`harmonization.${v}`)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+
       <section className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-5 md:p-7">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-primary mb-4">
           {t("harmonization.vizFlow")}
@@ -573,6 +605,39 @@ export function HarmonizationGuide() {
           ].map((line) => (
             <p key={line}>{line}</p>
           ))}
+        </Details>
+      </section>
+
+      <section className="space-y-4">
+        <h3 className="text-lg font-semibold text-gray-900">{t("harmonization.s11title")}</h3>
+        <p className="text-sm text-gray-600 leading-relaxed">{t("harmonization.s11p1")}</p>
+        <p className="text-sm text-gray-600 leading-relaxed">{t("harmonization.s11p2")}</p>
+        <div className="rounded-2xl border border-sky-200 bg-sky-50/70 p-5 space-y-3">
+          <div className="flex items-center gap-2 text-sm font-semibold text-sky-950">
+            <Bot className="w-5 h-5 text-sky-700" />
+            {t("harmonization.s11aiTitle")}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {[
+              t("harmonization.s11ai1"),
+              t("harmonization.s11ai2"),
+              t("harmonization.s11ai3"),
+              t("harmonization.s11ai4"),
+            ].map((rule) => (
+              <div
+                key={rule}
+                className="rounded-xl border border-sky-100 bg-white px-3 py-2 text-xs font-semibold text-sky-950"
+              >
+                {rule}
+              </div>
+            ))}
+          </div>
+        </div>
+        <p className="text-sm text-gray-600 leading-relaxed">{t("harmonization.s11p3")}</p>
+        <p className="text-sm text-gray-600 leading-relaxed">{t("harmonization.s11p4")}</p>
+        <Details summary={t("harmonization.vizMore")}>
+          <p>{t("harmonization.closeP1")}</p>
+          <p>{t("harmonization.closeP2")}</p>
         </Details>
       </section>
     </article>

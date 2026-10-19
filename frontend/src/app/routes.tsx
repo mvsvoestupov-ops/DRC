@@ -1,13 +1,14 @@
 import { createBrowserRouter, Navigate } from "react-router";
 import { Layout } from "./components/Layout";
 import { PageShell } from "./components/PageShell";
-import { RequireAuth, RequireAdmin, RequireStaff } from "./components/RequireAuth";
+import { RequireAuth, RequireAdmin, RequireStaff, RequireIntlMethodologist } from "./components/RequireAuth";
 import { HomePage } from "./pages/HomePage";
 import { SearchPage } from "./pages/SearchPage";
 import { CompetencyDetailPage } from "./pages/CompetencyDetailPage";
 import { NewCompetencyPage } from "./pages/NewCompetencyPage";
 import { AdminPage } from "./pages/AdminPage";
 import { UsersAdminPage } from "./pages/UsersAdminPage";
+import { InternationalMappingAdminPage } from "./pages/InternationalMappingAdminPage";
 import { IntegrationPage } from "./pages/IntegrationPage";
 import { MethodologyPage } from "./pages/MethodologyPage";
 import { MethodologyTopicPage } from "./pages/MethodologyTopicPage";
@@ -147,6 +148,16 @@ export const router = createBrowserRouter([
           <RequireAdmin>
             <UsersAdminPage />
           </RequireAdmin>
+        ),
+      },
+      {
+        path: "admin/international-mapping",
+        element: (
+          <RequireIntlMethodologist>
+            <WorkspaceShell>
+              <InternationalMappingAdminPage />
+            </WorkspaceShell>
+          </RequireIntlMethodologist>
         ),
       },
       {

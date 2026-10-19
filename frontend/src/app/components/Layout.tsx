@@ -1,5 +1,5 @@
 import { Outlet, Link, useNavigate, useLocation } from "react-router";
-import { Search, User, LogOut, FolderOpen, BookOpen, GraduationCap, Play, ScrollText, ClipboardList, Users } from "lucide-react";
+import { Search, User, LogOut, FolderOpen, BookOpen, GraduationCap, Play, ScrollText, ClipboardList, Users, Globe2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
@@ -28,7 +28,18 @@ export function Layout() {
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
   const { t } = useI18n();
-  const { isAuthenticated, isAdmin, isExpert, isModerator, user, logout, isImpersonating, impersonatorEmail, stopImpersonation } = useAuth();
+  const {
+    isAuthenticated,
+    isAdmin,
+    isExpert,
+    isModerator,
+    isIntlMethodologist,
+    user,
+    logout,
+    isImpersonating,
+    impersonatorEmail,
+    stopImpersonation,
+  } = useAuth();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -172,7 +183,17 @@ export function Layout() {
                     <ScrollText className="w-3.5 h-3.5" />
                     {t("nav.fgos")}
                   </NavLink>
+                  <NavLink to="/admin/international-mapping">
+                    <Globe2 className="w-3.5 h-3.5" />
+                    {t("nav.intlMapping")}
+                  </NavLink>
                 </>
+              )}
+              {isIntlMethodologist && !isAdmin && (
+                <NavLink to="/admin/international-mapping">
+                  <Globe2 className="w-3.5 h-3.5" />
+                  {t("nav.intlMapping")}
+                </NavLink>
               )}
               {(isModerator || isExpert) && (
                 <NavLink to="/admin">{isModerator ? t("nav.moderation") : t("nav.expert")}</NavLink>

@@ -223,6 +223,7 @@ export function UsersAdminPage() {
                         <option value="user">{t("role.user")}</option>
                         <option value="expert">{t("role.expert")}</option>
                         <option value="moderator">{t("role.moderator")}</option>
+                        <option value="intl_methodologist">{t("role.intl_methodologist")}</option>
                         <option value="admin">{t("role.admin")}</option>
                       </select>
                     </TableCell>
@@ -364,6 +365,7 @@ export function UsersAdminPage() {
                   <option value="user">{t("role.user")}</option>
                   <option value="expert">{t("role.expert")}</option>
                   <option value="moderator">{t("role.moderator")}</option>
+                  <option value="intl_methodologist">{t("role.intl_methodologist")}</option>
                   <option value="admin">{t("role.admin")}</option>
                 </select>
               </div>

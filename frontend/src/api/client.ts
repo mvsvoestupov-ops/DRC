@@ -1,4 +1,9 @@
 import { CompetenceActivity, CompetencePresenceUser, CompetenceStepChatMessage, EscoSearchResponse, User, UserDirectoryItem } from './types';
+import type {
+  HarmonizationStepState,
+  HarmonizationVersion,
+  PassportHarmonization,
+} from '@/lib/harmonization';
 import { apiBaseUrl } from './baseUrl';
 
 const BASE_URL = apiBaseUrl();
@@ -429,6 +434,87 @@ class ApiClient {
 
   suggestHarmoniBrics = (data: Record<string, unknown>) =>
     this.post<Record<string, unknown>>('/harmonize/brics/suggest', data);
+
+  getGarmEscoStatus = () =>
+    this.get<{ configured?: boolean; model?: string; base_url?: string }>('/harmonize/garm-esco/status');
+
+  suggestGarmEsco = (data: Record<string, unknown>) =>
+    this.post<Record<string, unknown>>('/harmonize/garm-esco/suggest', data);
+
+  getHarmonizationStatus = () =>
+    this.get<{ ai_agent?: { configured?: boolean; model?: string } }>('/harmonization/status');
+
+  listHarmonizationVersions = () =>
+    this.get<HarmonizationVersion[]>('/harmonization/versions');
+
+  getHarmonizationVersion = (id: number) =>
+    this.get<HarmonizationVersion>(`/harmonization/versions/${id}`);
+
+  createHarmonizationVersion = (data: {
+    title?: string;
+    notes?: string;
+    clone_from_id?: number;
+  }) => this.post<HarmonizationVersion>('/harmonization/versions', data);
+
+  patchHarmonizationVersion = (
+    id: number,
+    data: {
+      title?: string;
+      notes?: string;
+      status?: string;
+      ready_for_apply?: boolean;
+    },
+  ) => this.patch<HarmonizationVersion>(`/harmonization/versions/${id}`, data);
+
+  putHarmonizationStep = (versionId: number, step: number, payload: Record<string, unknown>) =>
+    this.put<HarmonizationStepState>(
+      `/harmonization/versions/${versionId}/steps/${step}`,
+      { payload },
+    );
+
+  aiDraftHarmonizationStep = (versionId: number, step: number) =>
+    this.post<HarmonizationStepState>(
+      `/harmonization/versions/${versionId}/steps/${step}/ai-draft`,
+    );
+
+  verifyHarmonizationStep = (versionId: number, step: number) =>
+    this.post<HarmonizationStepState>(
+      `/harmonization/versions/${versionId}/steps/${step}/verify`,
+    );
+
+  getPassportHarmonization = (compId: number, versionId?: number) => {
+    const qs = versionId != null ? `?version_id=${versionId}` : '';
+    return this.get<PassportHarmonization>(`/competences/${compId}/harmonization${qs}`);
+  };
+
+  putPassportHarmonization = (
+    compId: number,
+    data: {
+      version_id?: number;
+      step3_payload?: Record<string, unknown>;
+      step6_payload?: Record<string, unknown>;
+    },
+  ) => this.put<PassportHarmonization>(`/competences/${compId}/harmonization`, data);
+
+  aiDraftPassportHarmonizationStep = (
+    compId: number,
+    step: number,
+    data?: { version_id?: number; purpose?: string },
+  ) =>
+    this.post<PassportHarmonization>(
+      `/competences/${compId}/harmonization/steps/${step}/ai-draft`,
+      data || {},
+    );
+
+  verifyPassportHarmonizationStep = (
+    compId: number,
+    step: number,
+    data?: { version_id?: number },
+  ) =>
+    this.post<PassportHarmonization>(
+      `/competences/${compId}/harmonization/steps/${step}/verify`,
+      data || {},
+    );
 
   // Competences — публичный реестр (без авторизации)
   getPublicCompetences = (params?: { q?: string; industry?: string; status?: string }) => {

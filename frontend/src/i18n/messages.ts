@@ -33,6 +33,7 @@ const ruCore = {
     moderation: "Модерация",
     expert: "Панель эксперта",
     users: "Пользователи",
+    intlMapping: "Международное сопоставление (справочник)",
     integration: "Интеграция",
   },
   footer: {
@@ -161,6 +162,7 @@ export const translations: Record<Locale, Messages> = {
       moderation: "Moderation",
       expert: "Expert panel",
       users: "Users",
+      intlMapping: "International mapping (reference)",
       integration: "Integration",
     },
     footer: {
@@ -283,6 +285,7 @@ export const translations: Record<Locale, Messages> = {
       moderation: "मॉडरेशन",
       expert: "विशेषज्ञ पैनल",
       users: "उपयोगकर्ता",
+      intlMapping: "अंतरराष्ट्रीय मिलान (संदर्भ)",
       integration: "एकीकरण",
     },
     footer: {
@@ -405,6 +408,7 @@ export const translations: Record<Locale, Messages> = {
       moderation: "审核",
       expert: "专家面板",
       users: "用户",
+      intlMapping: "国际对照（参考）",
       integration: "集成",
     },
     footer: {
@@ -527,6 +531,7 @@ export const translations: Record<Locale, Messages> = {
       moderation: "Kiểm duyệt",
       expert: "Bảng chuyên gia",
       users: "Người dùng",
+      intlMapping: "Đối chiếu quốc tế (tra cứu)",
       integration: "Tích hợp",
     },
     footer: {

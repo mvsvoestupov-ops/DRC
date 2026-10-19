@@ -7,6 +7,7 @@ from .user_models import User
 from .competence_models import Competence, CompetenceStatus
 from .fgos_models import FgosSpo          # <-- добавить
 from .esco_models import EscoOccupation, EscoSkill, EscoOccupationSkill, EscoMeta  # noqa: F401
+from .harmonization_models import HarmonizationVersion, HarmonizationStepState, PassportHarmonization  # noqa: F401
 from .session import engine, SessionLocal
 from .feedback_models import Feedback
 from .registration_models import Registration

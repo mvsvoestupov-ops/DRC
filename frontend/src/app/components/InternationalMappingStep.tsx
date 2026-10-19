@@ -1,8 +1,9 @@
-import { Award, Briefcase, Check, Globe2, Hash, Layers, RefreshCw, X } from "lucide-react";
+import { Award, Bot, Briefcase, Check, Globe2, Hash, Layers, RefreshCw, X } from "lucide-react";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useI18n } from "@/context/I18nContext";
+import { AutoTextarea } from "@/app/components/AutoTextarea";
 import { EscoSearchPicker } from "@/app/components/EscoSearchPicker";
 import {
   COVERAGE_TYPES,
@@ -16,6 +17,10 @@ type Props = {
   value: InternationalMapping;
   onChange: (next: InternationalMapping) => void;
   onRecalculate: () => void;
+  onAskAssistant?: () => Promise<void>;
+  assistantBusy?: boolean;
+  assistantError?: string | null;
+  aiAgentConfigured?: boolean | null;
 };
 
 const TYPE_RU: Record<RelationType, string> = {
@@ -26,7 +31,15 @@ const TYPE_RU: Record<RelationType, string> = {
   none: "нет соответствия",
 };
 
-export function InternationalMappingStep({ value, onChange, onRecalculate }: Props) {
+export function InternationalMappingStep({
+  value,
+  onChange,
+  onRecalculate,
+  onAskAssistant,
+  assistantBusy,
+  assistantError,
+  aiAgentConfigured,
+}: Props) {
   const { t } = useI18n();
 
   const patch = (partial: Partial<InternationalMapping>) => onChange({ ...value, ...partial });
@@ -38,16 +51,44 @@ export function InternationalMappingStep({ value, onChange, onRecalculate }: Pro
           <h2 className="text-xl font-semibold text-gray-900">{t("wizard.step9Title")}</h2>
           <p className="text-sm text-gray-500 mt-1">{t("wizard.step9Lead")}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Link to="/methodology/harmonization" className="text-xs font-semibold text-primary hover:underline">
             {t("wizard.imapMethod")}
           </Link>
-          <Button type="button" variant="outline" size="sm" onClick={onRecalculate}>
+          <Button type="button" variant="outline" size="sm" onClick={onRecalculate} disabled={assistantBusy}>
             <RefreshCw className="w-4 h-4 mr-1.5" />
             {t("wizard.imapRefresh")}
           </Button>
+          {onAskAssistant ? (
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => void onAskAssistant()}
+              disabled={assistantBusy}
+              title={
+                aiAgentConfigured === false
+                  ? t("wizard.imapAiNotConfigured")
+                  : t("wizard.imapAiHint")
+              }
+            >
+              <Bot className="w-4 h-4 mr-1.5" />
+              {assistantBusy ? t("wizard.imapAiBusy") : t("wizard.imapAiDraft")}
+            </Button>
+          ) : null}
         </div>
       </div>
+
+      {onAskAssistant ? (
+        <div className="flex gap-2.5 rounded-xl border border-sky-200 bg-sky-50/80 px-3.5 py-3 text-sm text-sky-950">
+          <Bot className="w-4 h-4 mt-0.5 shrink-0 text-sky-700" aria-hidden />
+          <p>{t("wizard.imapAiLead")}</p>
+        </div>
+      ) : null}
+      {assistantError ? (
+        <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          {assistantError}
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className={`rounded-2xl border p-5 flex gap-4 ${value.admitted ? "border-emerald-200 bg-emerald-50/80" : "border-rose-200 bg-rose-50/80"}`}>
@@ -225,8 +266,10 @@ export function InternationalMappingStep({ value, onChange, onRecalculate }: Pro
 
       <label className="block space-y-2">
         <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">{t("wizard.imapNotes")}</span>
-        <textarea
-          className="w-full min-h-[96px] rounded-xl border border-gray-200 px-3 py-2 text-sm"
+        <AutoTextarea
+          className="form-control w-full text-sm"
+          minRows={3}
+          maxRows={16}
           value={value.notes}
           onChange={(event) => patch({ notes: event.target.value })}
           placeholder={t("wizard.imapNotesPh")}

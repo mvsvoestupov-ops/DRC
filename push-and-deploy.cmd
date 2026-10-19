@@ -3,7 +3,7 @@ setlocal DisableDelayedExpansion
 chcp 65001 >nul
 cd /d "%~dp0"
 
-REM === правьте только этот блок при необходимости ===
+REM === конфигурация сервера (правьте при смене VPS) ===
 set "SSH_HOST=201.34.149.65"
 set "SSH_PORT=22"
 set "SSH_USER=root"
@@ -11,55 +11,78 @@ set "SSH_KEY=%USERPROFILE%\.ssh\id_ed25519_drc"
 set "REMOTE_DIR=/opt/drc"
 set "BRANCH=main"
 set "VITE_API_URL=https://drc.ao-nk.online/api"
-set "COMMIT_MSG=Harmoni-BRICS, ИИ-агент и очистка A/B/C при смене ТФ"
-REM ==================================================
+set "SITE_URL=https://drc.ao-nk.online"
+set "COMMIT_MSG=Международное сопоставление: ИИ ГАРМ-ESCO, ОКЗ из ПС, методика"
+REM =====================================================
 
-REM Запуск из cmd.exe (не из PowerShell Cursor):
-REM   C:\IT\DRC\push-and-deploy.cmd
-REM Без подтверждения:
-REM   C:\IT\DRC\push-and-deploy.cmd /y
-REM Только деплой уже запушенной ветки:
-REM   C:\IT\DRC\push-and-deploy.cmd /deploy
-REM   или: C:\IT\DRC\deploy-only.cmd
-REM Свой текст коммита:
-REM   C:\IT\DRC\push-and-deploy.cmd "свой текст коммита"
+REM Запускайте из cmd.exe (не PowerShell Cursor):
+REM   push-and-deploy.cmd              — пауза → commit + push + deploy
+REM   push-and-deploy.cmd /y           — без паузы
+REM   push-and-deploy.cmd /push        — только commit + push (без SSH)
+REM   push-and-deploy.cmd /deploy      — только деплой уже запушенной ветки
+REM   deploy-only.cmd                  — то же, что /deploy
+REM   push-and-deploy.cmd "текст"      — свой commit message
+
+set "SKIP_PAUSE="
+set "PUSH_ONLY="
 
 if /I "%~1"=="/deploy" goto :deploy
-if /I "%~1"=="/y" goto :ready
+
+if /I "%~1"=="/push" (
+  set "PUSH_ONLY=1"
+  if /I "%~2"=="/y" set "SKIP_PAUSE=1"
+  if not "%~2"=="" if /I not "%~2"=="/y" set "COMMIT_MSG=%~2"
+  goto :after_args
+)
+if /I "%~1"=="/y" (
+  set "SKIP_PAUSE=1"
+  goto :after_args
+)
 if not "%~1"=="" set "COMMIT_MSG=%~1"
+
+:after_args
+if defined SKIP_PAUSE goto :ready
 
 echo.
 echo Репозиторий: %CD%
 echo Ветка:       %BRANCH%
 echo Сервер:      %SSH_USER%@%SSH_HOST%:%SSH_PORT%  %REMOTE_DIR%
+echo Сайт:        %SITE_URL%
 echo Коммит:      %COMMIT_MSG%
+if defined PUSH_ONLY echo Режим:       только commit + push
 echo.
-echo Что сделает скрипт:
-echo   1. git add + commit текущих правок
+echo Шаги:
+echo   1. git add + commit ^(без секретов и локальной БД^)
 echo   2. git push origin %BRANCH%
-echo   3. ssh: pull, pip без torch/CUDA, ремонт ТФ/ОТФ,
-echo      seed примеров, сборка фронта, restart backend, nginx
-echo.
-echo В этом коммите ^(ожидаемо^):
-echo   - шаг 9.1 Harmoni-BRICS + методика
-echo   - ИИ-агент ^(ключ только в backend/.env^)
-echo   - при смене ТФ на шаге 2 рудименты A/B/C и зависимые шаги очищаются
+if not defined PUSH_ONLY (
+  echo   3. ssh: pull, pip, seed, build frontend, restart backend, nginx
+)
 echo.
 echo Не попадёт в коммит:
-echo   backend/.env, frontend/.env, venv, profstandart.db,
+echo   backend/.env, frontend/.env, venv, profstandart.db, ESCO/,
 echo   пароли, чаты, PassForDRC_mail.txt, frontend_old_backup
 echo.
-echo На сервере нужен свой backend/.env ^(DEEPSEEK_API_KEY уже задавали^).
-echo Локальный .env на VPS не копируется. База на сервере не подменяется.
-echo SSH спросит пароль, если ключа нет.
+echo На сервере свой backend/.env ^(DEEPSEEK_API_KEY^). БД не перезаписывается.
 echo.
-git status
+git status -sb
 echo.
-echo Enter = commit + push + deploy. Ctrl+C = отмена.
+echo Enter = продолжить. Ctrl+C = отмена.
 pause >nul
 
 :ready
 echo.
+
+where git >nul 2>&1
+if errorlevel 1 (
+  echo Ошибка: git не найден в PATH.
+  exit /b 1
+)
+
+git rev-parse --is-inside-work-tree >nul 2>&1
+if errorlevel 1 (
+  echo Ошибка: это не git-репозиторий.
+  exit /b 1
+)
 
 git add -A
 
@@ -76,9 +99,20 @@ git restore --staged -- ^
   "пароли и команды.txt" ^
   "PassForDRC_mail.txt" ^
   "backend/venv" ^
-  "backend/profstandart.db" 2>nul
+  "backend/profstandart.db" ^
+  "ESCO" ^
+  "ESCO/esco-v1.2.0.rdf" 2>nul
 
-REM На всякий случай: не коммитить ключ, если его снова вписали в example
+REM Блокировать commit/push, если в индексе снова оказался огромный RDF
+git diff --cached --name-only | findstr /I /C:"esco-v1.2.0.rdf" /C:"ESCO/" >nul 2>&1
+if not errorlevel 1 (
+  echo.
+  echo ОШИБКА: в коммит попал каталог ESCO ^(дамп ^>100 MB^).
+  echo Сначала: fix-push-lfs.cmd
+  exit /b 1
+)
+
+REM Не коммитить ключ, если его снова вписали в example
 findstr /C:"sk-" "backend\.env.example" >nul 2>&1
 if not errorlevel 1 (
   echo.
@@ -95,45 +129,72 @@ if errorlevel 1 (
     exit /b 1
   )
 ) else (
-  echo Нечего коммитить, пушу текущий HEAD.
+  echo Нечего коммитить — пушу текущий HEAD.
+)
+
+echo.
+echo == проверка: ESCO не в незапушенных коммитах
+git fetch origin %BRANCH% 2>nul
+git rev-list --objects origin/%BRANCH%..HEAD 2>nul | findstr /I /C:"ESCO/" /C:"esco-v1.2.0.rdf" >nul 2>&1
+if not errorlevel 1 (
+  echo.
+  echo ОШИБКА: ESCO RDF всё ещё в истории локальных коммитов.
+  echo GitHub отклонит push. Запустите: fix-push-lfs.cmd
+  exit /b 1
 )
 
 echo.
 echo == git push origin %BRANCH%
-git push origin %BRANCH%
+git push -u origin %BRANCH%
 if errorlevel 1 (
   echo Ошибка git push.
+  echo Если снова GH001 Large files — запустите: fix-push-lfs.cmd
   exit /b 1
 )
 
+if defined PUSH_ONLY (
+  echo.
+  echo Push готов. Деплой: deploy-only.cmd  или  push-and-deploy.cmd /deploy
+  endlocal
+  exit /b 0
+)
+
 :deploy
-set "SSH_OPTS=-p %SSH_PORT%"
+where ssh >nul 2>&1
+if errorlevel 1 (
+  echo Ошибка: ssh не найден. Установите OpenSSH Client.
+  exit /b 1
+)
+
+set "SSH_OPTS=-p %SSH_PORT% -o StrictHostKeyChecking=accept-new"
 if exist "%SSH_KEY%" (
-  set "SSH_OPTS=-i %SSH_KEY% -p %SSH_PORT%"
+  set SSH_OPTS=-i %SSH_KEY% -p %SSH_PORT% -o StrictHostKeyChecking=accept-new
   echo SSH-ключ: %SSH_KEY%
 ) else (
   echo Ключ не найден: %SSH_KEY%
-  echo Пробую обычный ssh без -i
+  echo Пробую ssh без -i ^(пароль / агент^)
 )
 
 echo.
-echo == deploy %SSH_USER%@%SSH_HOST%
+echo == deploy %SSH_USER%@%SSH_HOST% → %REMOTE_DIR%
 type "%~dp0deploy-remote.sh" | ssh %SSH_OPTS% %SSH_USER%@%SSH_HOST% "export VITE_API_URL=%VITE_API_URL% BRANCH=%BRANCH% REMOTE_DIR=%REMOTE_DIR%; tr -d '\r' | bash -s"
 if errorlevel 1 (
   echo.
   echo Деплой не прошёл.
-  echo   - порт: SSH_PORT в начале push-and-deploy.cmd
-  echo   - ключ: SSH_KEY
-  echo   - только деплой без push: push-and-deploy.cmd /deploy
+  echo   - порт/хост: SSH_HOST / SSH_PORT в начале скрипта
+  echo   - ключ: SSH_KEY=%SSH_KEY%
+  echo   - только деплой: deploy-only.cmd
   exit /b 1
 )
 
 echo.
-echo Готово: https://drc.ao-nk.online
-echo Методика Harmoni-BRICS: https://drc.ao-nk.online/methodology/harmoni-brics
+echo Готово: %SITE_URL%
+echo Методика: %SITE_URL%/methodology/harmonization
+echo Harmoni-BRICS: %SITE_URL%/methodology/harmoni-brics
 echo.
-echo Если ИИ-агент на сервере без ключа:
-echo   ssh на VPS и пропишите DEEPSEEK_API_KEY в %REMOTE_DIR%/backend/.env
-echo   затем: systemctl restart drc-backend   ^(или ваш unit^)
+echo Если ИИ на сервере без ключа:
+echo   ssh %SSH_USER%@%SSH_HOST%
+echo   nano %REMOTE_DIR%/backend/.env   ^(DEEPSEEK_API_KEY=...^)
+echo   systemctl restart drc-backend
 endlocal
 exit /b 0

@@ -46,6 +46,7 @@ from .esco_registry import (
     status as esco_status,
 )
 from .harmoni_brics import list_countries as harmoni_brics_countries, suggest_mapping as harmoni_brics_suggest
+from .garm_esco_ai import suggest_garm_esco
 from .deepseek_client import deepseek_status
 from .fgos_registry import FGOS_CATEGORIES, FGOS_CATEGORY_BY_ID, FGOS_CATEGORY_IDS
 from .db_operations import save_raw_standard
@@ -91,6 +92,26 @@ from .auth import (
     get_current_user_or_api_key, get_token_claim, is_user_active,
     is_email_confirmed, user_if_password_ok, UNCONFIRMED_EMAIL_DETAIL,
     generate_user_password, verify_password, is_staff_role, is_moderator_role, user_role,
+    is_intl_methodologist_role, get_current_intl_methodologist,
+)
+from .db.harmonization_models import (
+    HarmonizationVersion,
+    HarmonizationStepState,
+    PassportHarmonization,
+)
+from .harmonization import (
+    GLOBAL_STEPS,
+    PASSPORT_STEPS,
+    VERSION_STATUSES,
+    ai_agent_status,
+    empty_step_payload,
+    ensure_version_steps,
+    generate_ai_draft,
+    serialize_passport,
+    serialize_step,
+    serialize_version,
+    sync_bridges_payload_with_systems,
+    sync_component_rules_payload_with_systems,
 )
 from .mail import (
     confirmation_link,
@@ -171,6 +192,7 @@ for col in ensure_fgos_columns():
     print(f"DB migration: added column {col}")
 for col in ensure_users_columns():
     print(f"DB migration: added column {col}")
+
 for col in ensure_assessment_tools_columns():
     print(f"DB migration: added column {col}")
 for col in ensure_competence_public_code_column():
@@ -419,6 +441,21 @@ class HarmoniBricsSuggestRequest(BaseModel):
     structure_c: Optional[List[str]] = None
 
 
+class GarmEscoSuggestRequest(BaseModel):
+    title: Optional[str] = ""
+    description: Optional[str] = ""
+    competence_kind: Optional[str] = "professional"
+    qualification_level: Optional[str] = ""
+    education_kind: Optional[str] = ""
+    education_level: Optional[str] = ""
+    professional_area_code: Optional[str] = ""
+    fgos_code: Optional[str] = ""
+    labor_functions: Optional[List[Dict[str, Any]]] = None
+    structure_a: Optional[List[str]] = None
+    structure_b: Optional[List[str]] = None
+    structure_c: Optional[List[str]] = None
+
+
 class SuggestProfileRequest(BaseModel):
     qualification_level: str
     structure: Optional[Dict[str, Any]] = None
@@ -504,7 +541,7 @@ class CompetenceDevelopmentUpdate(BaseModel):
     due_date: Optional[str] = None
 
 
-USER_ROLES = ("user", "expert", "moderator", "admin")
+USER_ROLES = ("user", "expert", "moderator", "admin", "intl_methodologist")
 MIN_REVIEWERS = 3
 COLLABORATOR_PENDING = "pending"
 COLLABORATOR_ACCEPTED = "accepted"
@@ -542,7 +579,10 @@ def _normalize_person_field(value: Optional[str], *, required: bool, label: str,
 def _normalize_role(role: str) -> str:
     value = (role or "user").strip().lower()
     if value not in USER_ROLES:
-        raise HTTPException(400, "Роль должна быть user, expert, moderator или admin")
+        raise HTTPException(
+            400,
+            "Роль должна быть user, expert, moderator, admin или intl_methodologist",
+        )
     return value
 
 
@@ -1302,6 +1342,11 @@ async def get_labor_functions(standard_id: int, current_user: User = Depends(get
 
         result = []
         for gf in std.generalized_functions:
+            gf_okz = [
+                str(c).strip()
+                for c in (getattr(gf, "okz_codes", None) or [])
+                if str(c or "").strip()
+            ]
             for pf in gf.particular_functions:
                 tf_code = compact_tf_code(pf.code)
                 pf_knowledges = [k.text for k in (pf.knowledges or []) if k.text]
@@ -1357,7 +1402,7 @@ async def get_labor_functions(standard_id: int, current_user: User = Depends(get
                     "standard_id": std.id,
                     "standard_reg_number": std.reg_number,
                     "standard_name": std.name,
-                    "okz_codes": getattr(gf, "okz_codes", None) or [],
+                    "okz_codes": gf_okz,
                     "labor_actions": labor_actions_detail,
                     "knowledges": pf_knowledges,
                     "skills": pf_skills,
@@ -2556,6 +2601,594 @@ async def post_harmoni_brics_suggest(
         raise HTTPException(502, f"Не удалось получить черновик Harmoni-BRICS: {exc}") from exc
 
 
+@app.get("/harmonize/garm-esco/status")
+async def get_garm_esco_status(current_user: User = Depends(get_current_user)):
+    return deepseek_status()
+
+
+@app.post("/harmonize/garm-esco/suggest")
+async def post_garm_esco_suggest(
+    data: GarmEscoSuggestRequest,
+    current_user: User = Depends(get_current_user),
+):
+    session = SessionLocal()
+    try:
+        return suggest_garm_esco(session, data.model_dump())
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(502, f"Не удалось получить черновик ГАРМ-ESCO: {exc}") from exc
+    finally:
+        session.close()
+
+
+class HarmonizationVersionCreate(BaseModel):
+    title: str = "Новая версия"
+    notes: str = ""
+    clone_from_id: Optional[int] = None
+
+
+class HarmonizationVersionPatch(BaseModel):
+    title: Optional[str] = None
+    notes: Optional[str] = None
+    status: Optional[str] = None
+    ready_for_apply: Optional[bool] = None
+
+
+class HarmonizationStepPut(BaseModel):
+    payload: Dict[str, Any]
+
+
+class PassportHarmonizationPut(BaseModel):
+    version_id: Optional[int] = None
+    step3_payload: Optional[Dict[str, Any]] = None
+    step6_payload: Optional[Dict[str, Any]] = None
+
+
+class PassportStepAiRequest(BaseModel):
+    version_id: Optional[int] = None
+    purpose: Optional[str] = None
+
+
+def _get_harmonization_version(session, version_id: int) -> HarmonizationVersion:
+    version = session.query(HarmonizationVersion).filter(HarmonizationVersion.id == version_id).first()
+    if not version:
+        raise HTTPException(404, "Версия не найдена")
+    ensure_version_steps(session, version)
+    return version
+
+
+def _clear_ready_for_apply(session, *, except_id: int | None = None) -> None:
+    rows = session.query(HarmonizationVersion).filter(HarmonizationVersion.ready_for_apply.is_(True)).all()
+    for row in rows:
+        if except_id is not None and row.id == except_id:
+            continue
+        row.ready_for_apply = False
+
+
+@app.get("/harmonization/status")
+async def get_harmonization_status(current_user: User = Depends(get_current_intl_methodologist)):
+    return {"ai_agent": ai_agent_status()}
+
+
+@app.get("/harmonization/versions")
+async def list_harmonization_versions(current_user: User = Depends(get_current_intl_methodologist)):
+    session = SessionLocal()
+    try:
+        rows = (
+            session.query(HarmonizationVersion)
+            .order_by(HarmonizationVersion.ready_for_apply.desc(), HarmonizationVersion.updated_at.desc())
+            .all()
+        )
+        for row in rows:
+            ensure_version_steps(session, row)
+        session.commit()
+        return [serialize_version(row, include_steps=False) for row in rows]
+    finally:
+        session.close()
+
+
+@app.post("/harmonization/versions")
+async def create_harmonization_version(
+    data: HarmonizationVersionCreate,
+    current_user: User = Depends(get_current_intl_methodologist),
+):
+    session = SessionLocal()
+    try:
+        title = (data.title or "").strip() or "Новая версия"
+        version = HarmonizationVersion(
+            title=title,
+            notes=(data.notes or "").strip(),
+            status="draft",
+            ready_for_apply=False,
+            created_by_id=current_user.id,
+            updated_by_id=current_user.id,
+        )
+        session.add(version)
+        session.flush()
+        if data.clone_from_id:
+            source = _get_harmonization_version(session, int(data.clone_from_id))
+            ensure_version_steps(session, source)
+            for src_step in source.steps:
+                session.add(
+                    HarmonizationStepState(
+                        version_id=version.id,
+                        step=int(src_step.step),
+                        status="edited" if src_step.status == "verified" else (src_step.status or "empty"),
+                        payload=dict(src_step.payload or empty_step_payload(int(src_step.step))),
+                        ai_meta={},
+                    )
+                )
+        else:
+            ensure_version_steps(session, version)
+        session.commit()
+        session.refresh(version)
+        ensure_version_steps(session, version)
+        return serialize_version(version)
+    except HTTPException:
+        session.rollback()
+        raise
+    except Exception as exc:
+        session.rollback()
+        raise HTTPException(400, str(exc)) from exc
+    finally:
+        session.close()
+
+
+@app.get("/harmonization/versions/{version_id}")
+async def get_harmonization_version(
+    version_id: int,
+    current_user: User = Depends(get_current_intl_methodologist),
+):
+    session = SessionLocal()
+    try:
+        version = _get_harmonization_version(session, version_id)
+        session.commit()
+        return serialize_version(version)
+    finally:
+        session.close()
+
+
+@app.patch("/harmonization/versions/{version_id}")
+async def patch_harmonization_version(
+    version_id: int,
+    data: HarmonizationVersionPatch,
+    current_user: User = Depends(get_current_intl_methodologist),
+):
+    session = SessionLocal()
+    try:
+        version = _get_harmonization_version(session, version_id)
+        if data.title is not None:
+            version.title = (data.title or "").strip() or version.title
+        if data.notes is not None:
+            version.notes = data.notes or ""
+        if data.status is not None:
+            status = (data.status or "").strip().lower()
+            if status not in VERSION_STATUSES:
+                raise HTTPException(400, "Недопустимый статус версии")
+            version.status = status
+        if data.ready_for_apply is not None:
+            if data.ready_for_apply:
+                _clear_ready_for_apply(session, except_id=version.id)
+                version.ready_for_apply = True
+            else:
+                version.ready_for_apply = False
+        version.updated_by_id = current_user.id
+        version.updated_at = datetime.datetime.utcnow()
+        session.commit()
+        session.refresh(version)
+        return serialize_version(version)
+    except HTTPException:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+
+@app.put("/harmonization/versions/{version_id}/steps/{step}")
+async def put_harmonization_step(
+    version_id: int,
+    step: int,
+    data: HarmonizationStepPut,
+    current_user: User = Depends(get_current_intl_methodologist),
+):
+    if step not in GLOBAL_STEPS:
+        raise HTTPException(400, "Шаг должен быть 1, 2, 4 или 5")
+    session = SessionLocal()
+    try:
+        version = _get_harmonization_version(session, version_id)
+        row = next((s for s in version.steps if int(s.step) == step), None)
+        if not row:
+            row = HarmonizationStepState(version_id=version.id, step=step, payload={})
+            session.add(row)
+        row.payload = data.payload or empty_step_payload(step)
+        # Шаг 1 изменился — синхронизируем системы на шагах 2 и 5.
+        if step == 1:
+            regs = (row.payload or {}).get("registries") if isinstance(row.payload, dict) else []
+            for dep_step, sync_fn in (
+                (2, sync_bridges_payload_with_systems),
+                (5, sync_component_rules_payload_with_systems),
+            ):
+                dep = next((s for s in version.steps if int(s.step) == dep_step), None)
+                if dep is None:
+                    continue
+                dep.payload = sync_fn(
+                    dep.payload if isinstance(dep.payload, dict) else {},
+                    regs,
+                )
+                if dep.status == "verified":
+                    dep.status = "edited"
+                    dep.verified_by_id = None
+                    dep.verified_at = None
+                dep.updated_at = datetime.datetime.utcnow()
+        if step == 2:
+            step1 = next((s for s in version.steps if int(s.step) == 1), None)
+            regs = []
+            if step1 and isinstance(step1.payload, dict):
+                regs = step1.payload.get("registries") or []
+            row.payload = sync_bridges_payload_with_systems(
+                row.payload if isinstance(row.payload, dict) else {},
+                regs,
+            )
+        if step == 5:
+            step1 = next((s for s in version.steps if int(s.step) == 1), None)
+            regs = []
+            if step1 and isinstance(step1.payload, dict):
+                regs = step1.payload.get("registries") or []
+            row.payload = sync_component_rules_payload_with_systems(
+                row.payload if isinstance(row.payload, dict) else {},
+                regs,
+            )
+        row.status = "edited"
+        row.verified_by_id = None
+        row.verified_at = None
+        row.updated_at = datetime.datetime.utcnow()
+        version.updated_by_id = current_user.id
+        version.updated_at = datetime.datetime.utcnow()
+        session.commit()
+        session.refresh(row)
+        return serialize_step(row)
+    except HTTPException:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+
+@app.post("/harmonization/versions/{version_id}/steps/{step}/ai-draft")
+async def ai_draft_harmonization_step(
+    version_id: int,
+    step: int,
+    current_user: User = Depends(get_current_intl_methodologist),
+):
+    if step not in GLOBAL_STEPS:
+        raise HTTPException(400, "Шаг должен быть 1, 2, 4 или 5")
+    session = SessionLocal()
+    try:
+        version = _get_harmonization_version(session, version_id)
+        row = next((s for s in version.steps if int(s.step) == step), None)
+        if not row:
+            row = HarmonizationStepState(version_id=version.id, step=step, payload={})
+            session.add(row)
+            session.flush()
+        draft_context: dict = {"version_title": version.title}
+        if step == 1:
+            prev = row.payload if isinstance(row.payload, dict) else {}
+            draft_context["existing_registries"] = prev.get("registries") or []
+        if step in (2, 5):
+            step1 = next((s for s in version.steps if int(s.step) == 1), None)
+            regs = []
+            if step1 and isinstance(step1.payload, dict):
+                regs = step1.payload.get("registries") or []
+            draft_context["registries"] = regs
+            draft_context["existing_registries"] = regs
+        payload, ai_meta = generate_ai_draft(step, context=draft_context)
+        row.payload = payload
+        row.ai_meta = ai_meta
+        row.status = "ai_draft"
+        row.verified_by_id = None
+        row.verified_at = None
+        row.updated_at = datetime.datetime.utcnow()
+        if step == 1:
+            regs = (payload or {}).get("registries") if isinstance(payload, dict) else []
+            for dep_step, sync_fn in (
+                (2, sync_bridges_payload_with_systems),
+                (5, sync_component_rules_payload_with_systems),
+            ):
+                dep = next((s for s in version.steps if int(s.step) == dep_step), None)
+                if dep is None:
+                    continue
+                dep.payload = sync_fn(
+                    dep.payload if isinstance(dep.payload, dict) else {},
+                    regs,
+                )
+                if dep.status == "verified":
+                    dep.status = "edited"
+                    dep.verified_by_id = None
+                    dep.verified_at = None
+                dep.updated_at = datetime.datetime.utcnow()
+        version.updated_by_id = current_user.id
+        version.updated_at = datetime.datetime.utcnow()
+        session.commit()
+        session.refresh(row)
+        return serialize_step(row)
+    except HTTPException:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+
+@app.post("/harmonization/versions/{version_id}/steps/{step}/verify")
+async def verify_harmonization_step(
+    version_id: int,
+    step: int,
+    current_user: User = Depends(get_current_intl_methodologist),
+):
+    if step not in GLOBAL_STEPS:
+        raise HTTPException(400, "Шаг должен быть 1, 2, 4 или 5")
+    session = SessionLocal()
+    try:
+        version = _get_harmonization_version(session, version_id)
+        row = next((s for s in version.steps if int(s.step) == step), None)
+        if not row:
+            raise HTTPException(400, "Сначала заполните шаг")
+        row.status = "verified"
+        row.verified_by_id = current_user.id
+        row.verified_at = datetime.datetime.utcnow()
+        row.updated_at = datetime.datetime.utcnow()
+        version.updated_by_id = current_user.id
+        version.updated_at = datetime.datetime.utcnow()
+        session.commit()
+        session.refresh(row)
+        return serialize_step(row)
+    except HTTPException:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+
+def _competence_context_for_ai(comp: Competence) -> dict:
+    raw = comp.raw_data or {}
+    return {
+        "title": comp.name,
+        "competence_kind": (raw.get("formation_profile") or {}).get("competence_kind") or "professional",
+        "qualification_level": comp.qualification_level,
+        "labor_functions": comp.labor_functions or [],
+        "structure": comp.structure or {},
+        "education_level": raw.get("education_level") or "",
+        "education_kind": raw.get("education_kind") or "",
+    }
+
+
+def _resolve_passport_version(session, version_id: int | None) -> HarmonizationVersion:
+    if version_id:
+        return _get_harmonization_version(session, int(version_id))
+    ready = (
+        session.query(HarmonizationVersion)
+        .filter(HarmonizationVersion.ready_for_apply.is_(True))
+        .order_by(HarmonizationVersion.updated_at.desc())
+        .first()
+    )
+    if ready:
+        ensure_version_steps(session, ready)
+        return ready
+    latest = session.query(HarmonizationVersion).order_by(HarmonizationVersion.updated_at.desc()).first()
+    if not latest:
+        raise HTTPException(400, "Сначала создайте версию международных мостов")
+    ensure_version_steps(session, latest)
+    return latest
+
+
+@app.get("/competences/{comp_id}/harmonization")
+async def get_passport_harmonization(
+    comp_id: int,
+    version_id: Optional[int] = None,
+    current_user: User = Depends(get_current_intl_methodologist),
+):
+    session = SessionLocal()
+    try:
+        comp = session.query(Competence).filter(Competence.id == comp_id).first()
+        if not comp:
+            raise HTTPException(404, "Компетенция не найдена")
+        version = _resolve_passport_version(session, version_id)
+        row = (
+            session.query(PassportHarmonization)
+            .filter(
+                PassportHarmonization.competence_id == comp_id,
+                PassportHarmonization.version_id == version.id,
+            )
+            .first()
+        )
+        if not row:
+            row = PassportHarmonization(
+                competence_id=comp_id,
+                version_id=version.id,
+                step3_payload=empty_step_payload(3),
+                step6_payload=empty_step_payload(6),
+                updated_by_id=current_user.id,
+            )
+            session.add(row)
+            session.commit()
+            session.refresh(row)
+        return {
+            **serialize_passport(row),
+            "version": serialize_version(version, include_steps=False),
+            "ai_agent": ai_agent_status(),
+        }
+    finally:
+        session.close()
+
+
+@app.put("/competences/{comp_id}/harmonization")
+async def put_passport_harmonization(
+    comp_id: int,
+    data: PassportHarmonizationPut,
+    current_user: User = Depends(get_current_intl_methodologist),
+):
+    session = SessionLocal()
+    try:
+        comp = session.query(Competence).filter(Competence.id == comp_id).first()
+        if not comp:
+            raise HTTPException(404, "Компетенция не найдена")
+        version = _resolve_passport_version(session, data.version_id)
+        row = (
+            session.query(PassportHarmonization)
+            .filter(
+                PassportHarmonization.competence_id == comp_id,
+                PassportHarmonization.version_id == version.id,
+            )
+            .first()
+        )
+        if not row:
+            row = PassportHarmonization(
+                competence_id=comp_id,
+                version_id=version.id,
+                step3_payload=empty_step_payload(3),
+                step6_payload=empty_step_payload(6),
+            )
+            session.add(row)
+            session.flush()
+        if data.step3_payload is not None:
+            row.step3_payload = data.step3_payload
+            row.step3_status = "edited"
+            row.step3_verified_by_id = None
+            row.step3_verified_at = None
+        if data.step6_payload is not None:
+            row.step6_payload = data.step6_payload
+            row.step6_status = "edited"
+            row.step6_verified_by_id = None
+            row.step6_verified_at = None
+        row.updated_by_id = current_user.id
+        row.updated_at = datetime.datetime.utcnow()
+        session.commit()
+        session.refresh(row)
+        return {
+            **serialize_passport(row),
+            "version": serialize_version(version, include_steps=False),
+            "ai_agent": ai_agent_status(),
+        }
+    except HTTPException:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+
+@app.post("/competences/{comp_id}/harmonization/steps/{step}/ai-draft")
+async def ai_draft_passport_harmonization_step(
+    comp_id: int,
+    step: int,
+    data: PassportStepAiRequest = PassportStepAiRequest(),
+    current_user: User = Depends(get_current_intl_methodologist),
+):
+    if step not in PASSPORT_STEPS:
+        raise HTTPException(400, "Шаг должен быть 3 или 6")
+    session = SessionLocal()
+    try:
+        comp = session.query(Competence).filter(Competence.id == comp_id).first()
+        if not comp:
+            raise HTTPException(404, "Компетенция не найдена")
+        version = _resolve_passport_version(session, data.version_id)
+        row = (
+            session.query(PassportHarmonization)
+            .filter(
+                PassportHarmonization.competence_id == comp_id,
+                PassportHarmonization.version_id == version.id,
+            )
+            .first()
+        )
+        if not row:
+            row = PassportHarmonization(
+                competence_id=comp_id,
+                version_id=version.id,
+                step3_payload=empty_step_payload(3),
+                step6_payload=empty_step_payload(6),
+            )
+            session.add(row)
+            session.flush()
+        ctx = _competence_context_for_ai(comp)
+        if data.purpose:
+            ctx["purpose"] = data.purpose
+        elif isinstance(row.step6_payload, dict) and row.step6_payload.get("purpose"):
+            ctx["purpose"] = row.step6_payload.get("purpose")
+        payload, ai_meta = generate_ai_draft(step, context=ctx)
+        if step == 3:
+            row.step3_payload = payload
+            row.step3_ai_meta = ai_meta
+            row.step3_status = "ai_draft"
+            row.step3_verified_by_id = None
+            row.step3_verified_at = None
+        else:
+            row.step6_payload = payload
+            row.step6_ai_meta = ai_meta
+            row.step6_status = "ai_draft"
+            row.step6_verified_by_id = None
+            row.step6_verified_at = None
+        row.updated_by_id = current_user.id
+        row.updated_at = datetime.datetime.utcnow()
+        session.commit()
+        session.refresh(row)
+        return {
+            **serialize_passport(row),
+            "version": serialize_version(version, include_steps=False),
+            "ai_agent": ai_agent_status(),
+        }
+    except HTTPException:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+
+@app.post("/competences/{comp_id}/harmonization/steps/{step}/verify")
+async def verify_passport_harmonization_step(
+    comp_id: int,
+    step: int,
+    data: PassportStepAiRequest = PassportStepAiRequest(),
+    current_user: User = Depends(get_current_intl_methodologist),
+):
+    if step not in PASSPORT_STEPS:
+        raise HTTPException(400, "Шаг должен быть 3 или 6")
+    session = SessionLocal()
+    try:
+        version = _resolve_passport_version(session, data.version_id)
+        row = (
+            session.query(PassportHarmonization)
+            .filter(
+                PassportHarmonization.competence_id == comp_id,
+                PassportHarmonization.version_id == version.id,
+            )
+            .first()
+        )
+        if not row:
+            raise HTTPException(400, "Сначала заполните сопоставление паспорта")
+        now = datetime.datetime.utcnow()
+        if step == 3:
+            row.step3_status = "verified"
+            row.step3_verified_by_id = current_user.id
+            row.step3_verified_at = now
+        else:
+            row.step6_status = "verified"
+            row.step6_verified_by_id = current_user.id
+            row.step6_verified_at = now
+        row.updated_by_id = current_user.id
+        row.updated_at = now
+        session.commit()
+        session.refresh(row)
+        return {
+            **serialize_passport(row),
+            "version": serialize_version(version, include_steps=False),
+            "ai_agent": ai_agent_status(),
+        }
+    except HTTPException:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+
 @app.get("/reference/matrix-context")
 async def reference_matrix_context(level: str):
     """Контекст матрицы для указанного уровня квалификации (например level=6 или 6.1)."""
@@ -3310,7 +3943,7 @@ def _log_activity(
 
 def _can_view_competence(session, user, comp: Competence) -> bool:
     role = user_role(user)
-    if role == "admin":
+    if role == "admin" or role == "intl_methodologist":
         return True
     if _is_group_leader(comp, user) or _is_accepted_collaborator(session, comp.id, user.id):
         return True
@@ -3423,9 +4056,17 @@ def _serialize_competence_for_user(
 ) -> dict:
     role = _collaboration_role(session, user, comp)
     admin = user_role(user) == "admin"
+    intl_only = user_role(user) == "intl_methodologist"
+    intl = is_intl_methodologist_role(user)
     status = comp.status
     can_invite = (admin or role == "leader") and status != CompetenceStatus.APPROVED
-    can_edit = admin or role == "leader" or (role == "member" and status == CompetenceStatus.DRAFT)
+    # Методист-международник может открывать паспорт для 9.2 (и править поля при необходимости).
+    can_edit = (
+        admin
+        or intl_only
+        or role == "leader"
+        or (role == "member" and status == CompetenceStatus.DRAFT)
+    )
     payload = serialize_competence(
         comp,
         include_matrix=include_matrix,
@@ -3436,6 +4077,10 @@ def _serialize_competence_for_user(
         can_edit=can_edit,
     )
     payload["can_view_activity"] = admin or role == "leader"
+    payload["can_harmonize"] = intl
+    payload["can_submit_review"] = (not intl_only) and (
+        admin or role == "leader"
+    )
     return payload
 
 
@@ -3718,8 +4363,10 @@ async def list_competences(mine: bool = False, current_user: User = Depends(get_
         own_or_group = [Competence.user_id == current_user.id]
         if collab_ids:
             own_or_group.append(Competence.id.in_(collab_ids))
-        if mine or role not in ("admin", "moderator", "expert"):
+        if mine or role not in ("admin", "moderator", "expert", "intl_methodologist"):
             query = query.filter(or_(*own_or_group))
+        elif role == "intl_methodologist":
+            pass  # все активные паспорта
         elif role == "moderator":
             query = query.filter(
                 or_(
@@ -4512,6 +5159,8 @@ async def update_competence(comp_id: int, data: CompetenceUpdate, current_user: 
                     raise HTTPException(403, "Эксперт может утвердить компетенцию или вернуть на доработку")
             elif role == "moderator":
                 raise HTTPException(403, "Модератор назначает экспертов и не меняет статус экспертизы")
+            elif role == "intl_methodologist":
+                raise HTTPException(403, "Методист-международник не меняет статус компетенции")
             else:
                 if is_collab and not is_owner:
                     raise HTTPException(403, "Только руководитель рабочей группы может менять статус компетенции")
@@ -4520,7 +5169,9 @@ async def update_competence(comp_id: int, data: CompetenceUpdate, current_user: 
                 if target_status not in (CompetenceStatus.DRAFT, CompetenceStatus.REVIEW):
                     raise HTTPException(403, "Недостаточно прав для утверждения компетенции")
         if not changing_status:
-            if role not in ("admin",) and not is_owner and not assigned:
+            if role == "intl_methodologist":
+                pass  # доступ к паспорту для контура 9.2
+            elif role not in ("admin",) and not is_owner and not assigned:
                 if not is_collab:
                     raise HTTPException(403, "Доступ запрещён")
                 if comp.status != CompetenceStatus.DRAFT:

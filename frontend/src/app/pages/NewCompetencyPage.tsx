@@ -106,8 +106,10 @@ import {
   HarmoniBricsPreview,
   HarmoniBricsStep,
 } from "@/app/components/HarmoniBricsStep";
+import { HarmonizationStep92 } from "@/app/components/HarmonizationStep92";
 import {
   analyzeInternationalMapping,
+  applyGarmEscoSuggest,
   emptyInternationalMapping,
   normalizeInternationalMapping,
   type InternationalMapping,
@@ -168,7 +170,7 @@ export function NewCompetencyPage() {
   const { id: editIdParam } = useParams<{ id?: string }>();
   const editId = editIdParam ? Number(editIdParam) : null;
   const isEdit = Boolean(editId);
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isIntlMethodologist } = useAuth();
   const { t } = useI18n();
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedStandards, setSelectedStandards] = useState<ProfStandardSearchItem[]>([]);
@@ -225,21 +227,31 @@ export function NewCompetencyPage() {
   });
   const [hbBusy, setHbBusy] = useState(false);
   const [hbError, setHbError] = useState<string | null>(null);
+  const [garmBusy, setGarmBusy] = useState(false);
+  const [garmError, setGarmError] = useState<string | null>(null);
   const [aiAgentConfigured, setAiAgentConfigured] = useState<boolean | null>(null);
 
-  const steps = [
-    { number: 1, name: t("wizard.step1"), label: "1" },
-    { number: 2, name: t("wizard.step2"), label: "2" },
-    { number: 3, name: t("wizard.step3"), label: "3" },
-    { number: 4, name: t("wizard.step4"), label: "4" },
-    { number: 5, name: t("wizard.step5"), label: "5" },
-    { number: 6, name: t("wizard.step6"), label: "6" },
-    { number: 7, name: t("wizard.step7"), label: "7" },
-    { number: 8, name: t("wizard.step8"), label: "8" },
-    { number: 9, name: t("wizard.step9"), label: "9" },
-    { number: 10, name: t("wizard.step91"), label: "9.1" },
-    { number: 11, name: t("wizard.step10"), label: "10" },
-  ];
+  const steps = useMemo(() => {
+    const list = [
+      { number: 1, name: t("wizard.step1"), label: "1" },
+      { number: 2, name: t("wizard.step2"), label: "2" },
+      { number: 3, name: t("wizard.step3"), label: "3" },
+      { number: 4, name: t("wizard.step4"), label: "4" },
+      { number: 5, name: t("wizard.step5"), label: "5" },
+      { number: 6, name: t("wizard.step6"), label: "6" },
+      { number: 7, name: t("wizard.step7"), label: "7" },
+      { number: 8, name: t("wizard.step8"), label: "8" },
+      { number: 9, name: t("wizard.step9"), label: "9" },
+      { number: 10, name: t("wizard.step91"), label: "9.1" },
+    ];
+    if (isIntlMethodologist) {
+      list.push({ number: 11, name: t("wizard.step92"), label: "9.2" });
+      list.push({ number: 12, name: t("wizard.step10"), label: "10" });
+    } else {
+      list.push({ number: 11, name: t("wizard.step10"), label: "10" });
+    }
+    return list;
+  }, [t, isIntlMethodologist]);
   const lastStep = steps.length;
   const competenceId = editId || workingCompetence?.id || null;
   const { peers, setFragment: setPresenceFragment } = useCollaborationPresence({
@@ -294,7 +306,41 @@ export function NewCompetencyPage() {
     [laborFunctions, formData.selectedLaborFunctionIds],
   );
 
-  const runInternationalMapping = useCallback(() => {
+  const runInternationalMapping = useCallback(async () => {
+    let nextLabor = laborFunctions;
+    const standardIds = [
+      ...new Set(
+        laborFunctions
+          .map((lf) => lf.standard_id)
+          .filter((id): id is number => typeof id === "number" && id > 0),
+      ),
+    ];
+    if (standardIds.length > 0) {
+      try {
+        const batches = await Promise.all(
+          standardIds.map((id) =>
+            apiClient.getLaborFunctions(id).catch(() => [] as LaborFunctionDetail[]),
+          ),
+        );
+        const byId = new Map<number, LaborFunctionDetail>();
+        for (const batch of batches) {
+          for (const lf of Array.isArray(batch) ? batch : []) {
+            byId.set(lf.id, lf);
+          }
+        }
+        if (byId.size > 0) {
+          nextLabor = laborFunctions.map((lf) => {
+            const fresh = byId.get(lf.id);
+            if (!fresh) return lf;
+            const okz = Array.isArray(fresh.okz_codes) ? fresh.okz_codes : lf.okz_codes;
+            return okz && okz.length ? { ...lf, okz_codes: okz } : lf;
+          });
+          setLaborFunctions(nextLabor);
+        }
+      } catch {
+        /* оставляем текущие ТФ */
+      }
+    }
     setFormData((prev) => ({
       ...prev,
       internationalMapping: analyzeInternationalMapping({
@@ -305,7 +351,7 @@ export function NewCompetencyPage() {
         educationLevel: prev.educationLevel,
         professionalAreaCode: prev.professionalAreaCode,
         fgosCode: prev.fgosCode,
-        laborFunctions: laborFunctions.filter((lf) => prev.selectedLaborFunctionIds.includes(lf.id)),
+        laborFunctions: nextLabor.filter((lf) => prev.selectedLaborFunctionIds.includes(lf.id)),
         structure: prev.structure,
       }),
     }));
@@ -314,7 +360,7 @@ export function NewCompetencyPage() {
   useEffect(() => {
     if (currentStep !== 9) return;
     if (formData.internationalMapping.analyzedAt) return;
-    runInternationalMapping();
+    void runInternationalMapping();
   }, [currentStep, formData.internationalMapping.analyzedAt, runInternationalMapping]);
 
   const askHarmoniBrics = useCallback(async () => {
@@ -367,11 +413,50 @@ export function NewCompetencyPage() {
     }
   }, [formData, selectedLaborFunctions, t]);
 
+  const askGarmEsco = useCallback(async () => {
+    setGarmBusy(true);
+    setGarmError(null);
+    try {
+      const texts = (items: { text: string }[]) =>
+        items.map((item) => item.text.trim()).filter(Boolean);
+      const result = await apiClient.suggestGarmEsco({
+        title: formData.title,
+        description: formData.description,
+        competence_kind: formData.competenceKind,
+        qualification_level: formData.qualificationLevel,
+        education_kind: formData.educationKind,
+        education_level: formData.educationLevel,
+        professional_area_code: formData.professionalAreaCode,
+        fgos_code: formData.fgosCode,
+        labor_functions: selectedLaborFunctions.map((lf) => ({
+          code: lf.code,
+          name: lf.name,
+          otf_level: lf.otf_level,
+          otf_code: lf.otf_code,
+          okz_codes: lf.okz_codes,
+        })),
+        structure_a: texts(formData.structure.A),
+        structure_b: texts(formData.structure.B),
+        structure_c: texts(formData.structure.C),
+      });
+      const configured = Boolean((result as { status?: { configured?: boolean } }).status?.configured);
+      setAiAgentConfigured(configured);
+      setFormData((prev) => ({
+        ...prev,
+        internationalMapping: applyGarmEscoSuggest(prev.internationalMapping, result as never),
+      }));
+    } catch (err) {
+      setGarmError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setGarmBusy(false);
+    }
+  }, [formData, selectedLaborFunctions]);
+
   useEffect(() => {
-    if (currentStep !== 10) return;
+    if (currentStep !== 9 && currentStep !== 10) return;
     let cancelled = false;
-    apiClient
-      .getHarmoniBricsStatus()
+    const loader = currentStep === 9 ? apiClient.getGarmEscoStatus() : apiClient.getHarmoniBricsStatus();
+    loader
       .then((status) => {
         if (!cancelled) setAiAgentConfigured(Boolean(status.configured));
       })
@@ -491,7 +576,9 @@ export function NewCompetencyPage() {
           return;
         }
         setWorkingCompetence(comp);
-        setCanSubmitToReview(comp.collaboration_role !== "member");
+        setCanSubmitToReview(
+          comp.can_submit_review !== false && comp.collaboration_role !== "member",
+        );
         const structure = structureFromPayload(comp.structure || {});
         const grouped = groupDisciplineMapping(comp.discipline_mapping || []);
         const disciplineMapping = syncDisciplineMapping(structure, []).map((row) => {
@@ -1815,6 +1902,10 @@ export function NewCompetencyPage() {
                     setFormData((prev) => ({ ...prev, internationalMapping }))
                   }
                   onRecalculate={runInternationalMapping}
+                  onAskAssistant={askGarmEsco}
+                  assistantBusy={garmBusy}
+                  assistantError={garmError}
+                  aiAgentConfigured={aiAgentConfigured}
                 />
                 </div>
               )}
@@ -1829,6 +1920,12 @@ export function NewCompetencyPage() {
                     assistantError={hbError}
                     aiAgentConfigured={aiAgentConfigured}
                   />
+                </div>
+              )}
+
+              {isIntlMethodologist && currentStep === 11 && (
+                <div data-presence-fragment="intl-harmonization">
+                  <HarmonizationStep92 competenceId={competenceId} />
                 </div>
               )}
 

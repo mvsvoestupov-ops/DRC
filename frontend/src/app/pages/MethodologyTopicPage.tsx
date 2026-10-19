@@ -61,8 +61,10 @@ export function MethodologyTopicPage() {
         <ArrowLeft className="w-4 h-4" />
         {t("methodology.backToIndex")}
       </Link>
-      {(topicId === "harmonization" || topicId === "harmoni-brics") && topic ? (
+      {topicId === "harmoni-brics" && topic ? (
         <PageHeader title={t(topic.titleKey)} />
+      ) : topicId === "harmonization" && topic ? (
+        <PageHeader title={t(topic.titleKey)} description={t(topic.descKey)} />
       ) : topicId !== "matrix" && topic ? (
         <PageHeader title={t(topic.titleKey)} description={t(topic.descKey)} />
       ) : null}

@@ -62,6 +62,7 @@ FIELD_LABELS = frozenset(
         "Особые условия допуска к работе",
         "Другие характеристики",
         "Справочная информация",
+        "Дополнительные характеристики",
         "Наименование документа",
     }
 )
@@ -114,6 +115,7 @@ _LIST_LABELS = frozenset(
 _CODE_COLUMN_CONTEXT = {
     "Наименование документа",
     "Справочная информация",
+    "Дополнительные характеристики",
 }
 _INLINE_LABEL_RE = re.compile(
     r"^(Уровень квалификации|Уровень \(подуровень\) квалификации|Код|Наименование)\s+(.+)$"
@@ -260,12 +262,44 @@ def _extract_metadata(lines: List[str], soup: BeautifulSoup) -> dict:
     okz_group_name = ""
     for i, line in enumerate(section_i):
         if "Группа занятий" in line:
-            for j in range(i + 1, min(i + 6, len(section_i))):
-                m = re.match(r"^(\d{3,4})\s+(.+)$", section_i[j])
-                if m:
-                    okz_group_code = m.group(1)
-                    okz_group_name = m.group(2).strip(" -")
+            codes: list[str] = []
+            names: list[str] = []
+            j = i + 1
+            while j < min(i + 12, len(section_i)):
+                cell = section_i[j].strip()
+                if cell.startswith("Отнесение") or cell.startswith("II.") or cell.startswith("III."):
                     break
+                # Код и наименование в одной строке: "2149 Специалисты…"
+                m = re.match(r"^(\d{3,4})\s+(.+)$", cell)
+                if m:
+                    codes.append(m.group(1))
+                    names.append(m.group(2).strip(" -"))
+                    j += 1
+                    continue
+                # В HTML-таблице код и имя часто в соседних ячейках/строках
+                if re.fullmatch(r"\d{3,4}", cell):
+                    name = ""
+                    if j + 1 < len(section_i):
+                        nxt = section_i[j + 1].strip()
+                        if (
+                            nxt
+                            and not re.fullmatch(r"\d{3,4}", nxt)
+                            and not nxt.startswith("(")
+                            and "код ОКЗ" not in nxt.lower()
+                        ):
+                            name = nxt.strip(" -")
+                            j += 1
+                    codes.append(cell)
+                    names.append(name)
+                    j += 1
+                    continue
+                if "код ОКЗ" in cell.lower() or cell.startswith("("):
+                    j += 1
+                    continue
+                j += 1
+            if codes:
+                okz_group_code = "; ".join(codes)
+                okz_group_name = "; ".join(n for n in names if n)
             break
 
     opd_code = professional_area_code
@@ -343,7 +377,12 @@ def _parse_reference_units(lines: List[str]) -> dict[str, List[ClassifierUnit]]:
     i = 0
     while i < len(lines):
         line = lines[i]
-        if line == "Справочная информация" or line.startswith("Справочная информация"):
+        if (
+            line == "Справочная информация"
+            or line.startswith("Справочная информация")
+            or line == "Дополнительные характеристики"
+            or line.startswith("Дополнительные характеристики")
+        ):
             started = True
             i += 1
             continue

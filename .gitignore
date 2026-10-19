@@ -20,6 +20,8 @@ build/
 
 # Downloads / bulky source dumps
 downloads/
+ESCO/
+*.rdf
 *.xml
 *.xlsx
 *.log

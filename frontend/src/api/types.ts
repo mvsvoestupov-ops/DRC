@@ -91,6 +91,7 @@ export interface AuthState {
   isExpert: boolean;
   isModerator: boolean;
   isStaff: boolean;
+  isIntlMethodologist: boolean;
   isImpersonating: boolean;
   impersonatorEmail: string | null;
 }
@@ -231,6 +232,8 @@ export interface Competence {
   collaboration_role?: "leader" | "member" | null;
   can_invite?: boolean;
   can_edit?: boolean;
+  can_harmonize?: boolean;
+  can_submit_review?: boolean;
   labor_functions?: Array<{ code: string; name?: string }>;
   discipline_mapping?: any[];
   ed_technologies?: string[];

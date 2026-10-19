@@ -161,6 +161,11 @@ def is_moderator_role(user) -> bool:
     return user_role(user) in ("admin", "moderator")
 
 
+def is_intl_methodologist_role(user) -> bool:
+    """Админ или методист-международник — доступ к разделу 9.2."""
+    return user_role(user) in ("admin", "intl_methodologist")
+
+
 async def get_current_moderator(current_user: User = Depends(get_current_user)):
     if not is_moderator_role(current_user):
         raise HTTPException(status_code=403, detail="Not enough permissions")
@@ -169,6 +174,12 @@ async def get_current_moderator(current_user: User = Depends(get_current_user)):
 
 async def get_current_expert(current_user: User = Depends(get_current_user)):
     if not is_staff_role(current_user):
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    return current_user
+
+
+async def get_current_intl_methodologist(current_user: User = Depends(get_current_user)):
+    if not is_intl_methodologist_role(current_user):
         raise HTTPException(status_code=403, detail="Not enough permissions")
     return current_user
 

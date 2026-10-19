@@ -154,6 +154,88 @@ export function normalizeInternationalMapping(raw?: Partial<InternationalMapping
   };
 }
 
+export type GarmEscoSuggestResponse = {
+  admitted?: boolean;
+  deny_reason?: string;
+  okz?: string;
+  isco?: string;
+  esco_occupation?: string;
+  esco_occupation_uri?: string;
+  occupation_type?: RelationType;
+  eqf_occupational?: number | null;
+  eqf_educational?: number | null;
+  isced?: string;
+  aggregate_type?: RelationType;
+  confidence?: MappingConfidence;
+  skills?: Array<{
+    id?: string;
+    component?: string;
+    text?: string;
+    esco_term?: string;
+    esco_uri?: string;
+    coverage?: SkillCoverage;
+  }>;
+  notes?: string;
+  esco_version?: string;
+  analyzed_at?: string;
+  assistant?: string;
+  model?: string;
+  disclaimer?: string;
+  status?: { configured?: boolean; model?: string };
+};
+
+/** Применяет черновик ИИ-агента ГАРМ-ESCO к состоянию шага 9. */
+export function applyGarmEscoSuggest(
+  prev: InternationalMapping,
+  suggest: GarmEscoSuggestResponse,
+): InternationalMapping {
+  const skills = Array.isArray(suggest.skills)
+    ? suggest.skills.map((row, index) => ({
+        id: String(row.id || `imap-ai-${index}-${row.component || index}`),
+        component: String(row.component || ""),
+        text: String(row.text || ""),
+        escoTerm: String(row.esco_term || ""),
+        escoUri: String(row.esco_uri || ""),
+        coverage: (COVERAGE_TYPES.includes(row.coverage as SkillCoverage)
+          ? row.coverage
+          : "absent") as SkillCoverage,
+      }))
+    : prev.skills;
+
+  const occupationType = RELATION_TYPES.includes(suggest.occupation_type as RelationType)
+    ? (suggest.occupation_type as RelationType)
+    : prev.occupationType;
+  const aggregateType = RELATION_TYPES.includes(suggest.aggregate_type as RelationType)
+    ? (suggest.aggregate_type as RelationType)
+    : prev.aggregateType;
+  const confidence =
+    suggest.confidence === "high" || suggest.confidence === "medium" || suggest.confidence === "low"
+      ? suggest.confidence
+      : prev.confidence;
+
+  return normalizeInternationalMapping({
+    ...prev,
+    admitted: suggest.admitted ?? prev.admitted,
+    denyReason: suggest.deny_reason ?? prev.denyReason,
+    okz: suggest.okz || prev.okz,
+    isco: suggest.isco || prev.isco,
+    escoOccupation: suggest.esco_occupation ?? prev.escoOccupation,
+    escoOccupationUri: suggest.esco_occupation_uri ?? prev.escoOccupationUri,
+    occupationType,
+    eqfOccupational:
+      suggest.eqf_occupational !== undefined ? suggest.eqf_occupational : prev.eqfOccupational,
+    eqfEducational:
+      suggest.eqf_educational !== undefined ? suggest.eqf_educational : prev.eqfEducational,
+    isced: suggest.isced || prev.isced,
+    aggregateType,
+    confidence,
+    skills,
+    notes: [suggest.notes, suggest.disclaimer].filter(Boolean).join("\n\n") || prev.notes,
+    escoVersion: suggest.esco_version || prev.escoVersion || "ESCO v1.2",
+    analyzedAt: suggest.analyzed_at || new Date().toISOString(),
+  });
+}
+
 export function eqfFrom148n(level: string | number | null | undefined): number | null {
   const n = Number(level);
   if (!Number.isFinite(n) || n < 1) return null;
