@@ -598,6 +598,7 @@ export const extraHi: ExtraMessages = {
     saveDraft: "मसौदा सहेजें",
     autoSaving: "सहेजा जा रहा है…",
     autoSaved: "मेरी परियोजनाओं में सहेजा गया",
+    autoSavedAt: "स्वतः सहेजा गया {{time}}",
     submitReview: "विशेषज्ञ समीक्षा के लिए भेजें",
     submitting: "भेजा जा रहा है...",
     step1Title: "दक्षता की सामान्य जानकारी",

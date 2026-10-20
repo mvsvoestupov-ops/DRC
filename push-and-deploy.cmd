@@ -12,7 +12,7 @@ set "REMOTE_DIR=/opt/drc"
 set "BRANCH=main"
 set "VITE_API_URL=https://drc.ao-nk.online/api"
 set "SITE_URL=https://drc.ao-nk.online"
-set "COMMIT_MSG=Пользователи: resizable колонки без горизонтального скролла; sync вёрстки"
+set "COMMIT_MSG=Новая компетенция: название по умолчанию = ID (RUS-PK-…); автосохранение каждые 5 мин"
 REM =====================================================
 
 REM Запускайте из cmd.exe (не PowerShell Cursor):

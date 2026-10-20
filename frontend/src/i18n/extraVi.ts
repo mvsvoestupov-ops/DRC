@@ -599,6 +599,7 @@ export const extraVi: ExtraMessages = {
     saveDraft: "Lưu bản nháp",
     autoSaving: "Đang lưu…",
     autoSaved: "Đã lưu vào Dự án của tôi",
+    autoSavedAt: "Tự động lưu lúc {{time}}",
     submitReview: "Gửi thẩm định",
     submitting: "Đang gửi...",
     step1Title: "Thông tin chung về năng lực",

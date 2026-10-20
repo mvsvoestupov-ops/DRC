@@ -4471,6 +4471,21 @@ async def create_competence(data: CompetenceCreate, current_user: User = Depends
             new_comp.public_code = f"RUS-PK-{int(new_comp.id):04d}"
             session.commit()
             session.refresh(new_comp)
+        # По умолчанию название = ID в системе, пока эксперт не задал своё.
+        _placeholder_names = {
+            "",
+            "—",
+            "-",
+            "draft",
+            "DRAFT-PENDING",
+            "Новая компетенция",
+            "New competency",
+        }
+        if (new_comp.name or "").strip() in _placeholder_names or (new_comp.name or "").startswith("DRAFT-"):
+            new_comp.name = new_comp.public_code
+            new_comp.qualification_name = new_comp.public_code
+            session.commit()
+            session.refresh(new_comp)
         _log_activity(
             session,
             competence_id=new_comp.id,

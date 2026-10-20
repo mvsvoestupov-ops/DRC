@@ -165,6 +165,11 @@ function PreviewField({ label, value }: { label: string; value?: string | null }
   );
 }
 
+/** Один create на открытие /new (в т.ч. React Strict Mode) */
+let newCompetenceBootstrapInFlight: Promise<Competence | null> | null = null;
+const AUTOSAVE_INTERVAL_MS = 5 * 60 * 1000;
+const DRAFT_PLACEHOLDER_NAME = "DRAFT-PENDING";
+
 export function NewCompetencyPage() {
   const navigate = useNavigate();
   const { id: editIdParam } = useParams<{ id?: string }>();
@@ -230,6 +235,17 @@ export function NewCompetencyPage() {
   const [garmBusy, setGarmBusy] = useState(false);
   const [garmError, setGarmError] = useState<string | null>(null);
   const [aiAgentConfigured, setAiAgentConfigured] = useState<boolean | null>(null);
+  const [lastAutoSavedAt, setLastAutoSavedAt] = useState<number | null>(null);
+  const formDataRef = useRef(formData);
+  const currentStepRef = useRef(currentStep);
+  const workingCompetenceRef = useRef(workingCompetence);
+  const autoSavingRef = useRef(autoSaving);
+  const submittingRef = useRef(submitting);
+  formDataRef.current = formData;
+  currentStepRef.current = currentStep;
+  workingCompetenceRef.current = workingCompetence;
+  autoSavingRef.current = autoSaving;
+  submittingRef.current = submitting;
 
   const steps = useMemo(() => {
     const list = [
@@ -559,6 +575,62 @@ export function NewCompetencyPage() {
       .then(setQualificationLevels)
       .catch(() => setQualificationLevels([]));
   }, [isAuthenticated]);
+
+  // Новая компетенция: сразу создаём черновик и подставляем ID (RUS-PK-…) в название
+  useEffect(() => {
+    if (editId || !isAuthenticated || !user) {
+      if (editId) newCompetenceBootstrapInFlight = null;
+      return;
+    }
+    if (workingCompetence?.id) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        setAutoSaving(true);
+        if (!newCompetenceBootstrapInFlight) {
+          newCompetenceBootstrapInFlight = apiClient
+            .createCompetence({
+              name: DRAFT_PLACEHOLDER_NAME,
+              qualification_name: DRAFT_PLACEHOLDER_NAME,
+              developer: user.email || t("wizard.notSpecified"),
+              status: "проект",
+              competence_kind: "professional",
+              wizard_step: 1,
+              description: "",
+              labor_functions: [],
+              structure: { A: [], B: [], C: [] },
+              descriptors: {},
+              discipline_mapping: [],
+              assessment_tools: [],
+              resources: { A: [], B: [], C: [] },
+            })
+            .catch((err) => {
+              newCompetenceBootstrapInFlight = null;
+              throw err;
+            });
+        }
+        const saved = await newCompetenceBootstrapInFlight;
+        if (cancelled || !saved?.id) return;
+        const code = saved.public_code || `RUS-PK-${String(saved.id).padStart(4, "0")}`;
+        setWorkingCompetence(saved);
+        setFormData((prev) => ({
+          ...prev,
+          title: code,
+          developer: prev.developer || user.email || "",
+        }));
+        navigate(`/competency/${saved.id}/edit`, { replace: true });
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : t("wizard.saveError"));
+        }
+      } finally {
+        if (!cancelled) setAutoSaving(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [editId, isAuthenticated, user, workingCompetence?.id, navigate, t]);
 
   useEffect(() => {
     if (!isAuthenticated || !editId) {
@@ -1020,19 +1092,59 @@ export function NewCompetencyPage() {
 
   const persistDraft = async (stepToStore: number) => {
     const payload = { ...buildPayload("проект"), wizard_step: stepToStore };
-    if (workingCompetence?.collaboration_role === "member") {
+    const working = workingCompetenceRef.current;
+    if (working?.collaboration_role === "member") {
       delete payload.status;
     }
-    const id = editId || workingCompetence?.id || null;
+    // Название по умолчанию — ID компетенции в системе
+    if (!String(payload.name || "").trim() && working?.public_code) {
+      payload.name = working.public_code;
+      payload.qualification_name = working.public_code;
+    }
+    const id = editId || working?.id || null;
     const saved = id
       ? await apiClient.updateCompetence(id, payload)
-      : await apiClient.createCompetence(payload);
-    if (saved?.id) setWorkingCompetence(saved);
+      : await apiClient.createCompetence({
+          ...payload,
+          name: payload.name?.trim() || DRAFT_PLACEHOLDER_NAME,
+          qualification_name: payload.qualification_name?.trim() || DRAFT_PLACEHOLDER_NAME,
+        });
+    if (saved?.id) {
+      setWorkingCompetence(saved);
+      const code = saved.public_code || `RUS-PK-${String(saved.id).padStart(4, "0")}`;
+      setFormData((prev) => {
+        if (prev.title.trim() && prev.title.trim() !== DRAFT_PLACEHOLDER_NAME) return prev;
+        return { ...prev, title: code };
+      });
+    }
     if (!editId && saved?.id) {
       navigate(`/competency/${saved.id}/edit`, { replace: true });
     }
     return saved;
   };
+
+  const persistDraftRef = useRef(persistDraft);
+  persistDraftRef.current = persistDraft;
+
+  // Автосохранение каждые 5 минут работы над проектом
+  useEffect(() => {
+    if (!competenceId || hydrating || !isAuthenticated) return;
+    const timer = window.setInterval(() => {
+      if (autoSavingRef.current || submittingRef.current) return;
+      void (async () => {
+        setAutoSaving(true);
+        try {
+          await persistDraftRef.current(currentStepRef.current);
+          setLastAutoSavedAt(Date.now());
+        } catch {
+          /* не блокируем работу при фоновом сбое */
+        } finally {
+          setAutoSaving(false);
+        }
+      })();
+    }, AUTOSAVE_INTERVAL_MS);
+    return () => window.clearInterval(timer);
+  }, [competenceId, hydrating, isAuthenticated]);
 
   const handleSubmit = async (status: string) => {
     const validationError = validateForm(status);
@@ -1290,7 +1402,16 @@ export function NewCompetencyPage() {
                   {autoSaving ? (
                     <span className="text-sm text-gray-500">{t("wizard.autoSaving")}</span>
                   ) : workingCompetence?.id ? (
-                    <span className="text-sm text-gray-400 hidden sm:inline">{t("wizard.autoSaved")}</span>
+                    <span className="text-sm text-gray-400 hidden sm:inline">
+                      {lastAutoSavedAt
+                        ? t("wizard.autoSavedAt", {
+                            time: new Date(lastAutoSavedAt).toLocaleTimeString(undefined, {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }),
+                          })
+                        : t("wizard.autoSaved")}
+                    </span>
                   ) : null}
                   <Button
                     variant="outline"

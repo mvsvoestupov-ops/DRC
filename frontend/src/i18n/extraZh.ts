@@ -598,6 +598,7 @@ export const extraZh: ExtraMessages = {
     saveDraft: "保存草稿",
     autoSaving: "正在保存…",
     autoSaved: "已保存到「我的项目」",
+    autoSavedAt: "自动保存于 {{time}}",
     submitReview: "提交评审",
     submitting: "正在提交...",
     step1Title: "能力基本信息",
