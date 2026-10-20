@@ -216,11 +216,13 @@ def empty_step_payload(step: int) -> dict[str, Any]:
             "component_rules": build_component_rules_for_systems(systems),
         }
     if step == 3:
-        return {"rows": []}
+        return {"rows": [], "target_systems": []}
     if step == 6:
         return {
-            "purpose": "migration",
+            "purpose": "",
+            "purposes": [],
             "depth": "medium",
+            "target_systems": [],
             "requirements": {
                 "data": "",
                 "formats": "",
@@ -228,6 +230,241 @@ def empty_step_payload(step: int) -> dict[str, Any]:
             },
         }
     return {}
+
+
+def normalize_purposes(raw: Any, *, fallback_purpose: Any = None) -> list[str]:
+    """Список целей сопряжения; пустой список допустим (пользователь ещё не выбрал)."""
+    out: list[str] = []
+    seen: set[str] = set()
+    items: list[Any]
+    if isinstance(raw, list):
+        items = raw
+    elif raw:
+        items = [raw]
+    else:
+        items = []
+    if not items and fallback_purpose:
+        items = [fallback_purpose]
+    for item in items:
+        code = str(item or "").strip()
+        if not code or code not in PURPOSES or code in seen:
+            continue
+        seen.add(code)
+        out.append(code)
+    return out
+
+
+def merge_purpose_requirements(purposes: list[str]) -> dict[str, str]:
+    """Объединяет шаблоны требований по выбранным целям (без дублей)."""
+    buckets: dict[str, list[str]] = {"data": [], "formats": [], "verification": []}
+    for code in purposes:
+        req = PURPOSE_REQUIREMENTS.get(code) or {}
+        for key in buckets:
+            text = str(req.get(key) or "").strip()
+            if text and text not in buckets[key]:
+                buckets[key].append(text)
+    return {key: "; ".join(vals) for key, vals in buckets.items()}
+
+
+def depth_for_purposes(purposes: list[str], current: str = "") -> str:
+    cur = str(current or "").strip()
+    if cur in ("low", "medium", "high"):
+        return cur
+    if any(p in ("network_programs", "education_export") for p in purposes):
+        return "high"
+    if purposes:
+        return "medium"
+    return "medium"
+
+
+def _passport_text_blob(context: dict[str, Any] | None) -> str:
+    context = context or {}
+    parts: list[str] = [
+        str(context.get("title") or ""),
+        str(context.get("education_kind") or ""),
+        str(context.get("education_level") or ""),
+    ]
+    for lf in context.get("labor_functions") or []:
+        if isinstance(lf, dict):
+            parts.append(str(lf.get("name") or ""))
+            parts.append(str(lf.get("code") or ""))
+            okz = lf.get("okz_codes")
+            if isinstance(okz, list):
+                parts.extend(str(x) for x in okz)
+            elif okz:
+                parts.append(str(okz))
+    structure = context.get("structure") or {}
+    if isinstance(structure, dict):
+        for key in ("A", "B", "C", "knowledge", "skill"):
+            for item in structure.get(key) or []:
+                if isinstance(item, dict):
+                    parts.append(str(item.get("text") or ""))
+                else:
+                    parts.append(str(item))
+    return " ".join(parts).lower()
+
+
+def detect_passport_domains(context: dict[str, Any] | None) -> list[str]:
+    """Грубые домены паспорта для подсказок по страновым системам."""
+    blob = _passport_text_blob(context)
+    domains: list[str] = []
+    if any(
+        x in blob
+        for x in (
+            "пожар",
+            "огнебор",
+            "огнетуш",
+            "спасат",
+            "чрезвычайн",
+            "firefighter",
+            "fire fighter",
+            "окз 5411",
+        )
+    ):
+        domains.append("fire_rescue")
+    if any(x in blob for x in ("медицин", "сестрин", "фельдшер", "врач", "healthcare", "nurse")):
+        domains.append("healthcare")
+    if any(x in blob for x in ("строител", "монтаж", "сварк", "construction")):
+        domains.append("construction")
+    if any(x in blob for x in ("информацион", "программ", "it ", " ict", "разработчик", "software")):
+        domains.append("ict")
+    return domains
+
+
+# Публичные ориентиры по страновым системам (не каталог URI — методические подсказки для ИИ).
+PARTNER_DOMAIN_REFERENCES: dict[str, dict[str, str]] = {
+    "fire_rescue": {
+        "KZ": (
+            "Казахстан / пожарно-спасательная деятельность: ориентир — Приказ Министра по чрезвычайным "
+            "ситуациям Республики Казахстан от 28 декабря 2022 года № 350 (квалификационные требования / "
+            "деятельность пожарных). Также НСК РК, цифровой банк навыков, классификатор занятий РК. "
+            "В title укажи занятие/квалификацию пожарного (или близкую ТФ); в notes — ссылку на приказ № 350 "
+            "и уровень НСК из моста; match=partial, если нет дословного совпадения формулировок."
+        ),
+        "КАЗАХСТАН": (
+            "Казахстан / пожарно-спасательная деятельность: Приказ МЧС РК от 28.12.2022 № 350; НСК; "
+            "цифровой банк навыков. Укажи аналог должности/ТФ пожарного и сошлись на приказ в notes."
+        ),
+    },
+}
+
+
+def _system_is_kazakhstan(code: str, name: str = "", region: str = "") -> bool:
+    blob = f"{code} {name} {region}".upper()
+    return any(
+        x in blob
+        for x in (
+            "KZ",
+            "КАЗАХ",
+            "KAZAKH",
+            "НСК",
+            "NQF-K",
+            "NSK-KZ",
+            "ENBEK",
+        )
+    )
+
+
+def build_partner_mapping_hints(
+    selected_codes: list[str],
+    bridge: dict[str, Any] | None,
+    context: dict[str, Any] | None,
+) -> dict[str, str]:
+    """Подсказки по выбранным не-ESCO системам с учётом домена паспорта."""
+    bridge = bridge if isinstance(bridge, dict) else {}
+    systems = bridge.get("systems") if isinstance(bridge.get("systems"), list) else []
+    by_code = {
+        str(s.get("code") or "").strip(): s
+        for s in systems
+        if isinstance(s, dict) and str(s.get("code") or "").strip()
+    }
+    domains = detect_passport_domains(context)
+    out: dict[str, str] = {}
+    for code in selected_codes:
+        if code.upper() == "ESCO":
+            continue
+        meta = by_code.get(code) or {}
+        name = str(meta.get("name") or "")
+        region = str(meta.get("region") or "")
+        level = str(meta.get("level_target") or "")
+        bits: list[str] = [
+            f"Система {code} ({name or code}, {region or 'регион не указан'}).",
+            "Предложи конкретный аналог занятия/квалификации/трудовой функции на языке системы или на русском.",
+            "uri оставь пустым. В notes укажи уровень из моста и известный нормативный/реестровый ориентир.",
+        ]
+        if level:
+            bits.append(f"Уровень по мосту шага 2: {level}.")
+        if _system_is_kazakhstan(code, name, region):
+            bits.append(
+                "Ориентиры Казахстана: НСК РК, цифровой банк навыков (на базе ESCO), "
+                "профессиональные стандарты / квалификационные требования ведомств."
+            )
+            for domain in domains:
+                ref = (PARTNER_DOMAIN_REFERENCES.get(domain) or {}).get("KZ") or (
+                    PARTNER_DOMAIN_REFERENCES.get(domain) or {}
+                ).get("КАЗАХСТАН")
+                if ref:
+                    bits.append(ref)
+        elif domains:
+            bits.append(
+                "Используй открытые знания о национальной рамке и отраслевых профстандартах этой страны; "
+                "не выдумывай несуществующие номера приказов — если документ не уверен, опиши тип источника."
+            )
+        out[code] = " ".join(bits)
+    return out
+
+
+def _enrich_non_esco_heuristic(
+    rows: list[dict[str, Any]],
+    *,
+    selected_codes: list[str],
+    bridge: dict[str, Any] | None,
+    context: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    """Усиливает эвристику для не-ESCO (в т.ч. НРК/НСК Казахстана, пожарная тематика)."""
+    domains = detect_passport_domains(context)
+    hints = build_partner_mapping_hints(selected_codes, bridge, context)
+    systems_meta = {
+        str(s.get("code") or "").strip(): s
+        for s in ((bridge or {}).get("systems") or [])
+        if isinstance(s, dict)
+    }
+    for row in rows:
+        systems = row.get("systems") if isinstance(row.get("systems"), dict) else {}
+        for code in selected_codes:
+            if code.upper() == "ESCO":
+                continue
+            slot = systems.get(code)
+            if not isinstance(slot, dict):
+                continue
+            meta = systems_meta.get(code) or {}
+            is_kz = _system_is_kazakhstan(
+                code, str(meta.get("name") or ""), str(meta.get("region") or "")
+            )
+            if is_kz and "fire_rescue" in domains:
+                if not slot.get("title") or str(slot.get("title") or "").startswith("Аналог в "):
+                    slot["title"] = "Пожарный / специалист пожарно-спасательной службы (НСК РК)"
+                note_parts = [
+                    "Ориентир: Приказ Министра по ЧС Республики Казахстан от 28.12.2022 № 350 "
+                    "(квалификационные требования к деятельности пожарных).",
+                ]
+                if slot.get("level_target"):
+                    note_parts.append(f"Уровень по мосту: {slot['level_target']}.")
+                if slot.get("rule_hint"):
+                    note_parts.append(f"Правило A/B/C: {slot['rule_hint']}.")
+                note_parts.append("Требуется экспертная сверка формулировок с текстом приказа.")
+                slot["notes"] = " ".join(note_parts)
+                slot["match"] = "partial"
+            elif hints.get(code) and (
+                not slot.get("title") or str(slot.get("title") or "").startswith("Аналог в ")
+            ):
+                # мягкая заготовка названия
+                slot["title"] = slot.get("title") or f"Аналог в {code}"
+                if not slot.get("notes"):
+                    slot["notes"] = hints[code][:500]
+                slot["match"] = slot.get("match") or "partial"
+        _sync_legacy_esco_fields(row)
+    return rows
 
 
 DEFAULT_REGISTRIES: list[dict[str, Any]] = [
@@ -815,6 +1052,244 @@ def serialize_passport(row) -> dict[str, Any]:
     }
 
 
+def _step_payload_map(version) -> dict[int, dict[str, Any]]:
+    out: dict[int, dict[str, Any]] = {}
+    for st in version.steps or []:
+        payload = st.payload if isinstance(st.payload, dict) else {}
+        out[int(st.step)] = payload
+    return out
+
+
+def _nsk_int(value: Any) -> int | None:
+    try:
+        n = int(str(value or "").strip().split(".")[0])
+    except (TypeError, ValueError):
+        return None
+    if n < 1 or n > 9:
+        return None
+    return n
+
+
+def build_bridge_context_for_passport(
+    version,
+    *,
+    qualification_level: Any = None,
+    education_kind: str = "",
+    education_level: str = "",
+) -> dict[str, Any]:
+    """Контекст моста 1/2/4/5 для шага 9.2 (без изменения шагов 9 и 9.1)."""
+    steps = _step_payload_map(version)
+    regs = steps.get(1, {}).get("registries") or []
+    systems = systems_from_registries(regs)
+    bridges = steps.get(2, {}).get("bridges") if isinstance(steps.get(2), dict) else []
+    if not isinstance(bridges, list):
+        bridges = []
+    nsk = _nsk_int(qualification_level)
+    level_row: dict[str, Any] | None = None
+    if nsk is not None:
+        for row in bridges:
+            if not isinstance(row, dict):
+                continue
+            if _nsk_int(row.get("nsk_level")) == nsk:
+                level_row = row
+                break
+
+    education_map = steps.get(4, {}).get("education_map") if isinstance(steps.get(4), dict) else []
+    if not isinstance(education_map, list):
+        education_map = []
+    edu_blob = f"{education_kind} {education_level}".lower()
+    education_row: dict[str, Any] | None = None
+    for row in education_map:
+        if not isinstance(row, dict):
+            continue
+        ru = str(row.get("ru_level") or "").lower()
+        if not ru:
+            continue
+        if edu_blob and (ru in edu_blob or any(tok and tok in ru for tok in edu_blob.split() if len(tok) > 4)):
+            education_row = row
+            break
+        if "профессиональн" in edu_blob and "обучен" in edu_blob and "273" in ru:
+            education_row = row
+            break
+    if education_row is None and education_map:
+        # мягкий fallback: первая строка с пересечением ключевых слов
+        for key in ("бакалавр", "магистр", "специалитет", "спо", "аспирант"):
+            if key in edu_blob:
+                for row in education_map:
+                    if isinstance(row, dict) and key in str(row.get("ru_level") or "").lower():
+                        education_row = row
+                        break
+            if education_row:
+                break
+
+    component_rules = steps.get(5, {}).get("component_rules") if isinstance(steps.get(5), dict) else []
+    if not isinstance(component_rules, list):
+        component_rules = []
+    level_targets: dict[str, str] = {}
+    if level_row and isinstance(level_row.get("targets"), dict):
+        level_targets = {
+            str(k).strip(): str(v or "").strip()
+            for k, v in level_row["targets"].items()
+            if str(k).strip()
+        }
+
+    systems_enriched: list[dict[str, Any]] = []
+    for s in systems:
+        code = s.get("code") or ""
+        systems_enriched.append(
+            {
+                "code": code,
+                "name": s.get("name") or code,
+                "region": s.get("region") or "",
+                "level_target": level_targets.get(code, ""),
+            }
+        )
+
+    esco_rules: dict[str, str] = {}
+    component_by_system: dict[str, dict[str, str]] = {}
+    for row in component_rules:
+        if not isinstance(row, dict):
+            continue
+        comp = str(row.get("crk_component") or "").strip().upper()
+        targets = row.get("targets") if isinstance(row.get("targets"), dict) else {}
+        for code, rule in targets.items():
+            c = str(code).strip()
+            if not c:
+                continue
+            component_by_system.setdefault(c, {})
+            if comp:
+                component_by_system[c][comp] = str(rule or "").strip()
+            if c.upper() == "ESCO" and comp:
+                esco_rules[comp] = str(rule or "").strip()
+
+    return {
+        "version_id": getattr(version, "id", None),
+        "version_title": getattr(version, "title", "") or "",
+        "ready_for_apply": bool(getattr(version, "ready_for_apply", False)),
+        "systems": systems_enriched,
+        "nsk_level": nsk,
+        "level_bridge": {
+            "nsk_level": level_row.get("nsk_level") if level_row else nsk,
+            "eqf": level_row.get("eqf") if level_row else None,
+            "targets": level_targets,
+            "confidence": level_row.get("confidence") if level_row else "",
+        }
+        if nsk is not None
+        else None,
+        "education_bridge": education_row,
+        "component_rules_esco": esco_rules,
+        "component_rules_by_system": component_by_system,
+        "component_rules": component_rules[:8],
+    }
+
+
+def normalize_target_system_codes(
+    codes: Any,
+    available: list[dict[str, Any]] | None = None,
+) -> list[str]:
+    """Коды выбранных систем; если available задан — только из каталога моста."""
+    allowed: set[str] | None = None
+    if available is not None:
+        allowed = {
+            str(s.get("code") or "").strip()
+            for s in available
+            if isinstance(s, dict) and str(s.get("code") or "").strip()
+        }
+    out: list[str] = []
+    seen: set[str] = set()
+    raw = codes if isinstance(codes, list) else []
+    for item in raw:
+        code = str(item or "").strip()
+        if not code or code in seen:
+            continue
+        if allowed is not None and code not in allowed:
+            continue
+        seen.add(code)
+        out.append(code)
+    return out
+
+
+def filter_bridge_context_by_systems(
+    bridge: dict[str, Any] | None,
+    codes: list[str] | None,
+) -> dict[str, Any]:
+    """Оставляет в снимке моста только выбранные системы (для 9.2)."""
+    base = dict(bridge or {}) if isinstance(bridge, dict) else {}
+    systems = base.get("systems") if isinstance(base.get("systems"), list) else []
+    selected = normalize_target_system_codes(codes or [], systems if systems else None)
+    if not selected and systems:
+        # пустой выбор — снимок без систем (явный отказ от сопоставления)
+        selected = []
+    code_set = set(selected)
+    filtered_systems = [
+        s for s in systems if isinstance(s, dict) and str(s.get("code") or "").strip() in code_set
+    ]
+    lb = dict(base.get("level_bridge") or {}) if isinstance(base.get("level_bridge"), dict) else {}
+    targets = lb.get("targets") if isinstance(lb.get("targets"), dict) else {}
+    lb["targets"] = {k: v for k, v in targets.items() if str(k).strip() in code_set}
+    by_sys = (
+        base.get("component_rules_by_system")
+        if isinstance(base.get("component_rules_by_system"), dict)
+        else {}
+    )
+    filtered_rules = {k: v for k, v in by_sys.items() if str(k).strip() in code_set}
+    esco_rules = base.get("component_rules_esco") if "ESCO" in code_set else {}
+    if not isinstance(esco_rules, dict):
+        esco_rules = {}
+    out = {
+        **base,
+        "systems": filtered_systems,
+        "selected_system_codes": selected,
+        "level_bridge": lb if lb else base.get("level_bridge"),
+        "component_rules_by_system": filtered_rules,
+        "component_rules_esco": esco_rules if "ESCO" in code_set else {},
+    }
+    return out
+
+
+def apply_bridge_snapshot_to_step6(
+    step6_payload: dict[str, Any] | None,
+    bridge: dict[str, Any],
+    *,
+    target_systems: list[str] | None = None,
+) -> dict[str, Any]:
+    """Встраивает снимок моста в payload шага 6 (не трогает 9 / 9.1)."""
+    base = dict(step6_payload or {}) if isinstance(step6_payload, dict) else {}
+    codes = normalize_target_system_codes(
+        target_systems if target_systems is not None else base.get("target_systems"),
+        bridge.get("systems") if isinstance(bridge.get("systems"), list) else None,
+    )
+    base["target_systems"] = codes
+    filtered = filter_bridge_context_by_systems(bridge, codes)
+    base["bridge_snapshot"] = filtered
+    base["bridge_applied_at"] = datetime.datetime.utcnow().isoformat() + "Z"
+    # Подсказка в requirements.verification, если пусто
+    req = dict(base.get("requirements") or {}) if isinstance(base.get("requirements"), dict) else {}
+    if not str(req.get("verification") or "").strip():
+        eqf = None
+        lb = filtered.get("level_bridge") or {}
+        if isinstance(lb, dict):
+            eqf = lb.get("eqf")
+        edu = filtered.get("education_bridge") or {}
+        bits = []
+        if eqf is not None:
+            bits.append(f"EQF из моста шага 2: {eqf}")
+        if isinstance(edu, dict) and edu.get("isced"):
+            bits.append(f"ISCED из моста шага 4: {edu.get('isced')}")
+        if codes:
+            bits.append("системы: " + ", ".join(codes))
+        if bits:
+            req["verification"] = (
+                "Сверка с версией мостов «"
+                + str(filtered.get("version_title") or filtered.get("version_id") or "")
+                + "»: "
+                + "; ".join(bits)
+                + "."
+            )
+            base["requirements"] = req
+    return base
+
+
 def ensure_version_steps(session, version) -> None:
     existing = {int(s.step) for s in (version.steps or [])}
     for step in GLOBAL_STEPS:
@@ -1101,25 +1576,54 @@ def normalize_step_payload(
 
     if step == 3:
         rows = _pick_list(data, "rows", "mappings", "items")
-        base["rows"] = rows
-        return base
+        codes = normalize_target_system_codes(
+            data.get("target_systems") if "target_systems" in data else base.get("target_systems")
+        )
+        normalized_rows: list[dict[str, Any]] = []
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            normalized_rows.append(_normalize_step3_row(row, codes or None))
+        out = {"rows": normalized_rows, "target_systems": codes}
+        return out
 
     if step == 6:
-        purpose = str(data.get("purpose") or base.get("purpose") or "migration")
-        if purpose not in PURPOSES:
-            purpose = "migration"
+        # Цели задаёт пользователь (чекбоксы). LLM/эвристика не подменяют их на migration.
+        purposes = normalize_purposes(
+            data.get("purposes") if "purposes" in data else base.get("purposes"),
+            fallback_purpose=data.get("purpose") if data.get("purpose") else base.get("purpose"),
+        )
+        # Если в ответе модели есть purpose, но purposes пуст и в base уже были — берем base
+        if not purposes:
+            purposes = normalize_purposes(base.get("purposes"), fallback_purpose=base.get("purpose"))
+        primary = purposes[0] if purposes else ""
         req_raw = data.get("requirements") if isinstance(data.get("requirements"), dict) else {}
-        defaults = PURPOSE_REQUIREMENTS[purpose]
-        base = {
-            "purpose": purpose,
-            "depth": str(data.get("depth") or base.get("depth") or "medium"),
+        defaults = merge_purpose_requirements(purposes) if purposes else {"data": "", "formats": "", "verification": ""}
+        out = {
+            "purpose": primary,
+            "purposes": purposes,
+            "depth": depth_for_purposes(
+                purposes,
+                str(data.get("depth") or base.get("depth") or "medium"),
+            ),
+            "target_systems": normalize_target_system_codes(
+                data.get("target_systems")
+                if "target_systems" in data
+                else base.get("target_systems")
+            ),
             "requirements": {
                 "data": str(req_raw.get("data") or defaults["data"]),
                 "formats": str(req_raw.get("formats") or defaults["formats"]),
                 "verification": str(req_raw.get("verification") or defaults["verification"]),
             },
         }
-        return base
+        # Снимок моста (9.2) не затираем черновиком ИИ шага 6
+        for key in ("bridge_snapshot", "bridge_applied_at"):
+            if key in data and data.get(key) is not None:
+                out[key] = data[key]
+            elif key in base and base.get(key) is not None:
+                out[key] = base[key]
+        return out
 
     # неизвестный шаг — мягкий merge без пустых списков
     merged = dict(base)
@@ -1144,16 +1648,19 @@ def heuristic_ai_draft(step: int, *, context: dict[str, Any] | None = None) -> d
     if step in (1, 4):
         return empty_step_payload(step)
     if step == 6:
-        purpose = str(context.get("purpose") or "migration")
-        if purpose not in PURPOSES:
-            purpose = "migration"
-        req = PURPOSE_REQUIREMENTS[purpose]
+        purposes = normalize_purposes(
+            context.get("purposes"),
+            fallback_purpose=context.get("purpose"),
+        )
+        req = merge_purpose_requirements(purposes)
         return {
-            "purpose": purpose,
-            "depth": "high" if purpose in ("network_programs", "education_export") else "medium",
+            "purpose": purposes[0] if purposes else "",
+            "purposes": purposes,
+            "depth": depth_for_purposes(purposes, str(context.get("depth") or "")),
+            "target_systems": normalize_target_system_codes(context.get("target_systems")),
             "requirements": dict(req),
         }
-    # step 3
+    # step 3 — строки паспорта + слоты по выбранным системам моста
     rows: list[dict[str, Any]] = []
     for lf in context.get("labor_functions") or []:
         text = str(lf.get("name") or lf.get("code") or "").strip()
@@ -1167,7 +1674,8 @@ def heuristic_ai_draft(step: int, *, context: dict[str, Any] | None = None) -> d
                 "esco_uri": "",
                 "esco_title": "",
                 "match": "partial",
-                "notes": "Черновик: требуется подбор ESCO",
+                "notes": "",
+                "systems": {},
             }
         )
     structure = context.get("structure") or {}
@@ -1185,9 +1693,545 @@ def heuristic_ai_draft(step: int, *, context: dict[str, Any] | None = None) -> d
                     "esco_title": "",
                     "match": "partial",
                     "notes": "",
+                    "systems": {},
                 }
             )
-    return {"rows": rows[:40]}
+    bridge = context.get("bridge_context") if isinstance(context.get("bridge_context"), dict) else {}
+    codes = normalize_target_system_codes(
+        context.get("target_systems"),
+        bridge.get("systems") if isinstance(bridge.get("systems"), list) else None,
+    )
+    rows = _attach_systems_to_rows(rows[:40], codes, bridge)
+    # Не-ESCO: только слоты и подсказки уровня; title/match заполняет корпусной поиск
+    # (partner_mapping_search) при достаточной уверенности — иначе остаётся пусто.
+    for row in rows:
+        systems = row.get("systems") if isinstance(row.get("systems"), dict) else {}
+        for code, slot in systems.items():
+            if not isinstance(slot, dict) or str(code).upper() == "ESCO":
+                continue
+            if not slot.get("title"):
+                slot["match"] = "none"
+    return {"rows": rows, "target_systems": codes}
+
+
+def _latin_query(text: str, limit: int = 6) -> str:
+    """Короткая латинская подстрока для поиска в ESCO (английские title)."""
+    import re
+
+    parts = re.findall(r"[A-Za-z][A-Za-z0-9\-/]{2,}", text or "")
+    if parts:
+        return " ".join(parts[:limit])
+    # fallback: первые значимые слова исходного текста (API/локаль могут не найти)
+    words = [w for w in re.split(r"\s+", (text or "").strip()) if len(w) > 3][:4]
+    return " ".join(words)
+
+
+def _empty_system_mapping(
+    code: str,
+    *,
+    bridge: dict[str, Any] | None = None,
+    source_type: str = "",
+) -> dict[str, Any]:
+    """Слот сопоставления одной системы для строки шага 3."""
+    bridge = bridge if isinstance(bridge, dict) else {}
+    level = ""
+    systems = bridge.get("systems") if isinstance(bridge.get("systems"), list) else []
+    for s in systems:
+        if isinstance(s, dict) and str(s.get("code") or "").strip() == code:
+            level = str(s.get("level_target") or "").strip()
+            break
+    if not level:
+        lb = bridge.get("level_bridge") if isinstance(bridge.get("level_bridge"), dict) else {}
+        targets = lb.get("targets") if isinstance(lb.get("targets"), dict) else {}
+        level = str(targets.get(code) or "").strip()
+
+    rule_hint = ""
+    by_sys = (
+        bridge.get("component_rules_by_system")
+        if isinstance(bridge.get("component_rules_by_system"), dict)
+        else {}
+    )
+    rules = by_sys.get(code) if isinstance(by_sys.get(code), dict) else {}
+    if source_type in ("knowledge",) and rules.get("A"):
+        rule_hint = str(rules.get("A") or "")
+    elif source_type in ("skill",) and (rules.get("B") or rules.get("C")):
+        rule_hint = str(rules.get("B") or rules.get("C") or "")
+    elif rules:
+        rule_hint = " | ".join(f"{k}: {v}" for k, v in list(rules.items())[:3] if v)
+
+    return {
+        "system_code": code,
+        "uri": "",
+        "title": "",
+        "match": "partial",
+        "notes": "",
+        "level_target": level,
+        "rule_hint": rule_hint,
+        "confidence": "",
+        "source": "",
+        "corpus_id": "",
+    }
+
+
+def _sync_legacy_esco_fields(row: dict[str, Any]) -> dict[str, Any]:
+    """Дублирует systems.ESCO → esco_* для совместимости."""
+    systems = row.get("systems") if isinstance(row.get("systems"), dict) else {}
+    esco = systems.get("ESCO") if isinstance(systems.get("ESCO"), dict) else None
+    if esco is None:
+        # найти по регистру
+        for key, val in systems.items():
+            if str(key).upper() == "ESCO" and isinstance(val, dict):
+                esco = val
+                break
+    if esco:
+        row["esco_uri"] = str(esco.get("uri") or "")
+        row["esco_title"] = str(esco.get("title") or "")
+        row["match"] = str(esco.get("match") or row.get("match") or "partial")
+        if esco.get("notes") and not row.get("notes"):
+            row["notes"] = str(esco.get("notes") or "")
+    return row
+
+
+def _normalize_step3_row(row: dict[str, Any], codes: list[str] | None = None) -> dict[str, Any]:
+    """Нормализует строку шага 3: systems по выбранным кодам + legacy ESCO-поля."""
+    out = {
+        "source_type": str(row.get("source_type") or "").strip(),
+        "source_id": str(row.get("source_id") or "").strip(),
+        "source_text": str(row.get("source_text") or "").strip(),
+        "notes": str(row.get("notes") or "").strip(),
+        "match": str(row.get("match") or "partial").strip() or "partial",
+        "esco_uri": str(row.get("esco_uri") or "").strip(),
+        "esco_title": str(row.get("esco_title") or "").strip(),
+        "systems": {},
+    }
+    raw_systems = row.get("systems") if isinstance(row.get("systems"), dict) else {}
+    # Миграция со старого формата: только esco_*
+    if not raw_systems and (out["esco_uri"] or out["esco_title"]):
+        raw_systems = {
+            "ESCO": {
+                "system_code": "ESCO",
+                "uri": out["esco_uri"],
+                "title": out["esco_title"],
+                "match": out["match"],
+                "notes": out["notes"],
+                "level_target": "",
+                "rule_hint": "",
+            }
+        }
+    wanted = codes if codes is not None else list(raw_systems.keys())
+    systems: dict[str, Any] = {}
+    for code in wanted:
+        c = str(code or "").strip()
+        if not c:
+            continue
+        prev = raw_systems.get(c) if isinstance(raw_systems.get(c), dict) else {}
+        # регистр ESCO
+        if not prev:
+            for k, v in raw_systems.items():
+                if str(k).upper() == c.upper() and isinstance(v, dict):
+                    prev = v
+                    break
+        conf = str(prev.get("confidence") or "").strip().lower()
+        if conf not in ("high", "medium", "low"):
+            conf = ""
+        slot = {
+            "system_code": c,
+            "uri": str(prev.get("uri") or "").strip(),
+            "title": str(prev.get("title") or "").strip(),
+            "match": str(prev.get("match") or "partial").strip() or "partial",
+            "notes": str(prev.get("notes") or "").strip(),
+            "level_target": str(prev.get("level_target") or "").strip(),
+            "rule_hint": str(prev.get("rule_hint") or "").strip(),
+            "confidence": conf,
+            "source": str(prev.get("source") or prev.get("document") or "").strip(),
+            "corpus_id": str(prev.get("corpus_id") or "").strip(),
+        }
+        if c.upper() == "ESCO" and not slot["uri"] and out["esco_uri"]:
+            slot["uri"] = out["esco_uri"]
+            slot["title"] = slot["title"] or out["esco_title"]
+        systems[c] = slot
+    out["systems"] = systems
+    return _sync_legacy_esco_fields(out)
+
+
+def _attach_systems_to_rows(
+    rows: list[dict[str, Any]],
+    codes: list[str],
+    bridge: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """Добавляет/выравнивает слоты systems для выбранных систем моста."""
+    out: list[dict[str, Any]] = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        base = _normalize_step3_row(row, codes)
+        systems = dict(base.get("systems") or {})
+        for code in codes:
+            if code not in systems:
+                systems[code] = _empty_system_mapping(
+                    code,
+                    bridge=bridge,
+                    source_type=str(base.get("source_type") or ""),
+                )
+            else:
+                # дозаполняем подсказки из моста, если пусто
+                empty = _empty_system_mapping(
+                    code,
+                    bridge=bridge,
+                    source_type=str(base.get("source_type") or ""),
+                )
+                if not systems[code].get("level_target"):
+                    systems[code]["level_target"] = empty["level_target"]
+                if not systems[code].get("rule_hint"):
+                    systems[code]["rule_hint"] = empty["rule_hint"]
+        # убрать системы вне выбора
+        base["systems"] = {c: systems[c] for c in codes if c in systems}
+        out.append(_sync_legacy_esco_fields(base))
+    return out
+
+
+def _step3_skill_candidates(session, rows: list[dict[str, Any]], occupation_uri: str = "") -> dict[str, list[dict[str, str]]]:
+    from .esco_registry import search_skills
+
+    out: dict[str, list[dict[str, str]]] = {}
+    pool: list[dict[str, str]] = []
+    if occupation_uri:
+        try:
+            res = search_skills(session, q="", occupation_uri=occupation_uri, limit=60)
+            pool = [
+                {"uri": str(it.get("uri") or "").strip(), "title": str(it.get("title") or "").strip()}
+                for it in (res.get("items") or [])
+                if str(it.get("uri") or "").strip()
+            ]
+        except Exception:
+            pool = []
+
+    for idx, row in enumerate(rows):
+        key = str(row.get("source_id") or f"row{idx}")
+        text = str(row.get("source_text") or "")
+        cands: list[dict[str, str]] = []
+        seen: set[str] = set()
+        for it in pool[:24]:
+            uri = it["uri"]
+            if uri in seen:
+                continue
+            seen.add(uri)
+            cands.append(it)
+        q = _latin_query(text)
+        if q:
+            try:
+                res = search_skills(session, q=q, occupation_uri="", limit=8)
+                for it in res.get("items") or []:
+                    uri = str(it.get("uri") or "").strip()
+                    if not uri or uri in seen:
+                        continue
+                    seen.add(uri)
+                    cands.append(
+                        {"uri": uri, "title": str(it.get("title") or "").strip()}
+                    )
+            except Exception:
+                pass
+        out[key] = cands[:16]
+    return out
+
+
+def generate_step3_ai_draft(session, *, context: dict[str, Any] | None = None) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Шаг 3 (9.2): сопоставление ТФ/ТД со ВСЕМИ выбранными системами моста (ESCO + остальные)."""
+    import json
+
+    from .esco_registry import ESCO_VERSION_LABEL, search_occupations, status as esco_status
+
+    context = context or {}
+    meta: dict[str, Any] = {
+        "assistant": "ai_agent",
+        "generated_at": datetime.datetime.utcnow().isoformat() + "Z",
+        "mode": "heuristic",
+        "esco_version": ESCO_VERSION_LABEL,
+    }
+    bridge_raw = context.get("bridge_context") if isinstance(context.get("bridge_context"), dict) else {}
+    selected_codes = normalize_target_system_codes(
+        context.get("target_systems"),
+        bridge_raw.get("systems") if isinstance(bridge_raw.get("systems"), list) else None,
+    )
+    bridge = filter_bridge_context_by_systems(bridge_raw, selected_codes)
+    context = {**context, "bridge_context": bridge, "target_systems": selected_codes}
+    seed = heuristic_ai_draft(3, context=context)
+    rows = list(seed.get("rows") or [])
+    meta["target_systems"] = selected_codes
+    meta["passport_domains"] = detect_passport_domains(context)
+    if not rows:
+        return {"rows": [], "target_systems": selected_codes}, meta
+    if not selected_codes:
+        meta["mode"] = "no_systems_selected"
+        meta["warning"] = "Не выбраны системы для сопоставления"
+        return {"rows": rows, "target_systems": []}, meta
+
+    # Не-ESCO: только поиск по корпусу + порог уверенности (ничего не выдумываем).
+    from .partner_mapping_search import apply_verified_to_rows
+
+    # Вставляем всё найденное; уверенность показывается в UI (по умолчанию без отсечения).
+    min_conf = str(context.get("min_confidence") or "low").lower()
+    if min_conf not in ("high", "medium", "low"):
+        min_conf = "low"
+    rows, search_stats = apply_verified_to_rows(
+        rows,
+        selected_codes=selected_codes,
+        bridge=bridge,
+        context=context,
+        min_confidence=min_conf,
+        use_llm_verify=deepseek_configured(),
+    )
+    meta["partner_search"] = search_stats
+    partner_hints = build_partner_mapping_hints(selected_codes, bridge, context)
+    meta["partner_hints"] = {k: v[:240] for k, v in partner_hints.items()}
+
+    esco_info = esco_status(session)
+    meta["esco_local"] = {
+        "occupations": esco_info.get("occupations"),
+        "skills": esco_info.get("skills"),
+        "source": esco_info.get("source"),
+        "local_ready": esco_info.get("local_ready"),
+    }
+    esco_selected = any(c.upper() == "ESCO" for c in selected_codes)
+
+    occupation_candidates: list[dict[str, str]] = []
+    skill_candidates: dict[str, list[dict[str, str]]] = {}
+    if esco_selected:
+        seen_occ: set[str] = set()
+        okz = ""
+        for lf in context.get("labor_functions") or []:
+            if not isinstance(lf, dict):
+                continue
+            raw = lf.get("okz_codes")
+            items = raw if isinstance(raw, list) else ([raw] if raw else [])
+            for item in items:
+                digits = "".join(ch for ch in str(item or "") if ch.isdigit())[:4]
+                if len(digits) >= 4:
+                    okz = digits
+                    break
+            if okz:
+                break
+        try:
+            batches = []
+            if okz:
+                batches.append(search_occupations(session, q="", isco=okz, limit=10))
+            title = str(context.get("title") or "").strip()
+            if title:
+                batches.append(
+                    search_occupations(session, q=_latin_query(title) or title, isco="", limit=8)
+                )
+            for res in batches:
+                for it in res.get("items") or []:
+                    uri = str(it.get("uri") or "").strip()
+                    if not uri or uri in seen_occ:
+                        continue
+                    seen_occ.add(uri)
+                    occupation_candidates.append(
+                        {
+                            "uri": uri,
+                            "title": str(it.get("title") or "").strip(),
+                            "isco": str(it.get("isco") or "").strip(),
+                        }
+                    )
+        except Exception as exc:
+            meta["occupation_search_error"] = str(exc)[:200]
+        occupation_uri = occupation_candidates[0]["uri"] if occupation_candidates else ""
+        skill_candidates = _step3_skill_candidates(session, rows, occupation_uri=occupation_uri)
+
+        if not deepseek_configured():
+            for idx, row in enumerate(rows):
+                key = str(row.get("source_id") or f"row{idx}")
+                cands = skill_candidates.get(key) or []
+                systems = row.get("systems") if isinstance(row.get("systems"), dict) else {}
+                esco_slot = None
+                for code, slot in systems.items():
+                    if str(code).upper() == "ESCO" and isinstance(slot, dict):
+                        esco_slot = slot
+                        break
+                if esco_slot and len(cands) == 1:
+                    esco_slot["uri"] = cands[0]["uri"]
+                    esco_slot["title"] = cands[0]["title"]
+                    esco_slot["match"] = "partial"
+                    esco_slot["notes"] = (esco_slot.get("notes") or "") + " (локальный ESCO, один кандидат)"
+                _sync_legacy_esco_fields(row)
+            meta["mode"] = "heuristic_multisystem"
+            meta["bridge_version_id"] = bridge.get("version_id")
+            return {"rows": rows, "target_systems": selected_codes}, meta
+    elif not deepseek_configured():
+        meta["mode"] = "heuristic_multisystem"
+        meta["bridge_version_id"] = bridge.get("version_id")
+        return {"rows": rows, "target_systems": selected_codes}, meta
+
+    other_codes = [c for c in selected_codes if c.upper() != "ESCO"]
+    system = (
+        "Ты методист по международной гармонизации квалификаций ЦРК РФ (шаг 9.2).\n"
+        "Задача: для КАЖДОЙ строки паспорта заполнить сопоставление по ВСЕМ выбранным системам моста.\n"
+        "Жёсткие правила:\n"
+        "1) Структура ответа: rows[].systems[CODE] = {title, uri, match, notes}.\n"
+        "2) Для ESCO: uri и title ТОЛЬКО из skill_candidates[source_id]; иначе uri пустой, match=none. "
+        "Не выдумывай URI ESCO.\n"
+        "3) Для прочих систем (не ESCO): НЕ выдумывай документы и аналоги. "
+        "Если в seed уже есть title/notes/source/confidence/corpus_id — сохрани source и confidence, "
+        "формулировку title можно слегка уточнить, не подменяй другим актом. "
+        "Если seed пустой (match=none) — оставь title пустым и match=none.\n"
+        "4) match: full | partial | none.\n"
+        "5) Без жаргона «маппить/маппинг». systems должен содержать каждый code из target_systems.\n"
+        "Верни только JSON: {\"rows\":[...], \"target_systems\":[...]}."
+    )
+    # компактные строки для промпта + трудовые функции паспорта
+    compact_lfs = []
+    for lf in (context.get("labor_functions") or [])[:20]:
+        if not isinstance(lf, dict):
+            continue
+        compact_lfs.append(
+            {
+                "code": lf.get("code"),
+                "name": lf.get("name"),
+                "okz_codes": lf.get("okz_codes"),
+            }
+        )
+    compact_rows = []
+    for row in rows[:40]:
+        compact_rows.append(
+            {
+                "source_type": row.get("source_type"),
+                "source_id": row.get("source_id"),
+                "source_text": row.get("source_text"),
+                "systems": {
+                    code: {
+                        "level_target": (row.get("systems") or {}).get(code, {}).get("level_target"),
+                        "rule_hint": (row.get("systems") or {}).get(code, {}).get("rule_hint"),
+                        "seed_title": (row.get("systems") or {}).get(code, {}).get("title"),
+                        "seed_notes": ((row.get("systems") or {}).get(code, {}).get("notes") or "")[:280],
+                        "seed_match": (row.get("systems") or {}).get(code, {}).get("match"),
+                        "seed_confidence": (row.get("systems") or {}).get(code, {}).get("confidence"),
+                        "seed_source": (row.get("systems") or {}).get(code, {}).get("source"),
+                        "corpus_id": (row.get("systems") or {}).get(code, {}).get("corpus_id"),
+                    }
+                    for code in selected_codes
+                },
+            }
+        )
+    user = (
+        "Сопоставь строки. Для не-ESCO сохраняй найденное из seed "
+        "(title, source, confidence); пустые seed не заполняй выдуманными актами.\n\n"
+        f"Паспорт: title={context.get('title')}, level={context.get('qualification_level')}, "
+        f"kind={context.get('competence_kind')}, purposes={context.get('purposes') or context.get('purpose')}, "
+        f"depth={context.get('depth')}, domains={meta.get('passport_domains')}\n"
+        f"Трудовые функции: {json.dumps(compact_lfs, ensure_ascii=False)[:4000]}\n"
+        f"target_systems={selected_codes}\n"
+        f"partner_search_stats: {json.dumps(search_stats, ensure_ascii=False)}\n"
+        f"Мост: {json.dumps(bridge, ensure_ascii=False)[:3500]}\n"
+        f"Строки (seed): {json.dumps(compact_rows, ensure_ascii=False)[:12000]}\n"
+        f"skill_candidates (только ESCO): {json.dumps(skill_candidates, ensure_ascii=False)[:8000]}\n"
+        f"occupation_candidates: {json.dumps(occupation_candidates, ensure_ascii=False)[:2000]}\n"
+        "Не-ESCO системы: " + (", ".join(other_codes) if other_codes else "нет") + "."
+    )
+    try:
+        data = chat_json(system=system, user=user, temperature=0.15, timeout=150)
+        if not isinstance(data, dict):
+            data = {}
+        data["target_systems"] = selected_codes
+        # Сливаем ответ модели поверх seed, сохраняя слоты всех систем
+        llm_rows = data.get("rows") if isinstance(data.get("rows"), list) else []
+        by_id: dict[str, dict[str, Any]] = {}
+        for r in llm_rows:
+            if isinstance(r, dict) and r.get("source_id") is not None:
+                by_id[str(r.get("source_id"))] = r
+        merged: list[dict[str, Any]] = []
+        allowed_esco: dict[str, dict[str, str]] = {}
+        for key, cands in skill_candidates.items():
+            for c in cands:
+                allowed_esco[c["uri"]] = c
+
+        for idx, base_row in enumerate(rows):
+            key = str(base_row.get("source_id") or f"row{idx}")
+            llm = by_id.get(key) or (llm_rows[idx] if idx < len(llm_rows) and isinstance(llm_rows[idx], dict) else {})
+            systems_llm = llm.get("systems") if isinstance(llm.get("systems"), dict) else {}
+            # legacy flat ESCO fields from LLM
+            if not systems_llm and (llm.get("esco_uri") or llm.get("esco_title")):
+                systems_llm = {
+                    "ESCO": {
+                        "uri": llm.get("esco_uri"),
+                        "title": llm.get("esco_title"),
+                        "match": llm.get("match"),
+                        "notes": llm.get("notes"),
+                    }
+                }
+            base_systems = base_row.get("systems") if isinstance(base_row.get("systems"), dict) else {}
+            new_systems: dict[str, Any] = {}
+            for code in selected_codes:
+                slot = dict(base_systems.get(code) or _empty_system_mapping(code, bridge=bridge))
+                src = systems_llm.get(code) if isinstance(systems_llm.get(code), dict) else {}
+                if not src:
+                    for k, v in systems_llm.items():
+                        if str(k).upper() == code.upper() and isinstance(v, dict):
+                            src = v
+                            break
+                if src:
+                    uri = str(src.get("uri") or "").strip()
+                    if code.upper() == "ESCO":
+                        new_title = str(src.get("title") or "").strip()
+                        new_notes = str(src.get("notes") or "").strip()
+                        if new_title:
+                            slot["title"] = new_title
+                        if new_notes:
+                            slot["notes"] = new_notes
+                        match = str(src.get("match") or slot.get("match") or "partial").strip().lower()
+                        slot["match"] = match if match in ("full", "partial", "none") else "partial"
+                        cands = skill_candidates.get(key) or []
+                        cand_uris = {c["uri"] for c in cands}
+                        if uri and uri in cand_uris and uri in allowed_esco:
+                            slot["uri"] = uri
+                            slot["title"] = allowed_esco[uri]["title"]
+                        else:
+                            slot["uri"] = ""
+                            if uri and uri not in cand_uris and not slot.get("title"):
+                                slot["match"] = "none"
+                    else:
+                        # не-ESCO: seed из поиска; сохраняем source + confidence
+                        slot["uri"] = ""
+                        seed_title = str(slot.get("title") or "").strip()
+                        seed_match = str(slot.get("match") or "none")
+                        seed_source = str(slot.get("source") or "").strip()
+                        seed_conf = str(slot.get("confidence") or "").strip().lower()
+                        if seed_title and seed_match != "none":
+                            new_title = str(src.get("title") or "").strip()
+                            new_notes = str(src.get("notes") or "").strip()
+                            if new_title:
+                                slot["title"] = new_title
+                            if new_notes:
+                                slot["notes"] = new_notes
+                            match = str(src.get("match") or seed_match).strip().lower()
+                            slot["match"] = match if match in ("full", "partial", "none") else seed_match
+                            slot["source"] = seed_source
+                            if seed_conf in ("high", "medium", "low"):
+                                slot["confidence"] = seed_conf
+                        else:
+                            slot["title"] = ""
+                            slot["match"] = "none"
+                            slot["source"] = ""
+                            slot["confidence"] = ""
+                new_systems[code] = slot
+            merged_row = {
+                "source_type": str(llm.get("source_type") or base_row.get("source_type") or ""),
+                "source_id": key,
+                "source_text": str(llm.get("source_text") or base_row.get("source_text") or ""),
+                "notes": str(llm.get("notes") or base_row.get("notes") or "").strip(),
+                "systems": new_systems,
+            }
+            merged.append(_sync_legacy_esco_fields(_normalize_step3_row(merged_row, selected_codes)))
+
+        meta["mode"] = "llm_multisystem"
+        meta["status"] = ai_agent_status()
+        meta["bridge_version_id"] = bridge.get("version_id")
+        meta["occupation_candidates"] = len(occupation_candidates)
+        meta["systems_count"] = len(selected_codes)
+        return {"rows": merged or rows, "target_systems": selected_codes}, meta
+    except Exception as exc:
+        meta["mode"] = "heuristic_fallback"
+        meta["error"] = str(exc)[:300]
+        return {"rows": rows, "target_systems": selected_codes}, meta
 
 
 def generate_ai_draft(step: int, *, context: dict[str, Any] | None = None) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -1279,10 +2323,17 @@ def generate_ai_draft(step: int, *, context: dict[str, Any] | None = None) -> tu
             + '},"notes":"…"}]}'
         )
     elif step == 6:
-        purpose = context.get("purpose") or "migration"
+        purposes = normalize_purposes(
+            context.get("purposes"),
+            fallback_purpose=context.get("purpose"),
+        )
+        labels = ", ".join(purposes) if purposes else "(не выбраны)"
         user = (
-            f"Цель сопряжения: {purpose}. Заполни требования. "
-            "JSON: {\"purpose\",\"depth\",\"requirements\":{\"data\",\"formats\",\"verification\"}}"
+            f"Цели сопряжения (уже выбраны пользователем, не меняй): {labels}.\n"
+            f"Глубина: {context.get('depth') or 'medium'}.\n"
+            "Заполни только requirements (data, formats, verification) под эти цели. "
+            "Поля purpose/purposes в ответе можно опустить — сервер сохранит выбор пользователя.\n"
+            "JSON: {\"depth\",\"requirements\":{\"data\",\"formats\",\"verification\"}}"
         )
     else:
         user = (
@@ -1299,6 +2350,18 @@ def generate_ai_draft(step: int, *, context: dict[str, Any] | None = None) -> tu
         regs_for_norm = None
         if step in (2, 5):
             regs_for_norm = context.get("registries") or context.get("existing_registries")
+        if step == 6 and isinstance(data, dict):
+            # Выбор целей — только от пользователя; модель заполняет requirements.
+            forced = normalize_purposes(
+                context.get("purposes"),
+                fallback_purpose=context.get("purpose"),
+            )
+            data = {
+                **data,
+                "purposes": forced,
+                "purpose": forced[0] if forced else "",
+                "depth": str(context.get("depth") or data.get("depth") or "medium"),
+            }
         payload = normalize_step_payload(step, data, registries=regs_for_norm)
         meta["mode"] = "llm"
         meta["status"] = ai_agent_status()

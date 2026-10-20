@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
 import { useNavigate } from "react-router";
 import { LogIn, Plus, KeyRound, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ import { apiClient } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
 import { useI18n } from "@/context/I18nContext";
 import { formatUserName } from "@/lib/userDisplay";
+import { cn } from "@/lib/utils";
 
 type AdminUser = {
   id: number;
@@ -42,11 +43,85 @@ type AdminUser = {
   created_at?: string | null;
 };
 
+type UserColId = "name" | "email" | "org" | "role" | "status" | "created" | "actions";
+
+const USER_COLS: UserColId[] = ["name", "email", "org", "role", "status", "created", "actions"];
+
+/** Доли по умолчанию суммируются в 100% — таблица помещается без горизонтального скролла. */
+const DEFAULT_COL_WIDTHS: Record<UserColId, number> = {
+  name: 14,
+  email: 16,
+  org: 14,
+  role: 12,
+  status: 12,
+  created: 12,
+  actions: 20,
+};
+
+const MIN_COL_PCT = 6;
+const WIDTHS_STORAGE_KEY = "drc.users.table.colWidths.v1";
+
 function formatDate(value?: string | null, locale = "ru-RU") {
   if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
   return date.toLocaleString(locale);
+}
+
+function loadSavedWidths(): Record<UserColId, number> | null {
+  try {
+    const raw = localStorage.getItem(WIDTHS_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<Record<UserColId, number>>;
+    const next = { ...DEFAULT_COL_WIDTHS };
+    let sum = 0;
+    for (const id of USER_COLS) {
+      const value = Number(parsed[id]);
+      if (!Number.isFinite(value) || value < MIN_COL_PCT) return null;
+      next[id] = value;
+      sum += value;
+    }
+    if (Math.abs(sum - 100) > 0.5) return null;
+    return next;
+  } catch {
+    return null;
+  }
+}
+
+function ResizableHead({
+  label,
+  widthPct,
+  align = "left",
+  resizable = true,
+  onResizeStart,
+}: {
+  label: string;
+  widthPct: number;
+  align?: "left" | "right";
+  resizable?: boolean;
+  onResizeStart?: (event: ReactMouseEvent<HTMLDivElement>) => void;
+}) {
+  return (
+    <TableHead
+      style={{ width: `${widthPct}%` }}
+      className={cn(
+        "relative select-none whitespace-normal break-words align-bottom",
+        align === "right" && "text-right",
+      )}
+    >
+      <span className="pr-2 block leading-snug">{label}</span>
+      {resizable && onResizeStart ? (
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Изменить ширину колонки"
+          title="Потяните, чтобы изменить ширину"
+          onMouseDown={onResizeStart}
+          className="absolute top-0 right-0 z-10 h-full w-1.5 cursor-col-resize touch-none hover:bg-primary/30 active:bg-primary/50"
+        />
+      ) : null}
+    </TableHead>
+  );
 }
 
 export function UsersAdminPage() {
@@ -67,6 +142,84 @@ export function UsersAdminPage() {
   const [newPassword, setNewPassword] = useState("");
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState("");
+  const [colWidths, setColWidths] = useState<Record<UserColId, number>>(
+    () => loadSavedWidths() || { ...DEFAULT_COL_WIDTHS },
+  );
+  const dragRef = useRef<{
+    left: UserColId;
+    right: UserColId;
+    startX: number;
+    startLeft: number;
+    startRight: number;
+    tableWidth: number;
+  } | null>(null);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(WIDTHS_STORAGE_KEY, JSON.stringify(colWidths));
+    } catch {
+      /* ignore quota */
+    }
+  }, [colWidths]);
+
+  useEffect(() => {
+    const onMove = (event: MouseEvent) => {
+      const drag = dragRef.current;
+      if (!drag || drag.tableWidth <= 0) return;
+      const deltaPct = ((event.clientX - drag.startX) / drag.tableWidth) * 100;
+      let nextLeft = drag.startLeft + deltaPct;
+      let nextRight = drag.startRight - deltaPct;
+      if (nextLeft < MIN_COL_PCT) {
+        nextRight -= MIN_COL_PCT - nextLeft;
+        nextLeft = MIN_COL_PCT;
+      }
+      if (nextRight < MIN_COL_PCT) {
+        nextLeft -= MIN_COL_PCT - nextRight;
+        nextRight = MIN_COL_PCT;
+      }
+      if (nextLeft < MIN_COL_PCT || nextRight < MIN_COL_PCT) return;
+      setColWidths((prev) => ({
+        ...prev,
+        [drag.left]: nextLeft,
+        [drag.right]: nextRight,
+      }));
+    };
+    const onUp = () => {
+      dragRef.current = null;
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+  }, []);
+
+  const startResize = (left: UserColId, event: ReactMouseEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const leftIndex = USER_COLS.indexOf(left);
+    if (leftIndex < 0 || leftIndex >= USER_COLS.length - 1) return;
+    const right = USER_COLS[leftIndex + 1];
+    const table = (event.currentTarget.closest("table") as HTMLTableElement | null) || null;
+    const tableWidth = table?.getBoundingClientRect().width || 1;
+    dragRef.current = {
+      left,
+      right,
+      startX: event.clientX,
+      startLeft: colWidths[left],
+      startRight: colWidths[right],
+      tableWidth,
+    };
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+  };
+
+  const resetWidths = () => {
+    setColWidths({ ...DEFAULT_COL_WIDTHS });
+  };
 
   const loadUsers = useCallback(async () => {
     setLoading(true);
@@ -167,10 +320,15 @@ export function UsersAdminPage() {
         title={t("users.title")}
         description={t("users.lead")}
         actions={
-          <Button className="gap-2" onClick={() => setCreateOpen(true)}>
-            <Plus className="w-4 h-4" />
-            {t("users.add")}
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={resetWidths}>
+              {t("users.resetColumns")}
+            </Button>
+            <Button className="gap-2" onClick={() => setCreateOpen(true)}>
+              <Plus className="w-4 h-4" />
+              {t("users.add")}
+            </Button>
+          </div>
         }
       />
 
@@ -187,16 +345,50 @@ export function UsersAdminPage() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
           </div>
         ) : (
-          <Table>
+          <Table className="table-fixed w-full" containerClassName="overflow-x-hidden">
+            <colgroup>
+              {USER_COLS.map((id) => (
+                <col key={id} style={{ width: `${colWidths[id]}%` }} />
+              ))}
+            </colgroup>
             <TableHeader>
               <TableRow>
-                <TableHead>{t("users.colName")}</TableHead>
-                <TableHead>{t("users.colEmail")}</TableHead>
-                <TableHead>{t("users.colOrg")}</TableHead>
-                <TableHead>{t("users.colRole")}</TableHead>
-                <TableHead>{t("users.colStatus")}</TableHead>
-                <TableHead>{t("users.colCreated")}</TableHead>
-                <TableHead className="text-right">{t("users.colActions")}</TableHead>
+                <ResizableHead
+                  label={t("users.colName")}
+                  widthPct={colWidths.name}
+                  onResizeStart={(event) => startResize("name", event)}
+                />
+                <ResizableHead
+                  label={t("users.colEmail")}
+                  widthPct={colWidths.email}
+                  onResizeStart={(event) => startResize("email", event)}
+                />
+                <ResizableHead
+                  label={t("users.colOrg")}
+                  widthPct={colWidths.org}
+                  onResizeStart={(event) => startResize("org", event)}
+                />
+                <ResizableHead
+                  label={t("users.colRole")}
+                  widthPct={colWidths.role}
+                  onResizeStart={(event) => startResize("role", event)}
+                />
+                <ResizableHead
+                  label={t("users.colStatus")}
+                  widthPct={colWidths.status}
+                  onResizeStart={(event) => startResize("status", event)}
+                />
+                <ResizableHead
+                  label={t("users.colCreated")}
+                  widthPct={colWidths.created}
+                  onResizeStart={(event) => startResize("created", event)}
+                />
+                <ResizableHead
+                  label={t("users.colActions")}
+                  widthPct={colWidths.actions}
+                  align="right"
+                  resizable={false}
+                />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -204,17 +396,27 @@ export function UsersAdminPage() {
                 const isSelf = currentUser?.email === row.email;
                 return (
                   <TableRow key={row.id}>
-                    <TableCell className="font-medium">
-                      {formatUserName(row) || "—"}
-                      {isSelf ? (
-                        <span className="ml-2 text-xs text-muted-foreground">{t("users.you")}</span>
-                      ) : null}
+                    <TableCell className="font-medium whitespace-normal break-words max-w-0">
+                      <span className="line-clamp-2" title={formatUserName(row) || undefined}>
+                        {formatUserName(row) || "—"}
+                        {isSelf ? (
+                          <span className="ml-2 text-xs text-muted-foreground">{t("users.you")}</span>
+                        ) : null}
+                      </span>
                     </TableCell>
-                    <TableCell>{row.email}</TableCell>
-                    <TableCell>{row.organization || "—"}</TableCell>
-                    <TableCell>
+                    <TableCell className="whitespace-normal break-all max-w-0">
+                      <span className="line-clamp-2" title={row.email}>
+                        {row.email}
+                      </span>
+                    </TableCell>
+                    <TableCell className="whitespace-normal break-words max-w-0">
+                      <span className="line-clamp-2" title={row.organization || undefined}>
+                        {row.organization || "—"}
+                      </span>
+                    </TableCell>
+                    <TableCell className="whitespace-normal max-w-0">
                       <select
-                        className="form-control w-auto px-2 py-1 text-sm"
+                        className="form-control w-full max-w-full px-1.5 py-1 text-xs sm:text-sm"
                         value={row.role}
                         disabled={isSelf}
                         onChange={(event) => handleRoleChange(row, event.target.value)}
@@ -227,15 +429,15 @@ export function UsersAdminPage() {
                         <option value="admin">{t("role.admin")}</option>
                       </select>
                     </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
+                    <TableCell className="whitespace-normal max-w-0">
+                      <div className="flex flex-wrap items-center gap-1.5">
                         <Switch
                           checked={row.is_active}
                           disabled={isSelf}
                           onCheckedChange={(checked) => handleActiveChange(row, checked)}
                           aria-label={t("users.activeAria", { email: row.email })}
                         />
-                        <Badge variant={row.is_active ? "secondary" : "outline"}>
+                        <Badge variant={row.is_active ? "secondary" : "outline"} className="text-[10px] sm:text-xs">
                           {row.email_confirmed === false
                             ? t("users.pending")
                             : row.is_active
@@ -244,14 +446,17 @@ export function UsersAdminPage() {
                         </Badge>
                       </div>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{formatDate(row.created_at, intlLocale)}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
+                    <TableCell className="text-muted-foreground whitespace-normal break-words max-w-0 text-xs sm:text-sm">
+                      {formatDate(row.created_at, intlLocale)}
+                    </TableCell>
+                    <TableCell className="text-right whitespace-normal max-w-0">
+                      <div className="flex flex-wrap justify-end gap-1">
                         <Button
                           type="button"
                           variant="outline"
                           size="sm"
-                          className="gap-1"
+                          className="gap-1 h-8 px-2"
+                          title={t("users.mail")}
                           disabled={row.email_confirmed !== false}
                           onClick={async () => {
                             setError("");
@@ -264,30 +469,32 @@ export function UsersAdminPage() {
                           }}
                         >
                           <Mail className="w-3.5 h-3.5" />
-                          {t("users.mail")}
+                          <span className="hidden xl:inline">{t("users.mail")}</span>
                         </Button>
                         <Button
                           type="button"
                           variant="outline"
                           size="sm"
-                          className="gap-1"
+                          className="gap-1 h-8 px-2"
+                          title={t("users.password")}
                           onClick={() => {
                             setPasswordUser(row);
                             setNewPassword("");
                           }}
                         >
                           <KeyRound className="w-3.5 h-3.5" />
-                          {t("users.password")}
+                          <span className="hidden xl:inline">{t("users.password")}</span>
                         </Button>
                         <Button
                           type="button"
                           size="sm"
-                          className="gap-1"
+                          className="gap-1 h-8 px-2"
+                          title={t("users.loginAs")}
                           disabled={isSelf || !row.is_active || isImpersonating}
                           onClick={() => handleImpersonate(row)}
                         >
                           <LogIn className="w-3.5 h-3.5" />
-                          {t("users.loginAs")}
+                          <span className="hidden xl:inline">{t("users.loginAs")}</span>
                         </Button>
                       </div>
                     </TableCell>

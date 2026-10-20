@@ -12,7 +12,7 @@ set "REMOTE_DIR=/opt/drc"
 set "BRANCH=main"
 set "VITE_API_URL=https://drc.ao-nk.online/api"
 set "SITE_URL=https://drc.ao-nk.online"
-set "COMMIT_MSG=Международное сопоставление: ИИ ГАРМ-ESCO, ОКЗ из ПС, методика"
+set "COMMIT_MSG=Пользователи: resizable колонки без горизонтального скролла; sync вёрстки"
 REM =====================================================
 
 REM Запускайте из cmd.exe (не PowerShell Cursor):

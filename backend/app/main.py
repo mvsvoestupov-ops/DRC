@@ -104,9 +104,15 @@ from .harmonization import (
     PASSPORT_STEPS,
     VERSION_STATUSES,
     ai_agent_status,
+    apply_bridge_snapshot_to_step6,
+    build_bridge_context_for_passport,
     empty_step_payload,
     ensure_version_steps,
+    filter_bridge_context_by_systems,
     generate_ai_draft,
+    generate_step3_ai_draft,
+    normalize_purposes,
+    normalize_target_system_codes,
     serialize_passport,
     serialize_step,
     serialize_version,
@@ -2648,6 +2654,28 @@ class PassportHarmonizationPut(BaseModel):
 class PassportStepAiRequest(BaseModel):
     version_id: Optional[int] = None
     purpose: Optional[str] = None
+    purposes: Optional[List[str]] = None
+    depth: Optional[str] = None
+    target_systems: Optional[List[str]] = None
+
+
+class PassportApplyBridgeRequest(BaseModel):
+    version_id: Optional[int] = None
+    target_systems: Optional[List[str]] = None
+
+
+def _passport_bridge_bundle(session, comp: Competence, version: HarmonizationVersion) -> dict:
+    raw = comp.raw_data or {}
+    bridge = build_bridge_context_for_passport(
+        version,
+        qualification_level=comp.qualification_level,
+        education_kind=str(raw.get("education_kind") or ""),
+        education_level=str(raw.get("education_level") or ""),
+    )
+    return {
+        "bridge_context": bridge,
+        "esco": esco_status(session),
+    }
 
 
 def _get_harmonization_version(session, version_id: int) -> HarmonizationVersion:
@@ -3016,6 +3044,7 @@ async def get_passport_harmonization(
             **serialize_passport(row),
             "version": serialize_version(version, include_steps=False),
             "ai_agent": ai_agent_status(),
+            **_passport_bridge_bundle(session, comp, version),
         }
     finally:
         session.close()
@@ -3068,6 +3097,70 @@ async def put_passport_harmonization(
             **serialize_passport(row),
             "version": serialize_version(version, include_steps=False),
             "ai_agent": ai_agent_status(),
+            **_passport_bridge_bundle(session, comp, version),
+        }
+    except HTTPException:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+
+@app.post("/competences/{comp_id}/harmonization/apply-bridge")
+async def apply_passport_bridge(
+    comp_id: int,
+    data: PassportApplyBridgeRequest = PassportApplyBridgeRequest(),
+    current_user: User = Depends(get_current_intl_methodologist),
+):
+    """Встраивает снимок моста 1/2/4/5 в шаг 6 паспорта (шаги 9 и 9.1 не затрагиваются)."""
+    session = SessionLocal()
+    try:
+        comp = session.query(Competence).filter(Competence.id == comp_id).first()
+        if not comp:
+            raise HTTPException(404, "Компетенция не найдена")
+        version = _resolve_passport_version(session, data.version_id)
+        row = (
+            session.query(PassportHarmonization)
+            .filter(
+                PassportHarmonization.competence_id == comp_id,
+                PassportHarmonization.version_id == version.id,
+            )
+            .first()
+        )
+        if not row:
+            row = PassportHarmonization(
+                competence_id=comp_id,
+                version_id=version.id,
+                step3_payload=empty_step_payload(3),
+                step6_payload=empty_step_payload(6),
+            )
+            session.add(row)
+            session.flush()
+        bundle = _passport_bridge_bundle(session, comp, version)
+        bridge = bundle["bridge_context"]
+        available = bridge.get("systems") if isinstance(bridge.get("systems"), list) else []
+        codes = (
+            normalize_target_system_codes(data.target_systems, available)
+            if data.target_systems is not None
+            else None
+        )
+        row.step6_payload = apply_bridge_snapshot_to_step6(
+            row.step6_payload if isinstance(row.step6_payload, dict) else {},
+            bridge,
+            target_systems=codes,
+        )
+        row.step6_status = "edited"
+        row.step6_verified_by_id = None
+        row.step6_verified_at = None
+        row.updated_by_id = current_user.id
+        row.updated_at = datetime.datetime.utcnow()
+        session.commit()
+        session.refresh(row)
+        return {
+            **serialize_passport(row),
+            "version": serialize_version(version, include_steps=False),
+            "ai_agent": ai_agent_status(),
+            **bundle,
         }
     except HTTPException:
         session.rollback()
@@ -3109,18 +3202,56 @@ async def ai_draft_passport_harmonization_step(
             session.add(row)
             session.flush()
         ctx = _competence_context_for_ai(comp)
-        if data.purpose:
-            ctx["purpose"] = data.purpose
-        elif isinstance(row.step6_payload, dict) and row.step6_payload.get("purpose"):
-            ctx["purpose"] = row.step6_payload.get("purpose")
-        payload, ai_meta = generate_ai_draft(step, context=ctx)
+        step6_payload = row.step6_payload if isinstance(row.step6_payload, dict) else {}
+        if data.purposes is not None:
+            ctx["purposes"] = normalize_purposes(data.purposes)
+        elif isinstance(step6_payload.get("purposes"), list):
+            ctx["purposes"] = normalize_purposes(step6_payload.get("purposes"))
+        elif data.purpose:
+            ctx["purposes"] = normalize_purposes([data.purpose])
+        elif step6_payload.get("purpose"):
+            ctx["purposes"] = normalize_purposes([step6_payload.get("purpose")])
+        else:
+            ctx["purposes"] = []
+        ctx["purpose"] = ctx["purposes"][0] if ctx["purposes"] else ""
+        if data.depth:
+            ctx["depth"] = data.depth
+        elif step6_payload.get("depth"):
+            ctx["depth"] = step6_payload.get("depth")
+        bridge_bundle = _passport_bridge_bundle(session, comp, version)
+        available = (
+            bridge_bundle["bridge_context"].get("systems")
+            if isinstance(bridge_bundle["bridge_context"].get("systems"), list)
+            else []
+        )
+        if data.target_systems is not None:
+            ctx["target_systems"] = normalize_target_system_codes(data.target_systems, available)
+        else:
+            ctx["target_systems"] = normalize_target_system_codes(
+                step6_payload.get("target_systems"), available
+            )
+        ctx["bridge_context"] = filter_bridge_context_by_systems(
+            bridge_bundle["bridge_context"],
+            ctx["target_systems"],
+        )
         if step == 3:
+            payload, ai_meta = generate_step3_ai_draft(session, context=ctx)
             row.step3_payload = payload
             row.step3_ai_meta = ai_meta
             row.step3_status = "ai_draft"
             row.step3_verified_by_id = None
             row.step3_verified_at = None
         else:
+            payload, ai_meta = generate_ai_draft(step, context=ctx)
+            # Сохраняем снимок моста и выбор систем/целей
+            if isinstance(step6_payload, dict):
+                for key in ("bridge_snapshot", "bridge_applied_at", "target_systems"):
+                    if key in step6_payload and key not in payload:
+                        payload[key] = step6_payload[key]
+            if ctx.get("target_systems") is not None:
+                payload["target_systems"] = ctx["target_systems"]
+            payload["purposes"] = ctx.get("purposes") or []
+            payload["purpose"] = payload["purposes"][0] if payload["purposes"] else ""
             row.step6_payload = payload
             row.step6_ai_meta = ai_meta
             row.step6_status = "ai_draft"
@@ -3134,6 +3265,7 @@ async def ai_draft_passport_harmonization_step(
             **serialize_passport(row),
             "version": serialize_version(version, include_steps=False),
             "ai_agent": ai_agent_status(),
+            **bridge_bundle,
         }
     except HTTPException:
         session.rollback()
@@ -3153,6 +3285,9 @@ async def verify_passport_harmonization_step(
         raise HTTPException(400, "Шаг должен быть 3 или 6")
     session = SessionLocal()
     try:
+        comp = session.query(Competence).filter(Competence.id == comp_id).first()
+        if not comp:
+            raise HTTPException(404, "Компетенция не найдена")
         version = _resolve_passport_version(session, data.version_id)
         row = (
             session.query(PassportHarmonization)
@@ -3181,6 +3316,7 @@ async def verify_passport_harmonization_step(
             **serialize_passport(row),
             "version": serialize_version(version, include_steps=False),
             "ai_agent": ai_agent_status(),
+            **_passport_bridge_bundle(session, comp, version),
         }
     except HTTPException:
         session.rollback()

@@ -178,11 +178,38 @@ fi
 chown -R www-data:www-data "$OUT" 2>/dev/null || true
 chmod -R a+rX "$OUT"
 
-# If nginx still points at the old CRA build folder, copy Vite output there too.
-if [ -d "$ROOT/frontend/build" ] && [ "$OUT" = "$ROOT/frontend/dist" ]; then
-  mkdir -p "$ROOT/frontend/build"
-  cp -a "$ROOT/frontend/dist/." "$ROOT/frontend/build/"
+# Vite → dist; nginx часто смотрит на build (старый CRA) — всегда синхронизируем.
+# --delete убирает устаревшие hashed CSS/JS, из‑за которых «ломается» вёрстка.
+sync_static() {
+  local src="$1" dest="$2"
+  mkdir -p "$dest"
+  if command -v rsync >/dev/null 2>&1; then
+    rsync -a --delete "$src"/ "$dest"/
+  else
+    find "$dest" -mindepth 1 -maxdepth 1 -exec rm -rf {} + 2>/dev/null || true
+    cp -a "$src"/. "$dest"/
+  fi
+  chown -R www-data:www-data "$dest" 2>/dev/null || true
+  chmod -R a+rX "$dest"
+  echo "==> synced static -> $dest"
+}
+
+if [ "$OUT" = "$ROOT/frontend/dist" ]; then
+  sync_static "$OUT" "$ROOT/frontend/build"
 fi
+
+# Дополнительно: все nginx root, похожие на DRC
+while IFS= read -r nginx_root; do
+  [ -n "$nginx_root" ] || continue
+  case "$nginx_root" in
+    "$ROOT/frontend/dist"|"$ROOT/frontend/build") continue ;;
+  esac
+  sync_static "$OUT" "$nginx_root"
+done < <(
+  grep -RhoE 'root[[:space:]]+/[^;]+' /etc/nginx 2>/dev/null \
+    | awk '{print $2}' | sed 's|/$||' | sort -u \
+    | grep -Ei 'drc|frontend' || true
+)
 
 echo "==> nginx"
 nginx -t

@@ -333,6 +333,8 @@ def refresh_meta(session: Session) -> dict[str, Any]:
         row = EscoMeta(version=ESCO_VERSION)
         session.add(row)
     row.version = ESCO_VERSION
+    if not (row.source or "").strip():
+        row.source = "https://ec.europa.eu/esco/api"
     row.occupation_count = session.query(EscoOccupation).count()
     row.skill_count = session.query(EscoSkill).count()
     row.imported_at = datetime.datetime.utcnow()
@@ -342,6 +344,7 @@ def refresh_meta(session: Session) -> dict[str, Any]:
 
 def status(session: Session) -> dict[str, Any]:
     row = session.query(EscoMeta).first()
+    source = (row.source if row and row.source else "") or "https://ec.europa.eu/esco/api"
     return {
         "version": ESCO_VERSION_LABEL,
         "api_version": ESCO_VERSION,
@@ -349,7 +352,10 @@ def status(session: Session) -> dict[str, Any]:
         "skills": session.query(EscoSkill).count(),
         "relations": session.query(EscoOccupationSkill).count(),
         "imported_at": row.imported_at.isoformat() if row and row.imported_at else None,
-        "source": "https://ec.europa.eu/esco/api",
+        "source": source,
+        "local_ready": bool(
+            session.query(EscoOccupation).count() > 0 and session.query(EscoSkill).count() > 0
+        ),
     }
 
 

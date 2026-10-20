@@ -499,7 +499,13 @@ class ApiClient {
   aiDraftPassportHarmonizationStep = (
     compId: number,
     step: number,
-    data?: { version_id?: number; purpose?: string },
+    data?: {
+      version_id?: number;
+      purpose?: string;
+      purposes?: string[];
+      depth?: string;
+      target_systems?: string[];
+    },
   ) =>
     this.post<PassportHarmonization>(
       `/competences/${compId}/harmonization/steps/${step}/ai-draft`,
@@ -513,6 +519,15 @@ class ApiClient {
   ) =>
     this.post<PassportHarmonization>(
       `/competences/${compId}/harmonization/steps/${step}/verify`,
+      data || {},
+    );
+
+  applyPassportBridge = (
+    compId: number,
+    data?: { version_id?: number; target_systems?: string[] },
+  ) =>
+    this.post<PassportHarmonization>(
+      `/competences/${compId}/harmonization/apply-bridge`,
       data || {},
     );
 

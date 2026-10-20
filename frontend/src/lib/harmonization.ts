@@ -41,6 +41,42 @@ export type PassportStepBlock = {
   verified_at?: string | null;
 };
 
+export type BridgeSystem = {
+  code: string;
+  name: string;
+  region?: string;
+  level_target?: string;
+};
+
+export type BridgeContext = {
+  version_id?: number | null;
+  version_title?: string;
+  ready_for_apply?: boolean;
+  systems?: BridgeSystem[];
+  selected_system_codes?: string[];
+  nsk_level?: number | null;
+  level_bridge?: {
+    nsk_level?: number | null;
+    eqf?: string | number | null;
+    targets?: Record<string, string>;
+    confidence?: string;
+  } | null;
+  education_bridge?: Record<string, unknown> | null;
+  component_rules_esco?: Record<string, string>;
+  component_rules_by_system?: Record<string, Record<string, string>>;
+  component_rules?: Array<Record<string, unknown>>;
+};
+
+export type EscoLocalStatus = {
+  version?: string;
+  occupations?: number;
+  skills?: number;
+  relations?: number;
+  source?: string;
+  local_ready?: boolean;
+  imported_at?: string | null;
+};
+
 export type PassportHarmonization = {
   id: number;
   competence_id: number;
@@ -49,6 +85,8 @@ export type PassportHarmonization = {
   step6: PassportStepBlock;
   version?: HarmonizationVersion;
   ai_agent?: { configured?: boolean; model?: string };
+  bridge_context?: BridgeContext;
+  esco?: EscoLocalStatus;
   updated_by_id?: number | null;
   created_at?: string | null;
   updated_at?: string | null;
@@ -57,7 +95,7 @@ export type PassportHarmonization = {
 export const STEP_LABELS_RU: Record<number, string> = {
   1: "Реестры-аналоги",
   2: "Матрица уровней НРК",
-  3: "ТФ/ТД ↔ ESCO",
+  3: "ТФ/ТД ↔ системы моста",
   4: "Образование / ISCED",
   5: "Компоненты A/B/C",
   6: "Цель сопряжения",
