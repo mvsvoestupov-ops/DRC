@@ -4086,6 +4086,13 @@ def _can_view_competence(session, user, comp: Competence) -> bool:
         return True
     if _is_group_leader(comp, user) or _is_accepted_collaborator(session, comp.id, user.id):
         return True
+    # Реестр «В разработке»: любой авторизованный может смотреть черновики (без права правки)
+    if (
+        comp.status == CompetenceStatus.DRAFT
+        and (comp.is_active or 0) == 1
+        and user is not None
+    ):
+        return True
     if role == "moderator" and comp.status == CompetenceStatus.REVIEW:
         return True
     if role == "expert":
@@ -4582,6 +4589,34 @@ async def list_competences(mine: bool = False, current_user: User = Depends(get_
         ]
     finally:
         session.close()
+
+@app.get("/competences/in-development")
+async def list_competences_in_development(current_user: User = Depends(get_current_user)):
+    """Все активные черновики («проект») с составом рабочих групп для авторизованных."""
+    session = SessionLocal()
+    try:
+        competences = (
+            session.query(Competence)
+            .filter(
+                Competence.is_active == 1,
+                Competence.status == CompetenceStatus.DRAFT,
+            )
+            .order_by(Competence.updated_at.desc())
+            .all()
+        )
+        reviewers = _reviewers_map(session, [c.id for c in competences if c.id])
+        return [
+            _serialize_competence_for_user(
+                session,
+                c,
+                current_user,
+                reviewers=reviewers.get(c.id, []),
+            )
+            for c in competences
+        ]
+    finally:
+        session.close()
+
 
 @app.get("/competences/stats")
 async def get_competence_stats(current_user: User = Depends(get_current_user)):

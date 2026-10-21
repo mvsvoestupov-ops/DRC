@@ -290,6 +290,20 @@ export const extraVi: ExtraMessages = {
     develop: "Phát triển",
     approved: "Đã phê duyệt",
   },
+  inDev: {
+    title: "Đang phát triển",
+    lead: "Tất cả năng lực trạng thái bản nháp: thành viên nhóm; người đăng nhập được xem, chỉ thành viên phát triển được sửa",
+    loadError: "Không tải được dự án đang phát triển",
+    empty: "Không có năng lực đang phát triển",
+    workingGroup: "Nhóm công tác",
+    noGroup: "Chưa có thành viên nhóm",
+    leader: "trưởng nhóm",
+    pending: "chờ phản hồi",
+    youLeader: "Bạn là trưởng nhóm",
+    youMember: "Bạn là thành viên",
+    view: "Xem",
+    edit: "Chỉnh sửa",
+  },
   wg: {
     title: "Nhóm công tác",
     memberHelp:

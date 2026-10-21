@@ -196,7 +196,7 @@ export function HomePage() {
             intlLocale={intlLocale}
           />
           <StatCard
-            to="/my-projects"
+            to="/in-development"
             icon={PenLine}
             color="#6366F1"
             bg="#EEF2FF"

@@ -21,6 +21,7 @@ import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
 import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { MyProjectsPage } from "./pages/MyProjectsPage";
+import { InDevelopmentPage } from "./pages/InDevelopmentPage";
 import {
   StandardsPage,
   QualificationsListPage,
@@ -52,6 +53,16 @@ export const router = createBrowserRouter([
           <RequireAuth>
             <WorkspaceShell>
               <MyProjectsPage />
+            </WorkspaceShell>
+          </RequireAuth>
+        ),
+      },
+      {
+        path: "in-development",
+        element: (
+          <RequireAuth>
+            <WorkspaceShell>
+              <InDevelopmentPage />
             </WorkspaceShell>
           </RequireAuth>
         ),

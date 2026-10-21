@@ -12,7 +12,7 @@ set "REMOTE_DIR=/opt/drc"
 set "BRANCH=main"
 set "VITE_API_URL=https://drc.ao-nk.online/api"
 set "SITE_URL=https://drc.ao-nk.online"
-set "COMMIT_MSG=Рабочая группа: фикс overflow модалки (бейдж/Пригласить не уезжают за край)"
+set "COMMIT_MSG=Дашборд «В разработке»: реестр всех черновиков с составом групп, Edit/View по участию"
 REM =====================================================
 
 REM Запускайте из cmd.exe (не PowerShell Cursor):

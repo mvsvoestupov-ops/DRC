@@ -293,6 +293,20 @@ export const extraEn: ExtraMessages = {
     develop: "Develop",
     approved: "Approved",
   },
+  inDev: {
+    title: "In development",
+    lead: "All competencies with draft status: working group members, view for every signed-in user, edit only for development participants",
+    loadError: "Could not load projects in development",
+    empty: "No competencies in development",
+    workingGroup: "Working group",
+    noGroup: "No group members listed",
+    leader: "leader",
+    pending: "pending",
+    youLeader: "You are the leader",
+    youMember: "You are a member",
+    view: "View",
+    edit: "Edit",
+  },
   wg: {
     title: "Working group",
     memberHelp:

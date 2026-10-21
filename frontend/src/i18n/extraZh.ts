@@ -289,6 +289,20 @@ export const extraZh: ExtraMessages = {
     develop: "继续开发",
     approved: "已批准",
   },
+  inDev: {
+    title: "开发中",
+    lead: "所有「草稿」状态能力：工作组成员；已登录用户可查看，仅开发参与者可编辑",
+    loadError: "无法加载开发中的项目",
+    empty: "暂无开发中的能力",
+    workingGroup: "工作组",
+    noGroup: "未指定组成员",
+    leader: "负责人",
+    pending: "待回复",
+    youLeader: "您是负责人",
+    youMember: "您是成员",
+    view: "查看",
+    edit: "编辑",
+  },
   wg: {
     title: "工作组",
     memberHelp:

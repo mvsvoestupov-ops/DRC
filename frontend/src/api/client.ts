@@ -563,6 +563,8 @@ class ApiClient {
 
   // Competences — авторизованные операции
   getCompetences = (mine = false) => this.get<any[]>(mine ? '/competences?mine=true' : '/competences');
+  /** Все черновики («В разработке») + состав рабочих групп */
+  getCompetencesInDevelopment = () => this.get<any[]>('/competences/in-development');
   getCompetenceById = (id: number) => this.get<any>(`/competences/${id}`);
   createCompetence = (data: any) => this.post('/competences', data);
   updateCompetence = (
