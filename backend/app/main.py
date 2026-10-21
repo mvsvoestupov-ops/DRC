@@ -4290,11 +4290,22 @@ async def get_public_competence_stats():
             Competence.is_active == 1,
             Competence.status == CompetenceStatus.REVIEW,
         )
+        draft_q = session.query(Competence).filter(
+            Competence.is_active == 1,
+            Competence.status == CompetenceStatus.DRAFT,
+        )
         archived_q = session.query(Competence).filter(Competence.is_active == 0)
         active = active_q.count()
         review = review_q.count()
+        draft = draft_q.count()
         archived = archived_q.count()
-        return {"total": active + review, "active": active, "review": review, "archived": archived}
+        return {
+            "total": active + review,
+            "active": active,
+            "review": review,
+            "draft": draft,
+            "archived": archived,
+        }
     finally:
         session.close()
 
@@ -4594,6 +4605,7 @@ async def get_competence_stats(current_user: User = Depends(get_current_user)):
         total = query.count()
         active = query.filter(Competence.status == CompetenceStatus.APPROVED).count()
         review = query.filter(Competence.status == CompetenceStatus.REVIEW).count()
+        draft = query.filter(Competence.status == CompetenceStatus.DRAFT).count()
         archived = session.query(Competence).filter(Competence.is_active == 0)
         if not is_staff_role(current_user):
             archived = archived.filter(or_(
@@ -4601,7 +4613,13 @@ async def get_competence_stats(current_user: User = Depends(get_current_user)):
                 Competence.id.in_(_accepted_collaborator_ids(session, current_user.id) or [-1]),
             ))
         archived_count = archived.count()
-        return {"total": total, "active": active, "review": review, "archived": archived_count}
+        return {
+            "total": total,
+            "active": active,
+            "review": review,
+            "draft": draft,
+            "archived": archived_count,
+        }
     finally:
         session.close()
 

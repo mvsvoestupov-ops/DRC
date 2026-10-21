@@ -551,7 +551,13 @@ class ApiClient {
   };
 
   getPublicCompetenceStats = () =>
-    this.get<{ total: number; active: number; review: number; archived: number }>('/competences/public/stats');
+    this.get<{
+      total: number;
+      active: number;
+      review: number;
+      draft: number;
+      archived: number;
+    }>('/competences/public/stats');
 
   getPublicCompetenceById = (id: number) => this.get<any>(`/competences/public/${id}`);
 
@@ -609,7 +615,14 @@ class ApiClient {
   revertCompetenceActivity = (competenceId: number, eventId: number) =>
     this.post(`/competences/${competenceId}/activity/${eventId}/revert`);
   deleteCompetence = (id: number) => this.delete(`/competences/${id}`);
-  getCompetenceStats = () => this.get<{ total: number; active: number; review: number; archived: number }>('/competences/stats');
+  getCompetenceStats = () =>
+    this.get<{
+      total: number;
+      active: number;
+      review: number;
+      draft: number;
+      archived: number;
+    }>('/competences/stats');
 
   downloadCompetenceDocx = async (id: number, opts?: { public?: boolean }): Promise<Blob> => {
     const token = this.getToken();

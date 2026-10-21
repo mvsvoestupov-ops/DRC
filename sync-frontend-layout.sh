@@ -29,10 +29,16 @@ echo "==> app root: $ROOT"
 
 cd "$ROOT"
 if [ -d .git ]; then
-  echo "==> git fetch/checkout $BRANCH"
-  git fetch origin "$BRANCH" || true
-  git checkout -B "$BRANCH" "origin/$BRANCH" 2>/dev/null || git pull --ff-only origin "$BRANCH" || true
+  echo "==> git fetch/reset $BRANCH"
+  git fetch origin "$BRANCH"
+  if ! git diff --quiet || ! git diff --cached --quiet; then
+    echo "==> stash local tracked changes on server"
+    git stash push -m "frontend-sync-$(date +%Y%m%d%H%M%S)" --quiet || true
+  fi
+  git checkout -f -B "$BRANCH" "origin/$BRANCH"
+  git reset --hard "origin/$BRANCH"
   echo "==> HEAD $(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
+  echo "==> WorkingGroupPanel present: $(test -f frontend/src/app/components/WorkingGroupPanel.tsx && echo yes || echo NO)"
 fi
 
 echo "==> frontend build (VITE_API_URL=$API_URL)"

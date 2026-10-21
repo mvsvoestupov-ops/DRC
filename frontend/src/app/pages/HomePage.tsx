@@ -7,6 +7,7 @@ import {
   FileText,
   CheckCircle,
   Clock,
+  PenLine,
   Archive,
   Building2,
   ChevronLeft,
@@ -63,7 +64,13 @@ export function HomePage() {
   const { isAuthenticated } = useAuth();
   const { t, intlLocale } = useI18n();
   const [recentCompetencies, setRecentCompetencies] = useState<CompetenceListItem[]>([]);
-  const [stats, setStats] = useState<CompetenceStats>({ total: 0, active: 0, review: 0, archived: 0 });
+  const [stats, setStats] = useState<CompetenceStats>({
+    total: 0,
+    active: 0,
+    review: 0,
+    draft: 0,
+    archived: 0,
+  });
   const [invites, setInvites] = useState<CompetenceInvite[]>([]);
   const [loading, setLoading] = useState(true);
   const [areaPage, setAreaPage] = useState(0);
@@ -90,12 +97,18 @@ export function HomePage() {
       apiClient.getPublicCompetences(),
     ])
       .then(([statsData, competences]) => {
-        setStats(statsData);
+        setStats({
+          total: statsData.total ?? 0,
+          active: statsData.active ?? 0,
+          review: statsData.review ?? 0,
+          draft: statsData.draft ?? 0,
+          archived: statsData.archived ?? 0,
+        });
         const items = (competences as Competence[]).slice(0, 3).map(toListItem);
         setRecentCompetencies(items);
       })
       .catch(() => {
-        setStats({ total: 0, active: 0, review: 0, archived: 0 });
+        setStats({ total: 0, active: 0, review: 0, draft: 0, archived: 0 });
         setRecentCompetencies([]);
       })
       .finally(() => setLoading(false));
@@ -150,7 +163,7 @@ export function HomePage() {
             </p>
           </Link>
         ) : null}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-10">
           <StatCard
             to="/search"
             icon={FileText}
@@ -179,6 +192,16 @@ export function HomePage() {
             bg="#FEF3C7"
             value={stats.review}
             label={t("home.statsReview")}
+            loading={loading}
+            intlLocale={intlLocale}
+          />
+          <StatCard
+            to="/my-projects"
+            icon={PenLine}
+            color="#6366F1"
+            bg="#EEF2FF"
+            value={stats.draft ?? 0}
+            label={t("home.statsDraft")}
             loading={loading}
             intlLocale={intlLocale}
           />

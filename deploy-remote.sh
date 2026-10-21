@@ -62,10 +62,18 @@ ensure_git() {
   mkdir -p "$root"
   cd "$root"
   if [ -d .git ]; then
-    echo "==> git pull origin $BRANCH in $root"
+    echo "==> sync origin/$BRANCH in $root"
     git remote get-url origin >/dev/null 2>&1 || git remote add origin "$GIT_URL"
     git fetch origin "$BRANCH"
-    git checkout -B "$BRANCH" "origin/$BRANCH"
+    # На сервере иногда остаются ручные правки tracked-файлов (например после
+    # отладки ESCO). Они блокируют checkout. Сбрасываем только tracked;
+    # untracked (.env, *.db, ESCO/) не трогаем.
+    if ! git diff --quiet || ! git diff --cached --quiet; then
+      echo "==> local tracked changes on server — stash + hard reset to origin/$BRANCH"
+      git stash push -m "deploy-auto-$(date +%Y%m%d%H%M%S)" --quiet || true
+    fi
+    git checkout -f -B "$BRANCH" "origin/$BRANCH"
+    git reset --hard "origin/$BRANCH"
     return 0
   fi
   echo "==> $root has no .git, fetching $GIT_URL (database files stay untracked)"
@@ -73,6 +81,7 @@ ensure_git() {
   git remote add origin "$GIT_URL" 2>/dev/null || git remote set-url origin "$GIT_URL"
   git fetch origin "$BRANCH"
   git checkout -f -B "$BRANCH" "origin/$BRANCH"
+  git reset --hard "origin/$BRANCH"
 }
 
 detect_service() {

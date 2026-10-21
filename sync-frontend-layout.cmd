@@ -14,12 +14,15 @@ set "REMOTE_DIR=/opt/drc"
 set "BRANCH=main"
 set "VITE_API_URL=https://drc.ao-nk.online/api"
 
+if not exist "%SSH_KEY%" if exist "%USERPROFILE%\.ssh\id_ed25519" set "SSH_KEY=%USERPROFILE%\.ssh\id_ed25519"
+if not exist "%SSH_KEY%" if exist "%USERPROFILE%\.ssh\id_rsa" set "SSH_KEY=%USERPROFILE%\.ssh\id_rsa"
+
 set "SSH_OPTS=-p %SSH_PORT% -o StrictHostKeyChecking=accept-new"
 if exist "%SSH_KEY%" (
   set "SSH_OPTS=-i %SSH_KEY% -p %SSH_PORT% -o StrictHostKeyChecking=accept-new"
   echo SSH-ключ: %SSH_KEY%
 ) else (
-  echo Ключ не найден, обычный ssh
+  echo Ключ не найден, обычный ssh ^(пароль / агент^)
 )
 
 echo.

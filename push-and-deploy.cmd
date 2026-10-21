@@ -12,7 +12,7 @@ set "REMOTE_DIR=/opt/drc"
 set "BRANCH=main"
 set "VITE_API_URL=https://drc.ao-nk.online/api"
 set "SITE_URL=https://drc.ao-nk.online"
-set "COMMIT_MSG=Групповая разработка: dirty-gate автосейва и optimistic lock (409), чтобы не затирать чужие поля"
+set "COMMIT_MSG=Деплой: сброс локальных tracked-правок на сервере перед sync (не трогаем .env/БД)"
 REM =====================================================
 
 REM Запускайте из cmd.exe (не PowerShell Cursor):
@@ -198,9 +198,7 @@ echo Готово: %SITE_URL%
 echo Методика: %SITE_URL%/methodology/harmonization
 echo Harmoni-BRICS: %SITE_URL%/methodology/harmoni-brics
 echo.
-echo Если ИИ на сервере без ключа:
-echo   ssh %SSH_USER%@%SSH_HOST%
-echo   nano %REMOTE_DIR%/backend/.env   ^(DEEPSEEK_API_KEY=...^)
-echo   systemctl restart drc-backend
+echo Ключ ИИ на сервере деплой не трогает ^(backend/.env сохраняется^).
+echo Статус ключа смотрите выше в логе remote: «DEEPSEEK_API_KEY задан» или WARNING.
 endlocal
 exit /b 0

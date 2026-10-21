@@ -313,6 +313,8 @@ export interface CompetenceStats {
   total: number;
   active: number;
   review: number;
+  /** Статус «проект» — разработка начата */
+  draft: number;
   archived: number;
 }
 
