@@ -131,9 +131,30 @@ for dest in "${UNIQUE[@]}"; do
   fi
 done
 
-echo "==> nginx reload"
-nginx -t
-systemctl reload nginx
+# Маркер новой вёрстки «Рабочая группа»: полоса выбора + CheckCircle2
+echo "==> verify WorkingGroup UI markers in dist JS"
+WG_HITS="$(grep -Rsl --include='*.js' 'bg-primary/5\|alreadyMember\|CheckCircle2' "$DIST" 2>/dev/null | head -n 5 || true)"
+if [ -z "$WG_HITS" ]; then
+  # в минифицированном бандле классов может не быть как строк — ищем по логике invite bar
+  WG_HITS="$(grep -Rsl --include='*.js' 'alreadyMember\|wg\.invite\|UserPlus' "$DIST" 2>/dev/null | head -n 5 || true)"
+fi
+if [ -z "$WG_HITS" ]; then
+  echo "WARNING: не нашли явных маркеров WG в dist (возможно сильно минифицировано)"
+else
+  echo "  OK markers in:"
+  printf '  %s\n' $WG_HITS
+fi
 
-echo "==> done. Жёстко обновите браузер: Ctrl+F5"
+# Сброс кэша nginx (если модуль есть) + touch index
+find "${UNIQUE[@]}" -name 'index.html' -exec touch {} \; 2>/dev/null || true
+if command -v nginx >/dev/null 2>&1; then
+  echo "==> nginx reload (+ optional cache purge)"
+  nginx -t
+  # некоторые сборки держат proxy_cache — чистим типичные пути
+  rm -rf /var/cache/nginx/* 2>/dev/null || true
+  systemctl reload nginx
+fi
+
+echo "==> done. Обязательно Ctrl+F5 (или окно инкогнито)."
 echo "    Сайт: https://drc.ao-nk.online"
+echo "    Ожидаемая WG: бейдж «Руководитель», галочка в списке, полоса «Пригласить» справа"
