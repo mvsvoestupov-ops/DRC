@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Графическая схема алгоритма — Национальный реестр компетенций</title>
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: "base",
+      themeVariables: {
+        primaryColor: "#dbeafe",
+        primaryTextColor: "#0f172a",
+        primaryBorderColor: "#1e40af",
+        lineColor: "#64748b",
+        secondaryColor: "#ecfdf5",
+        tertiaryColor: "#fffbeb",
+        fontFamily: "Segoe UI, system-ui, sans-serif",
+        fontSize: "15px",
+      },
+      flowchart: {
+        curve: "basis",
+        padding: 12,
+        nodeSpacing: 28,
+        rankSpacing: 36,
+        htmlLabels: true,
+      },
+    });
+  </script>
+  <style>
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --line: #cbd5e1;
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --blue: #1e40af;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      line-height: 1.5;
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+    .hero {
+      background: linear-gradient(135deg, #1e3a8a, #1e40af 50%, #2563eb);
+      color: #fff;
+      border-radius: 16px;
+      padding: 1.75rem 2rem;
+      margin-bottom: 1.25rem;
+      box-shadow: 0 10px 30px rgba(30, 64, 175, 0.22);
+    }
+    .hero h1 { margin: 0 0 0.4rem; font-size: clamp(1.4rem, 3vw, 1.85rem); }
+    .hero p { margin: 0; opacity: 0.92; max-width: 48rem; }
+    .hint {
+      font-size: 0.88rem;
+      color: var(--muted);
+      margin: 0 0 1rem;
+    }
+    nav.toc {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 0.9rem 1.1rem;
+      margin-bottom: 1.25rem;
+    }
+    nav.toc strong { display: block; margin-bottom: 0.4rem; color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    nav.toc a { color: var(--blue); text-decoration: none; margin-right: 0.85rem; font-size: 0.92rem; }
+    nav.toc a:hover { text-decoration: underline; }
+    section.scheme {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 1.25rem 1.25rem 0.5rem;
+      margin-bottom: 1.15rem;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+    }
+    section.scheme h2 {
+      margin: 0 0 0.25rem;
+      font-size: 1.15rem;
+      color: var(--blue);
+    }
+    section.scheme .caption {
+      margin: 0 0 0.85rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .mermaid {
+      display: flex;
+      justify-content: center;
+      overflow-x: auto;
+      padding: 0.5rem 0 1rem;
+      background: #fafbfc;
+      border-radius: 10px;
+      border: 1px dashed #e2e8f0;
+      margin-bottom: 0.75rem;
+    }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1rem;
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 0.75rem;
+    }
+    .legend i {
+      display: inline-block;
+      width: 0.85rem;
+      height: 0.85rem;
+      border-radius: 3px;
+      margin-right: 0.3rem;
+      vertical-align: -0.1rem;
+      border: 1px solid #94a3b8;
+    }
+    .l-start { background: #dbeafe; }
+    .l-proc { background: #fff; }
+    .l-dec { background: #fef3c7; }
+    .l-ok { background: #d1fae5; }
+    .l-bad { background: #ffe4e6; }
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-top: 1rem;
+    }
+    @media print {
+      .hint, nav.toc { display: none; }
+      section.scheme { break-inside: avoid; box-shadow: none; }
+      .mermaid { border: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="hero">
+      <h1>Графическая схема алгоритма работы цифрового сервиса</h1>
+      <p>
+        Национальный реестр компетенций (DRC): от создания паспорта и работы рабочей группы
+        до экспертизы, публикации в реестре и международного сопоставления.
+      </p>
+    </header>
+
+    <p class="hint">
+      Схемы рисуются автоматически (Mermaid). Нужен интернет при первом открытии.
+      Печать: Ctrl+P. Файл: <code>docs/algoritm-cifrovogo-servisa.html</code>
+    </p>
+
+    <nav class="toc">
+      <strong>Схемы</strong>
+      <a href="#g1">1. Жизненный цикл</a>
+      <a href="#g2">2. Доступ</a>
+      <a href="#g3">3. Конструктор</a>
+      <a href="#g4">4. Рабочая группа</a>
+      <a href="#g5">5. Автосохранение</a>
+      <a href="#g6">6. «В разработке»</a>
+      <a href="#g7">7. Экспертиза</a>
+      <a href="#g8">8. Общая карта сервиса</a>
+    </nav>
+
+    <div class="legend">
+      <span><i class="l-start"></i>Старт / вход</span>
+      <span><i class="l-proc"></i>Действие</span>
+      <span><i class="l-dec"></i>Решение (ветвление)</span>
+      <span><i class="l-ok"></i>Успех / публикация</span>
+      <span><i class="l-bad"></i>Блок / конфликт / возврат</span>
+    </div>
+
+    <!-- 1 -->
+    <section class="scheme" id="g1">
+      <h2>1. Жизненный цикл компетенции</h2>
+      <p class="caption">Статусы записи: проект → на экспертизе → утверждена (либо возврат в проект).</p>
+      <pre class="mermaid">
+flowchart TD
+  A([Создание или приглашение в группу]) --> B[Статус: проект<br/>черновик паспорта]
+  B --> C{Паспорт заполнен<br/>для экспертизы?}
+  C -->|Нет| B
+  C -->|Да| D[Руководитель отправляет<br/>на экспертизу]
+  D --> E[Статус: на экспертизе<br/>модератор назначает экспертов]
+  E --> F{Решение экспертизы}
+  F -->|Утвердить| G([Статус: утверждена<br/>открытый реестр])
+  F -->|Вернуть / отклонить| B
+  style A fill:#dbeafe,stroke:#1e40af
+  style G fill:#d1fae5,stroke:#047857
+  style C fill:#fef3c7,stroke:#b45309
+  style F fill:#fef3c7,stroke:#b45309
+  style B fill:#eef2ff,stroke:#4f46e5
+  style E fill:#fff7ed,stroke:#c2410c
+      </pre>
+    </section>
+
+    <!-- 2 -->
+    <section class="scheme" id="g2">
+      <h2>2. Доступ к функциям сервиса</h2>
+      <p class="caption">Гость видит открытый реестр; разработка и служебные разделы — после входа.</p>
+      <pre class="mermaid">
+flowchart TD
+  S([Открытие сайта]) --> T{Действие требует<br/>учётной записи?}
+  T -->|Нет| U[Главная, поиск, карточки<br/>утверждённых и на экспертизе]
+  T -->|Да| V{Пользователь<br/>авторизован?}
+  V -->|Нет| W[/Окно входа или регистрация/]
+  W --> X[Подтверждение email при регистрации]
+  X --> V
+  V -->|Да| Y[Предложить компетенцию,<br/>проекты, рабочая группа,<br/>экспертиза по роли]
+  style S fill:#dbeafe,stroke:#1e40af
+  style T fill:#fef3c7,stroke:#b45309
+  style V fill:#fef3c7,stroke:#b45309
+  style W fill:#ffe4e6,stroke:#be123c
+  style Y fill:#d1fae5,stroke:#047857
+  style U fill:#f8fafc,stroke:#64748b
+      </pre>
+    </section>
+
+    <!-- 3 -->
+    <section class="scheme" id="g3">
+      <h2>3. Конструктор паспорта компетенции</h2>
+      <p class="caption">Последовательность шагов заполнения. На экспертизу уходит только полный комплект.</p>
+      <pre class="mermaid">
+flowchart LR
+  S1[1. Общая<br/>информация] --> S2[2. ПС и уровень<br/>148н / ТФ]
+  S2 --> S3[3. Структура<br/>A / B / C]
+  S3 --> S4[4. Дескрипторы]
+  S4 --> S5[5. Дисциплины<br/>и шкалы]
+  S5 --> S6[6. Оценочные<br/>средства]
+  S6 --> S7[7. МТО]
+  S7 --> S8[8. Валидация]
+  S8 --> S9[9. Международное<br/>сопоставление]
+  S9 --> S10[10. Предпросмотр<br/>DOCX / отправка]
+  style S1 fill:#dbeafe,stroke:#1e40af
+  style S10 fill:#d1fae5,stroke:#047857
+      </pre>
+      <pre class="mermaid">
+flowchart TD
+  P[Любой шаг конструктора] --> Q{Что делает<br/>пользователь?}
+  Q -->|Сохранить черновик| R[Статус остаётся «проект»]
+  Q -->|Чат шага| T[Обсуждение рабочей группы]
+  Q -->|Далее| U[Переход к следующему шагу<br/>при прохождении проверок]
+  style P fill:#eef2ff,stroke:#4f46e5
+  style Q fill:#fef3c7,stroke:#b45309
+      </pre>
+    </section>
+
+    <!-- 4 -->
+    <section class="scheme" id="g4">
+      <h2>4. Рабочая группа</h2>
+      <p class="caption">Создатель — руководитель; участники совместно правят черновик; на экспертизу отправляет только руководитель.</p>
+      <pre class="mermaid">
+flowchart TD
+  A([Руководитель открывает<br/>«Рабочая группа»]) --> B[Поиск по ФИО / выбор<br/>из справочника пользователей]
+  B --> C[Пригласить выбранного]
+  C --> D[Участник видит приглашение<br/>в «Мои проекты»]
+  D --> E{Принять?}
+  E -->|Нет| F([Отклонено])
+  E -->|Да| G[Совместное редактирование<br/>presence, чат шагов]
+  G --> H{Кто отправляет<br/>на экспертизу?}
+  H -->|Руководитель| I([Отправка на экспертизу])
+  H -->|Участник| J[/Запрещено:<br/>только руководитель/]
+  style A fill:#dbeafe,stroke:#1e40af
+  style E fill:#fef3c7,stroke:#b45309
+  style H fill:#fef3c7,stroke:#b45309
+  style G fill:#eef2ff,stroke:#4f46e5
+  style I fill:#d1fae5,stroke:#047857
+  style J fill:#ffe4e6,stroke:#be123c
+  style F fill:#f1f5f9,stroke:#64748b
+      </pre>
+    </section>
+
+    <!-- 5 -->
+    <section class="scheme" id="g5">
+      <h2>5. Автосохранение при групповой работе</h2>
+      <p class="caption">Пустая вкладка не затирает чужие поля; при конфликте версий сохранение отклоняется.</p>
+      <pre class="mermaid">
+flowchart TD
+  A([Таймер автосохранения<br/>примерно каждые 5 минут]) --> B{Есть локальные изменения<br/>после загрузки?}
+  B -->|Нет| C([Автосейв пропущен<br/>dirty-gate])
+  B -->|Да| D[PUT на сервер<br/>с expected_updated_at]
+  D --> E{Версия на сервере<br/>совпадает со снимком?}
+  E -->|Да| F([Сохранено<br/>updated_at обновлён])
+  E -->|Нет| G[/409 Conflict:<br/>чужие правки не затираются<br/>обновить страницу/]
+  style A fill:#dbeafe,stroke:#1e40af
+  style B fill:#fef3c7,stroke:#b45309
+  style E fill:#fef3c7,stroke:#b45309
+  style C fill:#d1fae5,stroke:#047857
+  style F fill:#d1fae5,stroke:#047857
+  style G fill:#ffe4e6,stroke:#be123c
+      </pre>
+    </section>
+
+    <!-- 6 -->
+    <section class="scheme" id="g6">
+      <h2>6. Карточка дашборда «В разработке»</h2>
+      <p class="caption">Счётчик всех черновиков («проект»). Состав групп виден всем авторизованным; правка — только участникам.</p>
+      <pre class="mermaid">
+flowchart TD
+  A([Клик: «В разработке»]) --> B{Авторизован?}
+  B -->|Нет| C[/Окно авторизации/]
+  C --> B
+  B -->|Да| D[Список всех компетенций<br/>со статусом «проект»]
+  D --> E[Показ состава<br/>рабочей группы]
+  E --> F{Пользователь — участник<br/>разработки этой записи?}
+  F -->|Да| G([Кнопки:<br/>Просмотр + Редактирование])
+  F -->|Нет| H([Кнопка:<br/>только Просмотр])
+  style A fill:#dbeafe,stroke:#1e40af
+  style B fill:#fef3c7,stroke:#b45309
+  style F fill:#fef3c7,stroke:#b45309
+  style C fill:#ffe4e6,stroke:#be123c
+  style G fill:#d1fae5,stroke:#047857
+  style H fill:#eef2ff,stroke:#4f46e5
+  style D fill:#fff7ed,stroke:#c2410c
+      </pre>
+    </section>
+
+    <!-- 7 -->
+    <section class="scheme" id="g7">
+      <h2>7. Экспертиза и публикация</h2>
+      <p class="caption">Модератор назначает экспертов; эксперт выносит решение по чек-листу.</p>
+      <pre class="mermaid">
+flowchart TD
+  A([Заявка: на экспертизе]) --> B[Модератор назначает<br/>не менее 3 экспертов]
+  B --> C[Эксперт заполняет чек-лист<br/>и комментарии]
+  C --> D{Итоговое решение}
+  D -->|Утвердить| E([Утверждена:<br/>открытый поиск и счётчики])
+  D -->|Вернуть| F[Снова статус «проект»]
+  F --> G[Доработка рабочей группой]
+  G --> A
+  style A fill:#fff7ed,stroke:#c2410c
+  style D fill:#fef3c7,stroke:#b45309
+  style E fill:#d1fae5,stroke:#047857
+  style F fill:#eef2ff,stroke:#4f46e5
+      </pre>
+    </section>
+
+    <!-- 8 overview -->
+    <section class="scheme" id="g8">
+      <h2>8. Общая карта цифрового сервиса</h2>
+      <p class="caption">Сводка основных контуров платформы на одном листе.</p>
+      <pre class="mermaid">
+flowchart TB
+  subgraph Open["Открытый контур"]
+    H[Главная и поиск] --> K[Карточка компетенции]
+    K --> DOC[Выгрузка DOCX]
+  end
+
+  subgraph Dev["Контур разработки"]
+    N[Предложить компетенцию] --> WZ[Конструктор 1–10]
+    WZ --> WG[Рабочая группа]
+    WG --> AUT[Автосохранение<br/>и защита версий]
+    DEV[Реестр «В разработке»]
+  end
+
+  subgraph Exp["Контур экспертизы"]
+    REV[На экспертизе] --> MOD[Модератор]
+    MOD --> EXP[Эксперты]
+    EXP --> PUB[Утверждена / возврат]
+  end
+
+  subgraph Intl["Международный контур"]
+    GARM[ГАРМ-ESCO / шаг 9]
+    BRICS[Harmoni-BRICS]
+    BRIDGE[Каталог мостов и шаг 9.2]
+  end
+
+  H --> N
+  WZ --> REV
+  PUB --> H
+  WZ --> GARM
+  WZ --> BRICS
+  BRIDGE --> WZ
+
+  style Open fill:#f8fafc,stroke:#94a3b8
+  style Dev fill:#eef2ff,stroke:#4f46e5
+  style Exp fill:#fff7ed,stroke:#c2410c
+  style Intl fill:#ecfdf5,stroke:#047857
+      </pre>
+    </section>
+
+    <footer>
+      Национальный реестр компетенций (DRC) · графическая схема алгоритма · 21.10.2026
+    </footer>
+  </div>
+</body>
+</html>

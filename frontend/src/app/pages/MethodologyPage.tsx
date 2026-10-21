@@ -1,12 +1,22 @@
 import { useEffect } from "react";
 import { Link, useNavigate } from "react-router";
-import { BookOpen, ClipboardList, Globe2, Grid3x3, Network, Scale, type LucideIcon } from "lucide-react";
+import {
+  BookOpen,
+  ClipboardList,
+  Globe2,
+  Grid3x3,
+  ListOrdered,
+  Network,
+  Scale,
+  type LucideIcon,
+} from "lucide-react";
 import { PageHeader } from "@/app/components/PageHeader";
 import { PageShell } from "@/app/components/PageShell";
 import { useI18n } from "@/context/I18nContext";
 import { METHODOLOGY_TOPICS, isMethodologyTopicId } from "@/lib/methodologyTopics";
 
 const TOPIC_ICONS: Record<(typeof METHODOLOGY_TOPICS)[number]["id"], LucideIcon> = {
+  development: ListOrdered,
   harmonization: Globe2,
   "harmoni-brics": Network,
   scoring: Scale,

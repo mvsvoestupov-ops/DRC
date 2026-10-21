@@ -12,7 +12,7 @@ set "REMOTE_DIR=/opt/drc"
 set "BRANCH=main"
 set "VITE_API_URL=https://drc.ao-nk.online/api"
 set "SITE_URL=https://drc.ao-nk.online"
-set "COMMIT_MSG=Дашборд «В разработке»: реестр всех черновиков с составом групп, Edit/View по участию"
+set "COMMIT_MSG=Методология: инструкция разработки компетенции (шаги 1–7) с иллюстрациями"
 REM =====================================================
 
 REM Запускайте из cmd.exe (не PowerShell Cursor):

@@ -1,7 +1,9 @@
 import type { ExtraMessages } from "./extraRu";
 import { docsVi } from "./docsVi";
+import { devGuideEn } from "./devGuideEn";
 
 export const extraVi: ExtraMessages = {
+  devGuide: { ...devGuideEn },
   common: {
     loading: "Đang tải...",
     save: "Lưu",
@@ -1099,9 +1101,12 @@ export const extraVi: ExtraMessages = {
   },
   methodology: {
     title: "Phương pháp luận",
-    lead: "Tài liệu tham khảo của Sổ đăng ký năng lực quốc gia: hài hòa với ESCO và EQF, đánh giá chuyên gia các thành phần A/B/C, trình dựng công cụ đánh giá, mô hình khối lượng khuyến nghị và ma trận các mức.",
+    lead: "Tài liệu tham khảo của Sổ đăng ký năng lực quốc gia: phát triển hộ chiếu bước 1–7, hài hòa với ESCO và EQF, đánh giá chuyên gia các thành phần A/B/C, trình dựng công cụ đánh giá, mô hình khối lượng khuyến nghị và ma trận các mức.",
     cardBadge: "Tài liệu tham khảo",
     backToIndex: "Tất cả tài liệu phương pháp luận",
+    developmentTitle: "Phát triển năng lực: bước 1–7",
+    developmentDesc:
+      "Hướng dẫn phương pháp điền hộ chiếu trong trình dựng — từ thông tin chung đến cơ sở vật chất kỹ thuật",
     harmonizationTitle: "Đối chiếu quốc tế (GARM-ESCO)",
     harmonizationDesc:
       "Phương pháp bước «Đối chiếu quốc tế»: OKZ → ISCO → ESCO / EQF, phủ kỹ năng và bản nháp AI",

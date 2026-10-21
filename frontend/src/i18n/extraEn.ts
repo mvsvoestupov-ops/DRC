@@ -1,7 +1,9 @@
 import type { ExtraMessages } from "./extraRu";
 import { docsEn } from "./docsEn";
+import { devGuideEn } from "./devGuideEn";
 
 export const extraEn: ExtraMessages = {
+  devGuide: { ...devGuideEn },
   common: {
     loading: "Loading...",
     save: "Save",
@@ -1102,9 +1104,12 @@ export const extraEn: ExtraMessages = {
   },
   methodology: {
     title: "Methodology",
-    lead: "Reference materials of the National Competency Registry: harmonisation with ESCO and EQF, Harmoni-BRICS, expert scoring of A/B/C components, the assessment tools builder, the recommended volume model and the level matrix.",
+    lead: "Reference materials of the National Competency Registry: step-by-step passport development (steps 1–7), harmonisation with ESCO and EQF, Harmoni-BRICS, expert scoring of A/B/C components, the assessment tools builder, the recommended volume model and the level matrix.",
     cardBadge: "Reference material",
     backToIndex: "All methodology materials",
+    developmentTitle: "Competency development: steps 1–7",
+    developmentDesc:
+      "Methodological walkthrough of the passport wizard — from general information to material and technical resources",
     harmonizationTitle: "International alignment (GARM-ESCO)",
     harmonizationDesc:
       "Method for the International alignment step: OKZ → ISCO → ESCO / EQF, skills coverage and AI draft",

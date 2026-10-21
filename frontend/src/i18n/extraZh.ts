@@ -1,7 +1,9 @@
 import type { ExtraMessages } from "./extraRu";
 import { docsZh } from "./docsZh";
+import { devGuideEn } from "./devGuideEn";
 
 export const extraZh: ExtraMessages = {
+  devGuide: { ...devGuideEn },
   common: {
     loading: "加载中...",
     save: "保存",
@@ -1097,9 +1099,11 @@ export const extraZh: ExtraMessages = {
   },
   methodology: {
     title: "方法论",
-    lead: "国家能力登记册参考材料：与 ESCO 和 EQF 的协调、A/B/C 组件的专家评价、评价工具构造器、推荐规模模型以及水平矩阵。",
+    lead: "国家能力登记册参考材料：护照开发步骤 1–7、与 ESCO 和 EQF 的协调、A/B/C 组件的专家评价、评价工具构造器、推荐规模模型以及水平矩阵。",
     cardBadge: "参考材料",
     backToIndex: "全部方法论材料",
+    developmentTitle: "能力开发：第 1–7 步",
+    developmentDesc: "构造器中填写护照的分步方法说明——从基本信息到物资技术保障",
     harmonizationTitle: "国际对照（GARM-ESCO）",
     harmonizationDesc: "「国际对照」步骤方法：OKZ → ISCO → ESCO / EQF、技能覆盖与 AI 草稿",
     harmoniBricsTitle: "Harmoni-BRICS",

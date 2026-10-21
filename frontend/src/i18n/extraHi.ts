@@ -1,7 +1,9 @@
 import type { ExtraMessages } from "./extraRu";
 import { docsHi } from "./docsHi";
+import { devGuideEn } from "./devGuideEn";
 
 export const extraHi: ExtraMessages = {
+  devGuide: { ...devGuideEn },
   common: {
     loading: "लोड हो रहा है...",
     save: "सहेजें",
@@ -1098,9 +1100,11 @@ export const extraHi: ExtraMessages = {
   },
   methodology: {
     title: "पद्धति",
-    lead: "राष्ट्रीय दक्षता रजिस्ट्री की संदर्भ सामग्री: ESCO और EQF के साथ सामंजस्य, घटकों A/B/C का विशेषज्ञ मूल्यांकन, मूल्यांकन साधन निर्माता, अनुशंसित मात्रा का मॉडल और स्तर आव्यूह।",
+    lead: "राष्ट्रीय दक्षता रजिस्ट्री की संदर्भ सामग्री: पासपोर्ट विकास चरण 1–7, ESCO और EQF के साथ सामंजस्य, घटकों A/B/C का विशेषज्ञ मूल्यांकन, मूल्यांकन साधन निर्माता, अनुशंसित मात्रा का मॉडल और स्तर आव्यूह।",
     cardBadge: "संदर्भ सामग्री",
     backToIndex: "पद्धति की सभी सामग्री",
+    developmentTitle: "दक्षता विकास: चरण 1–7",
+    developmentDesc: "कंस्ट्रक्टर में पासपोर्ट भरने की चरणबद्ध पद्धति — सामान्य जानकारी से सामग्री-तकनीकी आधार तक",
     harmonizationTitle: "अंतरराष्ट्रीय मिलान (GARM-ESCO)",
     harmonizationDesc:
       "«अंतरराष्ट्रीय मिलान» चरण की पद्धति: OKZ → ISCO → ESCO / EQF, कौशल आवरण और AI draft",

@@ -1,4 +1,5 @@
 export const METHODOLOGY_TOPIC_IDS = [
+  "development",
   "harmonization",
   "harmoni-brics",
   "scoring",
@@ -14,6 +15,11 @@ export const METHODOLOGY_TOPICS: Array<{
   titleKey: string;
   descKey: string;
 }> = [
+  {
+    id: "development",
+    titleKey: "methodology.developmentTitle",
+    descKey: "methodology.developmentDesc",
+  },
   {
     id: "harmonization",
     titleKey: "methodology.harmonizationTitle",

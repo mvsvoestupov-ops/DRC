@@ -9,10 +9,16 @@ import { ComponentScoringGuide } from "@/app/components/ComponentScoringGuide";
 import { AssessmentFosGuide } from "@/app/components/AssessmentFosGuide";
 import { HarmonizationGuide } from "@/app/components/HarmonizationGuide";
 import { HarmoniBricsGuide } from "@/app/components/HarmoniBricsGuide";
+import { CompetenceDevelopmentGuide } from "@/app/components/CompetenceDevelopmentGuide";
 import { useI18n } from "@/context/I18nContext";
 import { isMethodologyTopicId, METHODOLOGY_TOPICS, type MethodologyTopicId } from "@/lib/methodologyTopics";
 
 const TOPIC_CONTENT: Record<MethodologyTopicId, () => ReactNode> = {
+  development: () => (
+    <div className="surface p-6 md:p-8">
+      <CompetenceDevelopmentGuide />
+    </div>
+  ),
   harmonization: () => (
     <div className="surface p-6 md:p-8">
       <HarmonizationGuide />
