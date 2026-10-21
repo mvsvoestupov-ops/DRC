@@ -65,24 +65,30 @@ fi
 DIST="$ROOT/frontend/dist"
 echo "==> dist готов: $(du -sh "$DIST" | awk '{print $1}') файлов=$(find "$DIST" -type f | wc -l)"
 
-# Куда nginx реально отдаёт статику для DRC
+# Куда nginx реально отдаёт статику для DRC (не трогаем чужие проекты вроде veche_rg)
 mapfile -t NGINX_ROOTS < <(
-  grep -RhoE 'root[[:space:]]+/[^;]+' /etc/nginx 2>/dev/null \
-    | awk '{print $2}' \
-    | sed 's|/$||' \
-    | sort -u \
-    | while read -r r; do
-        case "$r" in
-          *drc*|*DRC*|*frontend*) echo "$r" ;;
-        esac
-      done
+  # Берём только server-блоки с drc.ao-nk
+  awk '
+    /server_name/ { sn=$0 }
+    /[[:space:]]root[[:space:]]/ {
+      if (sn ~ /drc\.ao-nk/) {
+        for (i=1;i<=NF;i++) if ($i=="root") { print $(i+1); break }
+      }
+    }
+  ' /etc/nginx/sites-enabled/* /etc/nginx/conf.d/* 2>/dev/null \
+    | sed 's|[;[:space:]]||g' \
+    | sort -u
 )
 
 # Всегда синхронизируем dist → build (исторический CRA path)
-TARGETS=("$ROOT/frontend/build")
+TARGETS=("$ROOT/frontend/build" "$ROOT/frontend/dist")
 for r in "${NGINX_ROOTS[@]:-}"; do
   [ -n "$r" ] || continue
-  TARGETS+=("$r")
+  # защита: только пути внутри /opt/drc или явно drc
+  case "$r" in
+    /opt/drc/*|*drc*|*DRC*) TARGETS+=("$r") ;;
+    *) echo "==> skip foreign nginx root: $r" ;;
+  esac
 done
 
 # уникальные цели

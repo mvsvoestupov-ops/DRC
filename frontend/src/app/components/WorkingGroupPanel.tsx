@@ -54,7 +54,7 @@ export function WorkingGroupDialog({
         {t("wg.openButton")}
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-x-hidden overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{t("wg.title")}</DialogTitle>
             <DialogDescription>
@@ -208,7 +208,7 @@ export function WorkingGroupPanel({
   };
 
   const body = (
-      <div className="space-y-4">
+      <div className="space-y-4 min-w-0 max-w-full overflow-x-hidden">
         {notice ? (
           <p className="text-sm text-emerald-800 bg-emerald-50 px-3 py-2 rounded-md">{notice}</p>
         ) : null}
@@ -216,28 +216,28 @@ export function WorkingGroupPanel({
           <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-2">{error}</p>
         ) : null}
 
-        <div className="space-y-2">
+        <div className="space-y-2 min-w-0">
           {leader ? (
-            <div className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white px-3 py-2">
-              <div>
-                <p className="text-base font-medium text-gray-900">
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white px-3 py-2 min-w-0">
+              <div className="min-w-0 flex-1 overflow-hidden">
+                <p className="text-base font-medium text-gray-900 truncate">
                   {displayName(leader) || user?.email || t("common.you")}
                 </p>
-                <p className="text-sm text-gray-500">{leader.user?.email || user?.email}</p>
+                <p className="text-sm text-gray-500 truncate">{leader.user?.email || user?.email}</p>
               </div>
-              <Badge>{t("wg.leader")}</Badge>
+              <Badge className="shrink-0">{t("wg.leader")}</Badge>
             </div>
           ) : null}
           {members.map((row) => (
             <div
               key={`${row.user_id}-${row.status}`}
-              className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white px-3 py-2"
+              className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white px-3 py-2 min-w-0"
             >
-              <div>
-                <p className="text-base font-medium text-gray-900">{displayName(row)}</p>
-                <p className="text-sm text-gray-500">{row.user?.email}</p>
+              <div className="min-w-0 flex-1 overflow-hidden">
+                <p className="text-base font-medium text-gray-900 truncate">{displayName(row)}</p>
+                <p className="text-sm text-gray-500 truncate">{row.user?.email}</p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <Badge variant="secondary">{STATUS_LABEL[row.status] || row.status}</Badge>
                 {(canInvite || (iAmMember && row.user_id === myId)) && row.user_id ? (
                   <Button
@@ -262,13 +262,13 @@ export function WorkingGroupPanel({
 
         {canInvite ? (
           <form
-            className="space-y-2"
+            className="space-y-2 min-w-0"
             onSubmit={(event) => {
               event.preventDefault();
               void invite();
             }}
           >
-            <div className="relative">
+            <div className="relative min-w-0">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
               <Input
                 type="text"
@@ -304,7 +304,7 @@ export function WorkingGroupPanel({
                 {searchError}
               </p>
             ) : null}
-            <div className="rounded-xl border border-gray-200 h-56 overflow-y-auto overscroll-contain">
+            <div className="rounded-xl border border-gray-200 h-56 overflow-x-hidden overflow-y-auto overscroll-contain min-w-0">
               {loadingDirectory ? (
                 <div className="flex h-full items-center justify-center gap-2 text-gray-500">
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -315,13 +315,13 @@ export function WorkingGroupPanel({
                   {directory.length === 0 ? t("wg.emptyDirectory") : t("wg.noResults")}
                 </p>
               ) : (
-                <ul className="divide-y divide-gray-100">
+                <ul className="divide-y divide-gray-100 min-w-0">
                   {visibleResults.map((item) => {
                     const name = formatUserName(item);
                     const alreadyInGroup = takenIds.has(item.id);
                     const isSelected = selected?.id === item.id && !alreadyInGroup;
                     return (
-                      <li key={item.id}>
+                      <li key={item.id} className="min-w-0">
                         <button
                           type="button"
                           disabled={alreadyInGroup}
@@ -329,7 +329,7 @@ export function WorkingGroupPanel({
                             setSelected(item);
                             setError("");
                           }}
-                          className={`w-full text-left px-4 py-2.5 transition-colors ${
+                          className={`w-full max-w-full text-left px-4 py-2.5 transition-colors ${
                             alreadyInGroup
                               ? "opacity-60 cursor-not-allowed"
                               : isSelected
@@ -337,14 +337,16 @@ export function WorkingGroupPanel({
                                 : "hover:bg-gray-50"
                           }`}
                         >
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0">
-                              <p className="text-sm font-medium text-gray-900">{name || item.email}</p>
+                          <div className="flex items-start justify-between gap-2 min-w-0">
+                            <div className="min-w-0 flex-1 overflow-hidden">
+                              <p className="text-sm font-medium text-gray-900 truncate">{name || item.email}</p>
                               {name && item.email ? (
                                 <p className="text-xs text-gray-500 mt-0.5 truncate">{item.email}</p>
                               ) : null}
                               {item.organization ? (
-                                <p className="text-xs text-gray-500 mt-0.5 truncate">{item.organization}</p>
+                                <p className="text-xs text-gray-500 mt-0.5 truncate" title={item.organization}>
+                                  {item.organization}
+                                </p>
                               ) : null}
                             </div>
                             {alreadyInGroup ? (
@@ -363,11 +365,13 @@ export function WorkingGroupPanel({
               )}
             </div>
             {selected ? (
-              <div className="flex items-center justify-between gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-900">{formatUserName(selected)}</p>
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 min-w-0">
+                <div className="min-w-0 flex-1 overflow-hidden">
+                  <p className="text-sm font-medium text-gray-900 truncate">{formatUserName(selected)}</p>
                   {selected.organization ? (
-                    <p className="text-xs text-gray-500 truncate">{selected.organization}</p>
+                    <p className="text-xs text-gray-500 truncate" title={selected.organization}>
+                      {selected.organization}
+                    </p>
                   ) : null}
                 </div>
                 <Button type="submit" disabled={loading} className="gap-2 shrink-0">
