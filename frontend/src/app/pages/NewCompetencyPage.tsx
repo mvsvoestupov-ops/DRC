@@ -241,11 +241,20 @@ export function NewCompetencyPage() {
   const workingCompetenceRef = useRef(workingCompetence);
   const autoSavingRef = useRef(autoSaving);
   const submittingRef = useRef(submitting);
+  /** Снимок формы после hydrate/save — автосейв только если отличается. */
+  const baselineFpRef = useRef<string | null>(null);
+  const expectedUpdatedAtRef = useRef<string | null>(null);
   formDataRef.current = formData;
   currentStepRef.current = currentStep;
   workingCompetenceRef.current = workingCompetence;
   autoSavingRef.current = autoSaving;
   submittingRef.current = submitting;
+
+  useEffect(() => {
+    if (workingCompetence?.updated_at) {
+      expectedUpdatedAtRef.current = workingCompetence.updated_at;
+    }
+  }, [workingCompetence?.id, workingCompetence?.updated_at]);
 
   const steps = useMemo(() => {
     const list = [
@@ -1090,6 +1099,74 @@ export function NewCompetencyPage() {
     return null;
   };
 
+  const draftContentFingerprint = (step: number) => {
+    const fd = formDataRef.current;
+    return JSON.stringify({
+      step,
+      title: fd.title,
+      description: fd.description,
+      professionalAreaCode: fd.professionalAreaCode,
+      educationLevel: fd.educationLevel,
+      educationKind: fd.educationKind,
+      trainingProfessionId: fd.trainingProfessionId,
+      fgosId: fd.fgosId,
+      workload: fd.workload,
+      developer: fd.developer,
+      structure: fd.structure,
+      profStandardId: fd.profStandardId,
+      selectedLaborFunctionIds: fd.selectedLaborFunctionIds,
+      qualificationLevel: fd.qualificationLevel,
+      competenceKind: fd.competenceKind,
+      descriptors: fd.descriptors,
+      assessmentByLevel: fd.assessmentByLevel,
+      disciplineMapping: fd.disciplineMapping,
+      resources: fd.resources,
+      expertise: fd.expertise,
+      internationalMapping: fd.internationalMapping,
+      harmoniBrics: fd.harmoniBrics,
+      tdZu: fd.tdZu,
+    });
+  };
+
+  const markDraftBaseline = (step?: number) => {
+    baselineFpRef.current = draftContentFingerprint(
+      step ?? currentStepRef.current,
+    );
+  };
+
+  const isDraftDirty = (step?: number) => {
+    if (baselineFpRef.current === null) return false;
+    return (
+      draftContentFingerprint(step ?? currentStepRef.current) !==
+      baselineFpRef.current
+    );
+  };
+
+  const isConflictError = (err: unknown) => {
+    if (!err || typeof err !== "object") return false;
+    const e = err as { status?: number; code?: string };
+    return e.status === 409 || e.code === "competence_conflict";
+  };
+
+  const reloadAfterConflict = () => {
+    window.setTimeout(() => {
+      window.location.reload();
+    }, 1200);
+  };
+
+  // После загрузки паспорта фиксируем baseline — «просто открыл» ≠ dirty
+  useEffect(() => {
+    if (hydrating) {
+      baselineFpRef.current = null;
+      return;
+    }
+    if (!competenceId) return;
+    const timer = window.setTimeout(() => {
+      markDraftBaseline(currentStepRef.current);
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [hydrating, competenceId, editId]);
+
   const persistDraft = async (stepToStore: number) => {
     const payload = { ...buildPayload("проект"), wizard_step: stepToStore };
     const working = workingCompetenceRef.current;
@@ -1102,8 +1179,11 @@ export function NewCompetencyPage() {
       payload.qualification_name = working.public_code;
     }
     const id = editId || working?.id || null;
+    const expected = expectedUpdatedAtRef.current || working?.updated_at || null;
     const saved = id
-      ? await apiClient.updateCompetence(id, payload)
+      ? await apiClient.updateCompetence(id, payload, {
+          expectedUpdatedAt: expected,
+        })
       : await apiClient.createCompetence({
           ...payload,
           name: payload.name?.trim() || DRAFT_PLACEHOLDER_NAME,
@@ -1111,6 +1191,10 @@ export function NewCompetencyPage() {
         });
     if (saved?.id) {
       setWorkingCompetence(saved);
+      if (saved.updated_at) {
+        expectedUpdatedAtRef.current = saved.updated_at;
+      }
+      markDraftBaseline(stepToStore);
       const code = saved.public_code || `RUS-PK-${String(saved.id).padStart(4, "0")}`;
       setFormData((prev) => {
         if (prev.title.trim() && prev.title.trim() !== DRAFT_PLACEHOLDER_NAME) return prev;
@@ -1126,25 +1210,31 @@ export function NewCompetencyPage() {
   const persistDraftRef = useRef(persistDraft);
   persistDraftRef.current = persistDraft;
 
-  // Автосохранение каждые 5 минут работы над проектом
+  // Автосохранение каждые 5 минут — только при локальных изменениях
   useEffect(() => {
     if (!competenceId || hydrating || !isAuthenticated) return;
     const timer = window.setInterval(() => {
       if (autoSavingRef.current || submittingRef.current) return;
+      if (typeof document !== "undefined" && document.hidden) return;
+      if (!isDraftDirty(currentStepRef.current)) return;
       void (async () => {
         setAutoSaving(true);
         try {
           await persistDraftRef.current(currentStepRef.current);
           setLastAutoSavedAt(Date.now());
-        } catch {
-          /* не блокируем работу при фоновом сбое */
+        } catch (err) {
+          if (isConflictError(err)) {
+            setError(t("wizard.saveConflict"));
+            reloadAfterConflict();
+          }
+          /* прочие фоновые сбои не блокируют работу */
         } finally {
           setAutoSaving(false);
         }
       })();
     }, AUTOSAVE_INTERVAL_MS);
     return () => window.clearInterval(timer);
-  }, [competenceId, hydrating, isAuthenticated]);
+  }, [competenceId, hydrating, isAuthenticated, t]);
 
   const handleSubmit = async (status: string) => {
     const validationError = validateForm(status);
@@ -1160,17 +1250,32 @@ export function NewCompetencyPage() {
         delete payload.status;
       }
       const id = editId || workingCompetence?.id || null;
+      const expected =
+        expectedUpdatedAtRef.current || workingCompetence?.updated_at || null;
       const saved = id
-        ? await apiClient.updateCompetence(id, payload)
+        ? await apiClient.updateCompetence(id, payload, {
+            expectedUpdatedAt: expected,
+          })
         : await apiClient.createCompetence(payload);
-      if (saved?.id) setWorkingCompetence(saved);
+      if (saved?.id) {
+        setWorkingCompetence(saved);
+        if (saved.updated_at) {
+          expectedUpdatedAtRef.current = saved.updated_at;
+        }
+        markDraftBaseline(currentStep);
+      }
       if (status === "на экспертизе") {
         navigate(`/competency/${saved.id}`);
       } else if (!editId && saved?.id) {
         navigate(`/competency/${saved.id}/edit`, { replace: true });
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t("wizard.saveError"));
+      if (isConflictError(err)) {
+        setError(t("wizard.saveConflict"));
+        reloadAfterConflict();
+      } else {
+        setError(err instanceof Error ? err.message : t("wizard.saveError"));
+      }
     } finally {
       setSubmitting(false);
     }

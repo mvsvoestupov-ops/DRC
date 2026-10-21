@@ -684,6 +684,9 @@ export const extraVi: ExtraMessages = {
     noCollabRights: "Không có quyền phát triển phối hợp năng lực này",
     openError: "Không mở được năng lực",
     saveError: "Lỗi lưu",
+    saveConflict:
+      "Hộ chiếu đã bị người khác sửa. Không lưu để tránh ghi đè. Trang sẽ tải lại.",
+    autosaveSkippedIdle: "Bỏ qua tự lưu: không có thay đổi cục bộ",
     docxNeedTitle: "Nhập tên năng lực trước khi xuất DOCX",
     docxError: "Không tạo được DOCX",
     needTitle: "Nhập tên năng lực",

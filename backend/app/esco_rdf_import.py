@@ -197,7 +197,14 @@ def import_esco_rdf(
     counts = {"occupations": 0, "skills": 0, "relations": 0, "concepts": 0}
     pending = 0
 
-    context = etree.iterparse(str(path), events=("end",), tag=SKOS_CONCEPT, huge_tree=True)
+    # ESCO RDF глубоко вложен; без huge_tree libxml2 падает (depth > 2048).
+    # На части lxml у iterparse нет kwarg parser= — только huge_tree=.
+    context = etree.iterparse(
+        str(path),
+        events=("end",),
+        tag=SKOS_CONCEPT,
+        huge_tree=True,
+    )
     for _event, elem in context:
         counts["concepts"] += 1
         uri = (elem.get(RDF_ABOUT) or "").strip()

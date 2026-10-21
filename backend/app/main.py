@@ -423,6 +423,9 @@ class CompetenceUpdate(BaseModel):
     fgos_name: Optional[str] = None
     fgos_category: Optional[str] = None
     universal_skills: Optional[List[Dict[str, Any]]] = None
+    # Optimistic concurrency: клиент шлёт updated_at снимка, с которого правил.
+    # Если на сервере уже новее — 409, без перезаписи.
+    expected_updated_at: Optional[str] = None
 
 
 class HarmoniBricsSuggestRequest(BaseModel):
@@ -4183,6 +4186,27 @@ def serialize_competence(
     return payload
 
 
+def _normalize_competence_ts(value: Any) -> str:
+    """Сравнение updated_at с точностью до секунды (ISO / datetime)."""
+    if value is None or value == "":
+        return ""
+    if isinstance(value, datetime.datetime):
+        dt = value
+    else:
+        text = str(value).strip()
+        if not text:
+            return ""
+        if text.endswith("Z"):
+            text = text[:-1] + "+00:00"
+        try:
+            dt = datetime.datetime.fromisoformat(text)
+        except ValueError:
+            return text[:19]
+    if dt.tzinfo is not None:
+        dt = dt.astimezone(datetime.timezone.utc).replace(tzinfo=None)
+    return dt.replace(microsecond=0).isoformat(timespec="seconds")
+
+
 def _serialize_competence_for_user(
     session,
     comp: Competence,
@@ -5287,6 +5311,22 @@ async def update_competence(comp_id: int, data: CompetenceUpdate, current_user: 
 
         before_snapshot = snapshot_competence(comp)
         update_data = data.dict(exclude_unset=True)
+        expected_ts = update_data.pop("expected_updated_at", None)
+        if expected_ts is not None and str(expected_ts).strip():
+            server_ts = _normalize_competence_ts(comp.updated_at)
+            client_ts = _normalize_competence_ts(expected_ts)
+            if server_ts and client_ts and server_ts != client_ts:
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "code": "competence_conflict",
+                        "message": (
+                            "Паспорт изменён другим участником. "
+                            "Данные не сохранены, чтобы не затереть чужие правки."
+                        ),
+                        "updated_at": comp.updated_at.isoformat() if comp.updated_at else None,
+                    },
+                )
         incoming_keys = set(update_data.keys())
         role = user_role(current_user)
         assigned = _is_assigned_reviewer(session, comp.id, current_user.id)
@@ -5451,6 +5491,9 @@ async def update_competence(comp_id: int, data: CompetenceUpdate, current_user: 
                 fields=labels,
                 changes=changes,
             )
+        # Явно двигаем updated_at — иначе optimistic lock на клиенте не сдвинется
+        # при правках только через raw_data / flag_modified.
+        comp.updated_at = datetime.datetime.utcnow()
         session.commit()
         session.refresh(comp)
         reviewers = _reviewers_map(session, [comp.id]).get(comp.id, [])

@@ -4,15 +4,14 @@ chcp 65001 >nul
 cd /d "%~dp0"
 
 REM === Загрузка локального ESCO RDF на VPS (файл НЕ в git) ===
-REM Запускайте из cmd.exe:
 REM   upload-esco-to-server.cmd
-REM   upload-esco-to-server.cmd /import   — ещё и импорт в SQLite на сервере
+REM   upload-esco-to-server.cmd /import
+REM У scp порт = -P (заглавная), у ssh = -p
 REM ===========================================================
 
 set "SSH_HOST=201.34.149.65"
 set "SSH_PORT=22"
 set "SSH_USER=root"
-set "SSH_KEY=%USERPROFILE%\.ssh\id_ed25519_drc"
 set "REMOTE_DIR=/opt/drc"
 set "LOCAL_RDF=%~dp0ESCO\esco-v1.2.0.rdf"
 set "REMOTE_RDF=%REMOTE_DIR%/ESCO/esco-v1.2.0.rdf"
@@ -26,18 +25,20 @@ if not exist "%LOCAL_RDF%" (
   exit /b 1
 )
 
-set "SSH_OPTS=-p %SSH_PORT% -o StrictHostKeyChecking=accept-new"
-if exist "%SSH_KEY%" (
-  set "SSH_OPTS=-i %SSH_KEY% -p %SSH_PORT% -o StrictHostKeyChecking=accept-new"
+set "SSH_KEY="
+if exist "%USERPROFILE%\.ssh\id_ed25519_drc" set "SSH_KEY=%USERPROFILE%\.ssh\id_ed25519_drc"
+if not defined SSH_KEY if exist "%USERPROFILE%\.ssh\id_ed25519" set "SSH_KEY=%USERPROFILE%\.ssh\id_ed25519"
+if not defined SSH_KEY if exist "%USERPROFILE%\.ssh\id_rsa" set "SSH_KEY=%USERPROFILE%\.ssh\id_rsa"
+
+REM ssh: -p порт; scp (OpenSSH Windows): -P порт (-p у scp = preserve times)
+if defined SSH_KEY (
   echo SSH-ключ: %SSH_KEY%
+  set SSH_OPTS=-i "%SSH_KEY%" -p %SSH_PORT% -o StrictHostKeyChecking=accept-new
+  set SCP_OPTS=-i "%SSH_KEY%" -P %SSH_PORT% -o StrictHostKeyChecking=accept-new
 ) else (
-  echo.
-  echo Ошибка: SSH-ключ не найден:
-  echo   %SSH_KEY%
-  echo.
-  echo Создайте ключ или скопируйте существующий в этот путь,
-  echo либо уберите проверку и используйте ssh-agent / пароль.
-  echo Пробую ssh без -i ...
+  echo SSH-ключ не найден в .ssh — пробую без -i ^(агент / пароль^)
+  set SSH_OPTS=-p %SSH_PORT% -o StrictHostKeyChecking=accept-new
+  set SCP_OPTS=-P %SSH_PORT% -o StrictHostKeyChecking=accept-new
 )
 
 where scp >nul 2>&1
@@ -54,9 +55,9 @@ if errorlevel 1 (
   exit /b 1
 )
 
-echo == scp %LOCAL_RDF%
+echo == scp "%LOCAL_RDF%"
 echo    -^> %SSH_USER%@%SSH_HOST%:%REMOTE_RDF%
-scp %SSH_OPTS% "%LOCAL_RDF%" %SSH_USER%@%SSH_HOST%:%REMOTE_RDF%
+scp %SCP_OPTS% "%LOCAL_RDF%" %SSH_USER%@%SSH_HOST%:%REMOTE_RDF%
 if errorlevel 1 (
   echo Ошибка: scp не удался.
   exit /b 1

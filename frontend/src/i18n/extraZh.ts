@@ -683,6 +683,9 @@ export const extraZh: ExtraMessages = {
     noCollabRights: "无权协同开发此项能力",
     openError: "能力打开失败",
     saveError: "保存失败",
+    saveConflict:
+      "护照已被其他协作者修改。为避免覆盖其修改，未保存。页面将刷新。",
+    autosaveSkippedIdle: "已跳过自动保存：无本地更改",
     docxNeedTitle: "导出 DOCX 前请填写能力名称",
     docxError: "DOCX 生成失败",
     needTitle: "请填写能力名称",

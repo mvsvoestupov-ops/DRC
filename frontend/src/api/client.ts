@@ -49,9 +49,18 @@ class ApiClient {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      const detail = errorData.detail || `HTTP error ${response.status}`;
-      const error = new Error(detail);
+      const detail = errorData.detail;
+      const message =
+        typeof detail === "string"
+          ? detail
+          : detail && typeof detail === "object" && typeof detail.message === "string"
+            ? detail.message
+            : `HTTP error ${response.status}`;
+      const error = new Error(message);
       (error as any).status = response.status;
+      (error as any).detail = detail;
+      (error as any).code =
+        detail && typeof detail === "object" ? detail.code : undefined;
       if (response.status === 401) {
         localStorage.removeItem('token');
         localStorage.removeItem('role');
@@ -550,7 +559,18 @@ class ApiClient {
   getCompetences = (mine = false) => this.get<any[]>(mine ? '/competences?mine=true' : '/competences');
   getCompetenceById = (id: number) => this.get<any>(`/competences/${id}`);
   createCompetence = (data: any) => this.post('/competences', data);
-  updateCompetence = (id: number, data: any) => this.put(`/competences/${id}`, data);
+  updateCompetence = (
+    id: number,
+    data: any,
+    options?: { expectedUpdatedAt?: string | null },
+  ) => {
+    const payload = { ...data };
+    const expected = options?.expectedUpdatedAt ?? data?.expected_updated_at;
+    if (expected) {
+      payload.expected_updated_at = expected;
+    }
+    return this.put(`/competences/${id}`, payload);
+  };
   assignReviewers = (id: number, expertIds: number[]) =>
     this.put<any>(`/competences/${id}/reviewers`, { expert_ids: expertIds });
   listCompetenceInvites = () => this.get<any[]>('/competences/invites');

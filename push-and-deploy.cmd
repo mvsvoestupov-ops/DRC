@@ -12,7 +12,7 @@ set "REMOTE_DIR=/opt/drc"
 set "BRANCH=main"
 set "VITE_API_URL=https://drc.ao-nk.online/api"
 set "SITE_URL=https://drc.ao-nk.online"
-set "COMMIT_MSG=Новая компетенция: название по умолчанию = ID (RUS-PK-…); автосохранение каждые 5 мин"
+set "COMMIT_MSG=Групповая разработка: dirty-gate автосейва и optimistic lock (409), чтобы не затирать чужие поля"
 REM =====================================================
 
 REM Запускайте из cmd.exe (не PowerShell Cursor):
@@ -22,6 +22,8 @@ REM   push-and-deploy.cmd /push        — только commit + push (без SS
 REM   push-and-deploy.cmd /deploy      — только деплой уже запушенной ветки
 REM   deploy-only.cmd                  — то же, что /deploy
 REM   push-and-deploy.cmd "текст"      — свой commit message
+REM
+REM ESCO RDF на сервер отдельно: upload-esco-to-server.cmd
 
 set "SKIP_PAUSE="
 set "PUSH_ONLY="
@@ -166,12 +168,16 @@ if errorlevel 1 (
   exit /b 1
 )
 
+REM Ключ: заданный → id_ed25519_drc → id_ed25519 → id_rsa → агент/пароль
+if not exist "%SSH_KEY%" if exist "%USERPROFILE%\.ssh\id_ed25519" set "SSH_KEY=%USERPROFILE%\.ssh\id_ed25519"
+if not exist "%SSH_KEY%" if exist "%USERPROFILE%\.ssh\id_rsa" set "SSH_KEY=%USERPROFILE%\.ssh\id_rsa"
+
 set "SSH_OPTS=-p %SSH_PORT% -o StrictHostKeyChecking=accept-new"
 if exist "%SSH_KEY%" (
   set SSH_OPTS=-i %SSH_KEY% -p %SSH_PORT% -o StrictHostKeyChecking=accept-new
   echo SSH-ключ: %SSH_KEY%
 ) else (
-  echo Ключ не найден: %SSH_KEY%
+  echo Ключ не найден в %%USERPROFILE%%\.ssh
   echo Пробую ssh без -i ^(пароль / агент^)
 )
 

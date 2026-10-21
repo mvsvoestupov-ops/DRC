@@ -683,6 +683,9 @@ export const extraHi: ExtraMessages = {
     noCollabRights: "इस दक्षता के संयुक्त विकास का अधिकार नहीं है",
     openError: "दक्षता नहीं खोली जा सकी",
     saveError: "सहेजने में त्रुटि",
+    saveConflict:
+      "पासपोर्ट किसी अन्य सहभागी ने बदला। अधिलेखन से बचने के लिए सहेजा नहीं गया। पृष्ठ पुनः लोड होगा।",
+    autosaveSkippedIdle: "ऑटोसेव छोड़ी गई: कोई स्थानीय बदलाव नहीं",
     docxNeedTitle: "DOCX निर्यात से पहले दक्षता का नाम बताएँ",
     docxError: "DOCX तैयार नहीं हो सका",
     needTitle: "दक्षता का नाम बताएँ",

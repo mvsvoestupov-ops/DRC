@@ -687,6 +687,9 @@ export const extraEn: ExtraMessages = {
     noCollabRights: "You do not have rights for collaborative development of this competency",
     openError: "Could not open the competency",
     saveError: "Save error",
+    saveConflict:
+      "The passport was changed by another collaborator. Your save was skipped to avoid overwriting their edits. The page will reload.",
+    autosaveSkippedIdle: "Autosave skipped: no local changes",
     docxNeedTitle: "Enter the competency name before exporting DOCX",
     docxError: "Could not generate DOCX",
     needTitle: "Enter the competency name",
