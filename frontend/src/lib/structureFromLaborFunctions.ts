@@ -141,6 +141,9 @@ export function structureToPayload(structure: StructureABC) {
     const text = item.text.trim();
     if (!text) return null;
     return {
+      // Стабильный id нужен шагу 5 (привязки) и шагу 6 (ФОС), иначе после
+      // пересборки структуры привязки «отлипают» и уходят в PUT пустыми.
+      id: item.id || null,
       text,
       tfCode: item.tfCode || null,
       tdText: item.tdText || null,
@@ -177,8 +180,9 @@ export function structureFromPayload(raw?: Record<string, unknown> | null): Stru
     const origin = row.origin === "manual" ? "manual" : row.origin === "ps" ? "ps" : undefined;
     const tfCode = row.tfCode ? String(row.tfCode) : null;
     const tdText = row.tdText ? String(row.tdText) : null;
+    const savedId = String(row.id || "").trim();
     return {
-      id: createStructureItemId(),
+      id: savedId || createStructureItemId(),
       text,
       tfCode,
       tdText,
@@ -201,6 +205,8 @@ export function buildStructureFromLaborFunctions(
   const seenA = new Set<string>();
   const seenB = new Set<string>();
   const moved = previous.C;
+  const prevAByKey = new Map(previous.A.map((item) => [structureItemKey(item), item]));
+  const prevBByKey = new Map(previous.B.map((item) => [structureItemKey(item), item]));
 
   selectedLaborFunctions.forEach((tf) => {
     const tfCode = tf.code;
@@ -212,11 +218,12 @@ export function buildStructureFromLaborFunctions(
         const key = `${tfCode}::${text.toLowerCase()}`;
         if (seenA.has(key) || wasMovedToC(text, tfCode, moved)) return;
         seenA.add(key);
+        const prev = prevAByKey.get(key);
         knowledge.push({
-          id: createStructureItemId(),
+          id: prev?.id || createStructureItemId(),
           text,
           tfCode,
-          tdText,
+          tdText: prev?.tdText || tdText,
           origin: 'ps',
         });
       });
@@ -226,11 +233,12 @@ export function buildStructureFromLaborFunctions(
         const key = `${tfCode}::${text.toLowerCase()}`;
         if (seenB.has(key) || wasMovedToC(text, tfCode, moved)) return;
         seenB.add(key);
+        const prev = prevBByKey.get(key);
         skills.push({
-          id: createStructureItemId(),
+          id: prev?.id || createStructureItemId(),
           text,
           tfCode,
-          tdText,
+          tdText: prev?.tdText || tdText,
           origin: 'ps',
         });
       });

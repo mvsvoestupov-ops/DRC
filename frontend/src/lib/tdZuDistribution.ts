@@ -375,14 +375,23 @@ export function buildStructureFromTdZu(
   });
   const hints: Array<{ text: string; tfCode: string; tdText: string }> = [];
 
+  const prevAByKey = new Map(
+    previous.A.map((row) => [`${row.tfCode || ""}::${row.text.trim().toLowerCase()}`, row]),
+  );
+  const prevBByKey = new Map(
+    previous.B.map((row) => [`${row.tfCode || ""}::${row.text.trim().toLowerCase()}`, row]),
+  );
+
   for (const card of cards) {
     for (const item of card.knowledges) {
       const key = `${card.tfCode}::${item.text.toLowerCase()}`;
       hints.push({ text: item.text.toLowerCase(), tfCode: card.tfCode, tdText: card.tdText });
       if (seenA.has(key) || wasMovedToC(item.text, card.tfCode, moved)) continue;
       seenA.add(key);
+      const prev = prevAByKey.get(key);
       knowledge.push({
-        id: item.id,
+        // Сохраняем id из предыдущей структуры (шаг 5/6), иначе zu-* id ломает привязки.
+        id: prev?.id || item.id,
         text: item.text,
         tfCode: card.tfCode,
         tdText: card.tdText,
@@ -394,8 +403,9 @@ export function buildStructureFromTdZu(
       hints.push({ text: item.text.toLowerCase(), tfCode: card.tfCode, tdText: card.tdText });
       if (seenB.has(key) || wasMovedToC(item.text, card.tfCode, moved)) continue;
       seenB.add(key);
+      const prev = prevBByKey.get(key);
       skills.push({
-        id: item.id,
+        id: prev?.id || item.id,
         text: item.text,
         tfCode: card.tfCode,
         tdText: card.tdText,

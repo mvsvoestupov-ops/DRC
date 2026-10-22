@@ -662,18 +662,28 @@ export function NewCompetencyPage() {
         );
         const structure = structureFromPayload(comp.structure || {});
         const grouped = groupDisciplineMapping(comp.discipline_mapping || []);
-        const disciplineMapping = syncDisciplineMapping(structure, []).map((row) => {
-          const group = grouped.find((item) => item.text === row.text) || grouped.find((item) => item.component === row.component);
-          if (!group) return row;
+        const fromServer: DisciplineMappingRow[] = grouped.map((group) => {
+          const category =
+            group.category === "A" || group.category === "B" || group.category === "C"
+              ? group.category
+              : ((String(group.component || "").charAt(0).toUpperCase() as "A" | "B" | "C") || "A");
           return {
-            ...row,
+            id: String(group.key || ""),
+            component: group.component,
+            category,
+            text: group.text,
             importance: group.importance,
             volume: group.volume,
             bindings: group.bindings.length
-              ? group.bindings.map((binding) => ({ discipline: binding.discipline, control: binding.control }))
-              : row.bindings,
+              ? group.bindings.map((binding) => ({
+                  discipline: binding.discipline,
+                  control: binding.control,
+                }))
+              : [{ discipline: "", control: "" }],
           };
         });
+        // Склейка по id и по category|text — переживает пересоздание si-* id.
+        const disciplineMapping = syncDisciplineMapping(structure, fromServer);
         const assessmentByLevel = assessmentToolsToByLevel(comp.assessment_tools, structure);
         setFormData((prev) => ({
           ...prev,
@@ -1318,12 +1328,24 @@ export function NewCompetencyPage() {
   const goToStep = async (target: number) => {
     if (target === currentStep || autoSaving || submitting) return;
     setError("");
+    // Не гоняем полный PUT при «чистом» переходе: иначе после пересборки
+    // структуры можно затереть привязки шага 5 пустым снимком.
+    if (!isDraftDirty(currentStep)) {
+      setCurrentStep(target);
+      markDraftBaseline(target);
+      return;
+    }
     setAutoSaving(true);
     try {
       await persistDraft(target);
       setCurrentStep(target);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t("wizard.saveError"));
+      if (isConflictError(err)) {
+        setError(t("wizard.saveConflict"));
+        reloadAfterConflict();
+      } else {
+        setError(err instanceof Error ? err.message : t("wizard.saveError"));
+      }
     } finally {
       setAutoSaving(false);
     }
@@ -1332,13 +1354,24 @@ export function NewCompetencyPage() {
   const goNext = async () => {
     if (autoSaving || submitting) return;
     const next = Math.min(lastStep, currentStep + 1);
+    if (next === currentStep) return;
     setError("");
+    if (!isDraftDirty(currentStep)) {
+      setCurrentStep(next);
+      markDraftBaseline(next);
+      return;
+    }
     setAutoSaving(true);
     try {
       await persistDraft(next);
       setCurrentStep(next);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t("wizard.saveError"));
+      if (isConflictError(err)) {
+        setError(t("wizard.saveConflict"));
+        reloadAfterConflict();
+      } else {
+        setError(err instanceof Error ? err.message : t("wizard.saveError"));
+      }
     } finally {
       setAutoSaving(false);
     }

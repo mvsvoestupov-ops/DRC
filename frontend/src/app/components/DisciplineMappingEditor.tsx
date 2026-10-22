@@ -73,19 +73,41 @@ type SyncedRowState = {
   volume: ScaleScore;
 };
 
+function disciplineContentKey(category: string, text: string) {
+  return `${category}|${text.trim().toLowerCase()}`;
+}
+
+function mergeSyncedState(
+  target: SyncedRowState | undefined,
+  row: DisciplineMappingRow,
+): SyncedRowState {
+  const current = target || { bindings: [], importance: "" as ScaleScore, volume: "" as ScaleScore };
+  normalizeBindings(row).forEach((binding) => {
+    if (!(binding.discipline.trim() || binding.control)) return;
+    const dup = current.bindings.some(
+      (item) =>
+        item.discipline.trim().toLowerCase() === binding.discipline.trim().toLowerCase() &&
+        item.control === binding.control,
+    );
+    if (!dup) current.bindings.push(binding);
+  });
+  if (!current.importance) current.importance = parseScaleScore(row.importance);
+  if (!current.volume) current.volume = parseScaleScore(row.volume);
+  return current;
+}
+
 export function syncDisciplineMapping(
   structure: StructureABC,
   existing: DisciplineMappingRow[] = [],
 ): DisciplineMappingRow[] {
   const byId = new Map<string, SyncedRowState>();
+  const byContent = new Map<string, SyncedRowState>();
   existing.forEach((row) => {
-    const current = byId.get(row.id) || { bindings: [], importance: "" as ScaleScore, volume: "" as ScaleScore };
-    normalizeBindings(row).forEach((binding) => {
-      if (binding.discipline.trim() || binding.control) current.bindings.push(binding);
-    });
-    if (!current.importance) current.importance = parseScaleScore(row.importance);
-    if (!current.volume) current.volume = parseScaleScore(row.volume);
-    byId.set(row.id, current);
+    if (row.id) byId.set(row.id, mergeSyncedState(byId.get(row.id), row));
+    const contentKey = disciplineContentKey(row.category || "", row.text || "");
+    if (contentKey !== "|") {
+      byContent.set(contentKey, mergeSyncedState(byContent.get(contentKey), row));
+    }
   });
 
   const rows: DisciplineMappingRow[] = [];
@@ -93,12 +115,13 @@ export function syncDisciplineMapping(
     structure[category]
       .filter((item) => item.text.trim())
       .forEach((item, index) => {
-        const prev = byId.get(item.id);
+        const text = item.text.trim();
+        const prev = byId.get(item.id) || byContent.get(disciplineContentKey(category, text));
         rows.push({
           id: item.id,
           component: `${category}${index + 1}`,
           category,
-          text: item.text.trim(),
+          text,
           bindings: prev && prev.bindings.length > 0 ? prev.bindings : [emptyBinding()],
           importance: prev?.importance || "",
           volume: prev?.volume || "",
@@ -138,6 +161,7 @@ export function groupDisciplineMapping(
   items: Array<{
     id?: string;
     component?: string;
+    category?: string;
     text?: string;
     discipline?: string;
     hours?: string | number;
@@ -149,6 +173,7 @@ export function groupDisciplineMapping(
   const groups: Array<{
     key: string;
     component: string;
+    category: "A" | "B" | "C" | "";
     text: string;
     importance: ScaleScore;
     volume: ScaleScore;
@@ -157,7 +182,10 @@ export function groupDisciplineMapping(
   const indexByKey = new Map<string, number>();
 
   items.forEach((item) => {
-    const key = String(item.id || `${item.component || ""}|${item.text || ""}`);
+    const rawCat = String(item.category || item.component || "").trim().toUpperCase();
+    const category: "A" | "B" | "C" | "" =
+      rawCat.startsWith("A") ? "A" : rawCat.startsWith("B") ? "B" : rawCat.startsWith("C") ? "C" : "";
+    const key = String(item.id || `${category || item.component || ""}|${item.text || ""}`);
     const binding = {
       discipline: item.discipline || "",
       hours: item.hours,
@@ -169,6 +197,7 @@ export function groupDisciplineMapping(
       groups.push({
         key,
         component: item.component || "—",
+        category,
         text: item.text || "",
         importance: parseScaleScore(item.importance),
         volume: parseScaleScore(item.volume),
@@ -176,6 +205,7 @@ export function groupDisciplineMapping(
       });
     } else {
       const group = groups[existing];
+      if (!group.category && category) group.category = category;
       if (!group.importance) group.importance = parseScaleScore(item.importance);
       if (!group.volume) group.volume = parseScaleScore(item.volume);
       if (binding.discipline.trim() || binding.control || binding.hours) {

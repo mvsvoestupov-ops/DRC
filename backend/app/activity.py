@@ -395,10 +395,20 @@ def _human_disciplines(value: Any) -> str:
         discipline = str(row.get("discipline") or "").strip()
         component = str(row.get("text") or row.get("component") or "").strip()
         control = str(row.get("control") or row.get("form") or "").strip()
+        importance = str(row.get("importance") or "").strip()
+        volume = str(row.get("volume") or "").strip()
         parts = [part for part in (discipline, component) if part]
         line = " — ".join(parts)
+        extras: list[str] = []
         if control:
-            line = f"{line} (контроль: {control})" if line else f"контроль: {control}"
+            extras.append(f"контроль: {control}")
+        if importance:
+            extras.append(f"важность: {importance}")
+        if volume:
+            extras.append(f"объём: {volume}")
+        if extras:
+            suffix = "; ".join(extras)
+            line = f"{line} ({suffix})" if line else suffix
         if line:
             lines.append(line)
     return _bullet(lines)
