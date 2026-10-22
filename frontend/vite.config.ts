@@ -28,10 +28,14 @@ function figmaAssetResolver() {
 function spaGuideRoutes() {
   const rewrite = (url = '') => {
     const pathname = url.split('?')[0]
+    // Не отдавать public/methodology (каталог) вместо SPA-маршрута /methodology
     if (
       pathname === '/guide' ||
       pathname === '/user-guide' ||
-      pathname.startsWith('/guidelines')
+      pathname.startsWith('/guidelines') ||
+      pathname === '/methodology' ||
+      pathname === '/methodology/' ||
+      (pathname.startsWith('/methodology/') && !pathname.includes('.'))
     ) {
       return '/index.html'
     }
@@ -40,6 +44,7 @@ function spaGuideRoutes() {
   return {
     name: 'spa-guide-routes',
     configureServer(server) {
+      // До static public/: иначе /methodology → 403/заглушка из public/methodology
       server.middlewares.use((req, _res, next) => {
         const nextUrl = rewrite(req.url || '')
         if (nextUrl) req.url = nextUrl

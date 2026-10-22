@@ -1,34 +1,63 @@
+import type { ReactNode, SyntheticEvent } from "react";
 import { Link } from "react-router";
 import { useI18n } from "@/context/I18nContext";
 
 const STEPS = [1, 2, 3, 4, 5, 6, 7] as const;
 
-function StepFigure({ step }: { step: (typeof STEPS)[number] }) {
-  const { t } = useI18n();
-  const src = `/methodology/step${step}.jpg`;
+/** Скриншоты конструктора: png в /methodology-media, иначе SVG-схема. */
+function mediaSrc(file: string) {
+  return `/methodology-media/${file}`;
+}
+
+function onMediaError(e: SyntheticEvent<HTMLImageElement>) {
+  const el = e.currentTarget;
+  el.style.display = "none";
+  const fallback = el.parentElement?.querySelector("[data-fallback]");
+  if (fallback instanceof HTMLElement) fallback.hidden = false;
+}
+
+function GuideFigure({
+  file,
+  alt,
+  caption,
+  eager,
+  fallback,
+}: {
+  file: string;
+  alt: string;
+  caption: string;
+  eager?: boolean;
+  fallback: ReactNode;
+}) {
   return (
-    <figure className="space-y-2">
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-slate-50 shadow-sm">
+    <figure className="space-y-2 w-full">
+      {/* Весь скрин целиком: без object-cover и без обрезки по max-height */}
+      <div className="rounded-xl border border-gray-200 bg-slate-100/80 shadow-sm">
         <img
-          src={src}
-          alt={t(`devGuide.s${step}figAlt`)}
-          className="w-full h-auto object-cover object-top max-h-[420px]"
-          loading="lazy"
-          onError={(e) => {
-            const el = e.currentTarget;
-            el.style.display = "none";
-            const fallback = el.parentElement?.querySelector("[data-fallback]");
-            if (fallback instanceof HTMLElement) fallback.hidden = false;
-          }}
+          src={mediaSrc(file)}
+          alt={alt}
+          className="block w-full h-auto object-contain"
+          loading={eager ? "eager" : "lazy"}
+          onError={onMediaError}
         />
         <div data-fallback hidden className="p-4 md:p-6">
-          <StepSvg step={step} />
+          {fallback}
         </div>
       </div>
-      <figcaption className="text-xs text-gray-500 text-center px-2">
-        {t(`devGuide.s${step}figCap`)}
-      </figcaption>
+      <figcaption className="text-xs text-gray-500 text-center px-2">{caption}</figcaption>
     </figure>
+  );
+}
+
+function StepFigure({ step }: { step: (typeof STEPS)[number] }) {
+  const { t } = useI18n();
+  return (
+    <GuideFigure
+      file={`step${step}.png`}
+      alt={t(`devGuide.s${step}figAlt`)}
+      caption={t(`devGuide.s${step}figCap`)}
+      fallback={<StepSvg step={step} />}
+    />
   );
 }
 
@@ -76,38 +105,38 @@ function StepSvg({ step }: { step: (typeof STEPS)[number] }) {
   );
 }
 
+function OverviewFallback() {
+  const { t } = useI18n();
+  return (
+    <div className="flex flex-wrap gap-2 justify-center">
+      {STEPS.map((n, idx) => (
+        <div key={n} className="flex items-center gap-2">
+          <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-center min-w-[88px]">
+            <div className="text-xs font-bold text-primary">{n}</div>
+            <div className="text-[11px] text-gray-700 leading-tight">{t(`devGuide.nav${n}`)}</div>
+          </div>
+          {idx < STEPS.length - 1 ? <span className="text-gray-400">→</span> : null}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function OverviewFigure() {
   const { t } = useI18n();
   return (
-    <figure className="space-y-2">
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-slate-50 shadow-sm">
-        <img
-          src="/methodology/overview.jpg"
-          alt={t("devGuide.overviewAlt")}
-          className="w-full h-auto object-cover object-top max-h-[380px]"
-          loading="eager"
-          onError={(e) => {
-            e.currentTarget.style.display = "none";
-            const fallback = e.currentTarget.parentElement?.querySelector("[data-fallback]");
-            if (fallback instanceof HTMLElement) fallback.hidden = false;
-          }}
-        />
-        <div data-fallback hidden className="p-4 overflow-x-auto">
-          <div className="flex flex-wrap gap-2 justify-center min-w-[640px]">
-            {STEPS.map((n, idx) => (
-              <div key={n} className="flex items-center gap-2">
-                <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-center min-w-[88px]">
-                  <div className="text-xs font-bold text-primary">{n}</div>
-                  <div className="text-[11px] text-gray-700 leading-tight">{t(`devGuide.nav${n}`)}</div>
-                </div>
-                {idx < STEPS.length - 1 ? <span className="text-gray-400">→</span> : null}
-              </div>
-            ))}
-          </div>
-        </div>
+    <div className="space-y-4">
+      <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4">
+        <OverviewFallback />
       </div>
-      <figcaption className="text-xs text-gray-500 text-center">{t("devGuide.overviewCap")}</figcaption>
-    </figure>
+      <GuideFigure
+        file="overview.png"
+        alt={t("devGuide.overviewAlt")}
+        caption={t("devGuide.overviewCap")}
+        eager
+        fallback={<span className="text-sm text-gray-500">{t("devGuide.overviewAlt")}</span>}
+      />
+    </div>
   );
 }
 

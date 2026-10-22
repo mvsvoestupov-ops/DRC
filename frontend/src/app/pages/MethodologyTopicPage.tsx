@@ -15,7 +15,7 @@ import { isMethodologyTopicId, METHODOLOGY_TOPICS, type MethodologyTopicId } fro
 
 const TOPIC_CONTENT: Record<MethodologyTopicId, () => ReactNode> = {
   development: () => (
-    <div className="surface p-6 md:p-8">
+    <div className="surface p-4 sm:p-6 md:p-8 overflow-visible">
       <CompetenceDevelopmentGuide />
     </div>
   ),
