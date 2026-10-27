@@ -603,8 +603,8 @@ export const extraVi: ExtraMessages = {
     step3: "Cấu trúc A/B/C",
     step4: "Mô tả mức",
     step5: "Gắn với học phần",
-    step6: "Công cụ đánh giá",
-    step61: "Đánh giá v2",
+    step6: "Công cụ đánh giá OLD",
+    step61: "Công cụ đánh giá",
     step7: "Cơ sở vật chất",
     step8: "Thẩm định",
     step9: "Đối chiếu",
@@ -1166,8 +1166,8 @@ export const extraVi: ExtraMessages = {
     taskCriteria: "Tiêu chí đánh giá",
   },
   assessmentV2: {
-    badge: "Bước 6.1 · phiên bản song song",
-    title: "Công cụ đánh giá v2",
+    badge: "Bước 6 · công cụ đánh giá",
+    title: "Công cụ đánh giá",
     lead:
       "Bắt đầu bằng tóm tắt lý thuyết/thực hành. Kiến thức (A) chỉ trắc nghiệm. Kỹ năng (B) và năng lực (C) gán trên cây ТФ–ТД (chỉ tích lá), rồi điền biểu mẫu.",
     theoryTitle: "Lý thuyết",

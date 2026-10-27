@@ -271,6 +271,10 @@ export function NewCompetencyPage() {
     }
   }, [workingCompetence?.id, workingCompetence?.updated_at]);
 
+  // Шаг 6.0 (старый конструктор ФОС) скрыт в UI, но код и данные assessmentByLevel сохранены.
+  // Чтобы снова показать в навигаторе — уберите 6 из множества.
+  const HIDDEN_WIZARD_STEPS = useMemo(() => new Set([6]), []);
+  const SHOW_LEGACY_ASSESSMENT_STEP = false;
   const steps = useMemo(() => {
     const list = [
       { number: 1, name: t("wizard.step1"), label: "1" },
@@ -278,8 +282,8 @@ export function NewCompetencyPage() {
       { number: 3, name: t("wizard.step3"), label: "3" },
       { number: 4, name: t("wizard.step4"), label: "4" },
       { number: 5, name: t("wizard.step5"), label: "5" },
-      { number: 6, name: t("wizard.step6"), label: "6" },
-      { number: 7, name: t("wizard.step61"), label: "6.1" },
+      { number: 6, name: t("wizard.step6"), label: "6.0" },
+      { number: 7, name: t("wizard.step61"), label: "6" },
       { number: 8, name: t("wizard.step7"), label: "7" },
       { number: 9, name: t("wizard.step8"), label: "8" },
       { number: 10, name: t("wizard.step9"), label: "9" },
@@ -293,7 +297,18 @@ export function NewCompetencyPage() {
     }
     return list;
   }, [t, isIntlMethodologist]);
+  const visibleSteps = useMemo(
+    () => steps.filter((step) => !HIDDEN_WIZARD_STEPS.has(step.number)),
+    [steps, HIDDEN_WIZARD_STEPS],
+  );
   const lastStep = steps.length;
+  const skipHiddenWizardStep = (from: number, direction: 1 | -1) => {
+    let next = from;
+    while (HIDDEN_WIZARD_STEPS.has(next) && next >= 1 && next <= lastStep) {
+      next += direction;
+    }
+    return Math.min(lastStep, Math.max(1, next));
+  };
   const competenceId = editId || workingCompetence?.id || null;
   const { peers, setFragment: setPresenceFragment } = useCollaborationPresence({
     competenceId,
@@ -739,7 +754,8 @@ export function NewCompetencyPage() {
         }));
         const savedStep = Number(comp.wizard_step);
         if (Number.isFinite(savedStep) && savedStep >= 1) {
-          setCurrentStep(Math.min(lastStep, Math.floor(savedStep)));
+          const clamped = Math.min(lastStep, Math.floor(savedStep));
+          setCurrentStep(skipHiddenWizardStep(clamped, 1));
         }
         if (comp.fgos_id) {
           setSelectedFgos({
@@ -1206,6 +1222,12 @@ export function NewCompetencyPage() {
     return () => window.clearTimeout(timer);
   }, [hydrating, competenceId, editId]);
 
+  // Скрытый шаг 6.0: не оставляем пользователя на нём
+  useEffect(() => {
+    if (hydrating || !HIDDEN_WIZARD_STEPS.has(currentStep)) return;
+    setCurrentStep(skipHiddenWizardStep(currentStep, 1));
+  }, [hydrating, currentStep, HIDDEN_WIZARD_STEPS, lastStep]);
+
   // Шаг 6 → 6.1: подтянуть тесты A и практику B/C, если в 6.1 ещё пусто
   useEffect(() => {
     if (hydrating || currentStep !== 7) return;
@@ -1380,19 +1402,20 @@ export function NewCompetencyPage() {
   };
 
   const goToStep = async (target: number) => {
-    if (target === currentStep || autoSaving || submitting) return;
+    const safeTarget = skipHiddenWizardStep(target, target >= currentStep ? 1 : -1);
+    if (safeTarget === currentStep || autoSaving || submitting) return;
     setError("");
     // Не гоняем полный PUT при «чистом» переходе: иначе после пересборки
     // структуры можно затереть привязки шага 5 пустым снимком.
     if (!isDraftDirty(currentStep)) {
-      setCurrentStep(target);
-      markDraftBaseline(target);
+      setCurrentStep(safeTarget);
+      markDraftBaseline(safeTarget);
       return;
     }
     setAutoSaving(true);
     try {
-      await persistDraft(target);
-      setCurrentStep(target);
+      await persistDraft(safeTarget);
+      setCurrentStep(safeTarget);
     } catch (err: unknown) {
       if (isConflictError(err)) {
         setError(t("wizard.saveConflict"));
@@ -1407,7 +1430,7 @@ export function NewCompetencyPage() {
 
   const goNext = async () => {
     if (autoSaving || submitting) return;
-    const next = Math.min(lastStep, currentStep + 1);
+    const next = skipHiddenWizardStep(Math.min(lastStep, currentStep + 1), 1);
     if (next === currentStep) return;
     setError("");
     if (!isDraftDirty(currentStep)) {
@@ -1539,7 +1562,7 @@ export function NewCompetencyPage() {
       ) : null}
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8 w-full">
-        {steps.map((step) => (
+        {visibleSteps.map((step) => (
           <div key={step.number} className="flex items-center min-w-0">
             <button
               type="button"
@@ -1582,7 +1605,7 @@ export function NewCompetencyPage() {
               <div className="flex justify-between mb-6 pb-6 border-b border-gray-200">
                 <Button
                   variant="outline"
-                  onClick={() => void goToStep(currentStep - 1)}
+                  onClick={() => void goToStep(skipHiddenWizardStep(currentStep - 1, -1))}
                   disabled={currentStep === 1 || autoSaving || submitting}
                   className="gap-2 text-gray-700 border-gray-300 hover:bg-gray-50 disabled:opacity-50"
                 >
@@ -2163,7 +2186,7 @@ export function NewCompetencyPage() {
                 </div>
               )}
 
-              {currentStep === 6 && (
+              {SHOW_LEGACY_ASSESSMENT_STEP && currentStep === 6 && (
                 <div data-presence-fragment="assessment">
                 <AssessmentConstructor
                   structure={formData.structure}
@@ -2527,10 +2550,11 @@ export function NewCompetencyPage() {
                     )}
                   </section>
 
-                  {/* 6. Оценочные средства */}
+                  {/* 6.0 Оценочные средства OLD — скрыто, код сохранён */}
+                  {SHOW_LEGACY_ASSESSMENT_STEP ? (
                   <section className="rounded-xl border border-gray-200 bg-white p-5 space-y-5">
                     <h3 className="text-sm font-semibold uppercase tracking-wide text-primary">
-                      6. {t("wizard.step6")}
+                      6.0. {t("wizard.step6")}
                     </h3>
                     {(() => {
                       const assessmentByLevel = normalizeAssessmentByLevel(formData.assessmentByLevel);
@@ -2611,10 +2635,11 @@ export function NewCompetencyPage() {
                       );
                     })()}
                   </section>
+                  ) : null}
 
                   <section className="rounded-xl border border-gray-200 bg-white p-5 space-y-5">
                     <h3 className="text-sm font-semibold uppercase tracking-wide text-primary">
-                      6.1. {t("wizard.step61")}
+                      6. {t("wizard.step61")}
                     </h3>
                     {(() => {
                       const assessmentV2 = normalizeAssessmentByLevelV2(formData.assessmentV2);

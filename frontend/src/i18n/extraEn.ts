@@ -606,8 +606,8 @@ export const extraEn: ExtraMessages = {
     step3: "A/B/C structure",
     step4: "Descriptors",
     step5: "Mapping to disciplines",
-    step6: "Assessment tools",
-    step61: "Assessment v2",
+    step6: "Assessment tools OLD",
+    step61: "Assessment tools",
     step7: "Facilities",
     step8: "Validation",
     step9: "Alignment",
@@ -1169,8 +1169,8 @@ export const extraEn: ExtraMessages = {
     taskCriteria: "Assessment criteria",
   },
   assessmentV2: {
-    badge: "Step 6.1 · parallel version",
-    title: "Assessment tools v2",
+    badge: "Step 6 · assessment tools",
+    title: "Assessment tools",
     lead:
       "Start with the theory/practice summary. Knowledge (A) is tests only. Skills (B) and abilities (C) are assigned in the TF–TD tree (checkboxes on leaves only), then each task form is filled in.",
     theoryTitle: "Theory",

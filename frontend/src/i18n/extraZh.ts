@@ -602,8 +602,8 @@ export const extraZh: ExtraMessages = {
     step3: "A/B/C 结构",
     step4: "描述符",
     step5: "对应课程",
-    step6: "评价工具",
-    step61: "评价工具 v2",
+    step6: "评价工具 OLD",
+    step61: "评价工具",
     step7: "物资技术",
     step8: "校验",
     step9: "对照",
@@ -1162,8 +1162,8 @@ export const extraZh: ExtraMessages = {
     taskCriteria: "评价标准",
   },
   assessmentV2: {
-    badge: "步骤 6.1 · 并行版本",
-    title: "评价工具 v2",
+    badge: "步骤 6 · 评价工具",
+    title: "评价工具",
     lead:
       "先看理论/实践汇总。知识（A）仅测验。技能（B）与能力（C）在 ТФ–ТД 树中分配（仅叶子可勾选），再填写任务表单。",
     theoryTitle: "理论",
