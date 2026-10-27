@@ -202,7 +202,7 @@ describe("assessmentV2", () => {
     expect(seeded.базовый.practicalTasks).toHaveLength(1);
     expect(seeded.базовый.practicalTasks[0].componentIds.sort()).toEqual(["b1", "b2", "c1"]);
     expect(seeded.базовый.practicalTasks[0].prompt).toBe("Решите");
-    expect(seeded.базовый.compositionDone).toBe(false);
+    expect(seeded.базовый.compositionDone).toBe(true);
   });
 
   it("does not overwrite authored 6.1 practical tasks when seeding", () => {

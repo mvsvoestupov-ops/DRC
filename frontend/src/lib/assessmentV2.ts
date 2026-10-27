@@ -343,8 +343,8 @@ export function seedAssessmentV2PracticalFromV1(
     next[level] = {
       ...current,
       practicalTasks: imported,
-      // Даже при 100% охвате не форсим «готово» — пользователь подтверждает компоновку
-      compositionDone: Boolean(current.compositionDone) && coverage.complete,
+      // Если все B/C уже распределены импортом — сразу открываем «Содержание»
+      compositionDone: Boolean(current.compositionDone) || coverage.complete,
     };
   }
   return next;

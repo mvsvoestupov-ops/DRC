@@ -49,6 +49,16 @@ export function AssessmentConstructorV2({ structure, value, onChange }: Props) {
   const coverage = practicalCoverage(structure, block.practicalTasks);
   const theory = theoryDashboardStats(structure, block.tests);
   const practice = practiceDashboardStats(structure, block.practicalTasks);
+  const canOpenPracticeDetails =
+    block.compositionDone ||
+    coverage.complete ||
+    block.practicalTasks.some(
+      (task) =>
+        Boolean(task.prompt.trim()) ||
+        Boolean(task.description.trim()) ||
+        Boolean(task.instruction.trim()) ||
+        (task.criteria || []).some((item) => String(item || "").trim()),
+    );
   const byId = useMemo(
     () => new Map(practical.map((item) => [item.id, item])),
     [practical],
@@ -218,7 +228,7 @@ export function AssessmentConstructorV2({ structure, value, onChange }: Props) {
             onToggleRequirements={() => setShowPracticeReq((v) => !v)}
             requirements={t("assessmentV2.practiceRequirements")}
             onEditor={() =>
-              setScreen(block.compositionDone ? "practice-details" : "practice-compose")
+              setScreen(canOpenPracticeDetails ? "practice-details" : "practice-compose")
             }
           >
             <table className="w-full text-sm">
@@ -408,14 +418,19 @@ export function AssessmentConstructorV2({ structure, value, onChange }: Props) {
               </button>
               <button
                 type="button"
-                onClick={() => block.compositionDone && setScreen("practice-details")}
-                disabled={!block.compositionDone}
+                onClick={() => canOpenPracticeDetails && setScreen("practice-details")}
+                disabled={!canOpenPracticeDetails}
+                title={
+                  canOpenPracticeDetails
+                    ? undefined
+                    : t("assessmentV2.needComposeFirst")
+                }
                 className={cn(
                   "px-3 py-1.5 rounded-lg text-sm font-medium border",
                   screen === "practice-details"
                     ? "bg-primary text-white border-primary"
                     : "bg-white text-gray-700 border-gray-200",
-                  !block.compositionDone && "opacity-50 cursor-not-allowed",
+                  !canOpenPracticeDetails && "opacity-50 cursor-not-allowed",
                 )}
               >
                 {t("assessmentV2.phaseDetails")}
