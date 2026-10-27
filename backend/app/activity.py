@@ -692,7 +692,11 @@ def compute_progress(comp: Competence) -> dict[str, Any]:
             ),
         },
         {"step": 5, "key": "disciplines", "done": bool(comp.discipline_mapping)},
-        {"step": 6, "key": "assessment", "done": bool(comp.assessment_tools)},
+        {
+            "step": 6,
+            "key": "assessment",
+            "done": bool(comp.assessment_tools) or bool(raw.get("assessment_tools_v2")),
+        },
         {"step": 7, "key": "resources", "done": _resources_filled(comp.resources)},
         {"step": 8, "key": "expertise", "done": _expertise_filled(raw.get("expertise"))},
         {"step": 9, "key": "international", "done": bool(isinstance(mapping, dict) and mapping.get("analyzedAt"))},

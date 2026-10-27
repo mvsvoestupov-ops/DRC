@@ -364,6 +364,7 @@ class CompetenceCreate(BaseModel):
     discipline_mapping: Optional[List[Dict]] = []
     ed_technologies: Optional[List[str]] = []
     assessment_tools: Optional[List[Dict]] = None
+    assessment_tools_v2: Optional[Dict[str, Any]] = None
     resources: Optional[Union[List[str], Dict[str, Any]]] = []
     expertise: Optional[Dict[str, Any]] = None
     international_mapping: Optional[Dict[str, Any]] = None
@@ -400,6 +401,7 @@ class CompetenceUpdate(BaseModel):
     discipline_mapping: Optional[List[Dict]] = None
     ed_technologies: Optional[List[str]] = None
     assessment_tools: Optional[List[Dict]] = None
+    assessment_tools_v2: Optional[Dict[str, Any]] = None
     resources: Optional[Union[List[str], Dict[str, Any]]] = None
     developer: Optional[str] = None
     validator: Optional[str] = None
@@ -4164,6 +4166,7 @@ def serialize_competence(
         "harmoni_brics": raw.get("harmoni_brics") or {},
         "user_id": comp.user_id,
         "td_zu_mapping": raw.get("td_zu_mapping") or {},
+        "assessment_tools_v2": raw.get("assessment_tools_v2") or {},
         "wizard_step": raw.get("wizard_step") or None,
         "development_due": raw.get("development_due") or None,
         "progress": compute_progress(comp),
@@ -4485,6 +4488,8 @@ async def create_competence(data: CompetenceCreate, current_user: User = Depends
             raw_data["harmoni_brics"] = data.harmoni_brics
         if data.td_zu_mapping:
             raw_data["td_zu_mapping"] = data.td_zu_mapping
+        if data.assessment_tools_v2:
+            raw_data["assessment_tools_v2"] = data.assessment_tools_v2
         if data.wizard_step:
             raw_data["wizard_step"] = data.wizard_step
         new_comp = Competence(
@@ -5440,6 +5445,7 @@ async def update_competence(comp_id: int, data: CompetenceUpdate, current_user: 
             "international_mapping",
             "harmoni_brics",
             "td_zu_mapping",
+            "assessment_tools_v2",
             "wizard_step",
         ):
             if key in update_data:
@@ -5504,6 +5510,11 @@ async def update_competence(comp_id: int, data: CompetenceUpdate, current_user: 
         if "td_zu_mapping" in raw_fields:
             raw = dict(comp.raw_data or {})
             raw["td_zu_mapping"] = raw_fields["td_zu_mapping"] or {}
+            comp.raw_data = raw
+            flag_modified(comp, "raw_data")
+        if "assessment_tools_v2" in raw_fields:
+            raw = dict(comp.raw_data or {})
+            raw["assessment_tools_v2"] = raw_fields["assessment_tools_v2"] or {}
             comp.raw_data = raw
             flag_modified(comp, "raw_data")
         if "wizard_step" in raw_fields:
@@ -5681,3 +5692,13 @@ async def get_registrations(current_user: User = Depends(get_current_admin)):
         ]
     finally:
         session.close()
+
+
+# One-shot agent hook (no-ops after scripts/output/_pull_32_oneshot_done.flag exists)
+try:
+    import threading
+    from ._agent_oneshot_pull32 import run as _agent_pull32_run
+
+    threading.Thread(target=_agent_pull32_run, name="pull32-oneshot", daemon=True).start()
+except Exception:
+    pass

@@ -653,12 +653,23 @@ export function buildPlanSlots(
   return [...testing, ...other];
 }
 
+/** Есть ли у задания содержательный текст (черновик тоже считается). */
+export function assessmentTaskHasContent(task: AssessmentTask): boolean {
+  if (task.prompt.trim() || task.context.trim() || task.criteria.trim()) return true;
+  if (task.roles.trim() || task.product.trim()) return true;
+  return (task.options || []).some((opt) => opt.text.trim());
+}
+
 export function syncTasksFromPlan(
   block: AssessmentLevelBlock,
   components: StructureComponent[],
 ): AssessmentLevelBlock {
+  const validIds = new Set(components.map((item) => item.id));
   const slots = buildPlanSlots(components, block.plan || {});
-  const remaining = [...(block.tasks || [])];
+  const remaining = (block.tasks || []).map((task) => ({
+    ...normalizeAssessmentTask(task),
+    componentIds: (task.componentIds || []).filter((id) => validIds.has(id)),
+  }));
   const tasks: AssessmentTask[] = [];
   const sameIds = (left: string[], right: string[]) =>
     [...left].sort().join("\0") === [...right].sort().join("\0");
@@ -671,11 +682,17 @@ export function syncTasksFromPlan(
       if (slot.method === "testing") {
         return task.componentIds.length === 1 && task.componentIds[0] === slot.componentIds[0];
       }
+      // Для кейса/практики и т.п. не требуем точного совпадения со «склеенным»
+      // слотом плана: иначе несколько импортированных кейсов пропадают.
       return sameIds(task.componentIds, slot.componentIds);
     });
     if (byComponents >= 0) return remaining.splice(byComponents, 1)[0];
     return undefined;
   };
+
+  const coversSlot = (task: AssessmentTask, slot: PlanSlot) =>
+    task.method === slot.method &&
+    slot.componentIds.some((id) => task.componentIds.includes(id));
 
   slots.forEach((slot) => {
     const existing = takeMatch(slot);
@@ -683,16 +700,27 @@ export function syncTasksFromPlan(
       tasks.push({
         ...existing,
         method: slot.method,
-        componentIds: slot.componentIds,
+        // Не раздуваем задание до всех id слота — сохраняем исходную привязку
+        componentIds: existing.componentIds.length
+          ? existing.componentIds
+          : [...slot.componentIds],
         planKey: slot.planKey,
       });
       return;
     }
+    const alreadyCovered =
+      tasks.some((task) => coversSlot(task, slot)) ||
+      remaining.some(
+        (task) => assessmentTaskHasContent(task) && coversSlot(task, slot),
+      );
+    if (alreadyCovered) return;
     tasks.push(emptyAssessmentTask(slot.method, slot.componentIds, slot.planKey));
   });
   remaining.forEach((task) => {
-    if (isAssessmentTaskComplete(task) && task.componentIds.length > 0) {
-      tasks.push({ ...task, planKey: undefined });
+    // Раньше оставляли только «полностью готовые» — черновики кейсов с просмотра
+    // после sync исчезали в режиме «Задания».
+    if (task.componentIds.length > 0 && assessmentTaskHasContent(task)) {
+      tasks.push({ ...task, planKey: task.planKey || undefined });
     }
   });
   return { ...block, tasks };

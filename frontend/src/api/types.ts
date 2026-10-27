@@ -221,6 +221,10 @@ export interface Competence {
   descriptors?: CompetenceDescriptors | Record<string, string>;
   matrix_context?: MatrixContext | null;
   assessment_tools?: any[];
+  assessment_tools_v2?: {
+    version?: number;
+    by_level?: Record<string, unknown>;
+  } | Record<string, unknown>;
   coverage_data?: any[];
   developer?: string;
   validator?: string;

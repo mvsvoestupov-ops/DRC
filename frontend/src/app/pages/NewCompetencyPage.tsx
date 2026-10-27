@@ -97,6 +97,20 @@ import {
   type DisciplineMappingRow,
 } from "@/app/components/DisciplineMappingEditor";
 import { AssessmentConstructor } from "@/app/components/AssessmentConstructor";
+import { AssessmentConstructorV2 } from "@/app/components/AssessmentConstructorV2";
+import {
+  applyV2TestsToAssessmentByLevel,
+  assessmentToolsV2ToByLevel,
+  emptyAssessmentByLevelV2,
+  flattenAssessmentToolsV2,
+  listKnowledgeComponents,
+  listPracticalComponents,
+  normalizeAssessmentByLevelV2,
+  practicalCoverage,
+  seedAssessmentV2FromV1,
+  syncAssessmentByLevelV2,
+  type AssessmentByLevelV2,
+} from "@/lib/assessmentV2";
 import { ExpertiseChecklistForm } from "@/app/components/ExpertiseChecklist";
 import {
   InternationalMappingPreview,
@@ -223,6 +237,7 @@ export function NewCompetencyPage() {
     descriptors: createEmptyDescriptors(),
     matrixContext: null as MatrixContext | null,
     assessmentByLevel: emptyAssessmentByLevel(),
+    assessmentV2: emptyAssessmentByLevelV2() as AssessmentByLevelV2,
     disciplineMapping: [] as DisciplineMappingRow[],
     resources: emptyCompetenceResources() as CompetenceResources,
     expertise: {} as ExpertiseChecklist,
@@ -264,16 +279,17 @@ export function NewCompetencyPage() {
       { number: 4, name: t("wizard.step4"), label: "4" },
       { number: 5, name: t("wizard.step5"), label: "5" },
       { number: 6, name: t("wizard.step6"), label: "6" },
-      { number: 7, name: t("wizard.step7"), label: "7" },
-      { number: 8, name: t("wizard.step8"), label: "8" },
-      { number: 9, name: t("wizard.step9"), label: "9" },
-      { number: 10, name: t("wizard.step91"), label: "9.1" },
+      { number: 7, name: t("wizard.step61"), label: "6.1" },
+      { number: 8, name: t("wizard.step7"), label: "7" },
+      { number: 9, name: t("wizard.step8"), label: "8" },
+      { number: 10, name: t("wizard.step9"), label: "9" },
+      { number: 11, name: t("wizard.step91"), label: "9.1" },
     ];
     if (isIntlMethodologist) {
-      list.push({ number: 11, name: t("wizard.step92"), label: "9.2" });
-      list.push({ number: 12, name: t("wizard.step10"), label: "10" });
+      list.push({ number: 12, name: t("wizard.step92"), label: "9.2" });
+      list.push({ number: 13, name: t("wizard.step10"), label: "10" });
     } else {
-      list.push({ number: 11, name: t("wizard.step10"), label: "10" });
+      list.push({ number: 12, name: t("wizard.step10"), label: "10" });
     }
     return list;
   }, [t, isIntlMethodologist]);
@@ -480,7 +496,7 @@ export function NewCompetencyPage() {
   useEffect(() => {
     if (currentStep !== 9 && currentStep !== 10) return;
     let cancelled = false;
-    const loader = currentStep === 9 ? apiClient.getGarmEscoStatus() : apiClient.getHarmoniBricsStatus();
+    const loader = currentStep === 10 ? apiClient.getGarmEscoStatus() : apiClient.getHarmoniBricsStatus();
     loader
       .then((status) => {
         if (!cancelled) setAiAgentConfigured(Boolean(status.configured));
@@ -575,6 +591,7 @@ export function NewCompetencyPage() {
         : prev.tdZu,
       disciplineMapping: syncDisciplineMapping(structure, prev.disciplineMapping),
       assessmentByLevel: syncAssessmentByLevel(structure, prev.assessmentByLevel),
+      assessmentV2: syncAssessmentByLevelV2(structure, prev.assessmentV2),
     }));
   };
 
@@ -685,6 +702,11 @@ export function NewCompetencyPage() {
         // Склейка по id и по category|text — переживает пересоздание si-* id.
         const disciplineMapping = syncDisciplineMapping(structure, fromServer);
         const assessmentByLevel = assessmentToolsToByLevel(comp.assessment_tools, structure);
+        const assessmentV2 = seedAssessmentV2FromV1(
+          structure,
+          assessmentByLevel,
+          assessmentToolsV2ToByLevel(comp.assessment_tools_v2, structure),
+        );
         setFormData((prev) => ({
           ...prev,
           title: comp.name || "",
@@ -707,6 +729,7 @@ export function NewCompetencyPage() {
           descriptors: normalizeDescriptorMap(comp.descriptors),
           matrixContext: comp.matrix_context || null,
           assessmentByLevel,
+          assessmentV2,
           disciplineMapping,
           resources: parseCompetenceResources(comp.resources),
           expertise: (comp.expertise || {}) as ExpertiseChecklist,
@@ -942,6 +965,10 @@ export function NewCompetencyPage() {
           structure,
           removedTfCodes ? emptyAssessmentByLevel() : prev.assessmentByLevel,
         ),
+        assessmentV2: syncAssessmentByLevelV2(
+          structure,
+          removedTfCodes ? emptyAssessmentByLevelV2() : prev.assessmentV2,
+        ),
       };
 
       // Смена/снятие ТФ сбрасывает международные сопоставления, собранные по старой структуре.
@@ -980,6 +1007,7 @@ export function NewCompetencyPage() {
     descriptors: formData.descriptors,
     discipline_mapping: flattenDisciplineMapping(formData.disciplineMapping),
     assessment_tools: buildAssessmentTools(),
+    assessment_tools_v2: flattenAssessmentToolsV2(formData.assessmentV2),
     ed_technologies: uniqueAssessmentMethodLabels(formData.assessmentByLevel),
     resources: resourcesPayload(formData.resources),
     expertise: formData.expertise,
@@ -1060,12 +1088,12 @@ export function NewCompetencyPage() {
           return t("wizard.needB");
         }
         return null;
-      case 7:
+      case 8:
         if (!resourcesFilled(formData.resources)) {
           return t("wizard.needResources");
         }
         return null;
-      case 8:
+      case 9:
         if (EXPERTISE_CRITERIA.some((_, index) => !formData.expertise[criterionKey(index)]?.value)) {
           return t("wizard.needValidation");
         }
@@ -1129,6 +1157,7 @@ export function NewCompetencyPage() {
       competenceKind: fd.competenceKind,
       descriptors: fd.descriptors,
       assessmentByLevel: fd.assessmentByLevel,
+      assessmentV2: fd.assessmentV2,
       disciplineMapping: fd.disciplineMapping,
       resources: fd.resources,
       expertise: fd.expertise,
@@ -1176,6 +1205,31 @@ export function NewCompetencyPage() {
     }, 300);
     return () => window.clearTimeout(timer);
   }, [hydrating, competenceId, editId]);
+
+  // Шаг 6 → 6.1: подтянуть тесты A и практику B/C, если в 6.1 ещё пусто
+  useEffect(() => {
+    if (hydrating || currentStep !== 7) return;
+    setFormData((prev) => {
+      const seeded = seedAssessmentV2FromV1(
+        prev.structure,
+        prev.assessmentByLevel,
+        prev.assessmentV2,
+      );
+      const same = FORMATION_LEVELS.every((level) => {
+        const left = seeded[level];
+        const right = prev.assessmentV2[level];
+        if (!right) return false;
+        if (left.compositionDone !== right.compositionDone) return false;
+        if (JSON.stringify(left.tests) !== JSON.stringify(right.tests)) return false;
+        if (JSON.stringify(left.practicalTasks) !== JSON.stringify(right.practicalTasks)) {
+          return false;
+        }
+        return true;
+      });
+      if (same) return prev;
+      return { ...prev, assessmentV2: seeded };
+    });
+  }, [hydrating, currentStep]);
 
   const persistDraft = async (stepToStore: number) => {
     const payload = { ...buildPayload("проект"), wizard_step: stepToStore };
@@ -2126,6 +2180,26 @@ export function NewCompetencyPage() {
               )}
 
               {currentStep === 7 && (
+                <div data-presence-fragment="assessment-v2">
+                  <AssessmentConstructorV2
+                    structure={formData.structure}
+                    value={formData.assessmentV2}
+                    onChange={(assessmentV2) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        assessmentV2,
+                        assessmentByLevel: applyV2TestsToAssessmentByLevel(
+                          prev.structure,
+                          prev.assessmentByLevel,
+                          assessmentV2,
+                        ),
+                      }))
+                    }
+                  />
+                </div>
+              )}
+
+              {currentStep === 8 && (
                 <div className="space-y-6" data-presence-fragment="resources">
                   <div>
                     <h2 className="text-xl font-semibold text-gray-900">{t("wizard.step7Title")}</h2>
@@ -2138,7 +2212,7 @@ export function NewCompetencyPage() {
                 </div>
               )}
 
-              {currentStep === 8 && (
+              {currentStep === 9 && (
                 <div className="space-y-6" data-presence-fragment="expertise">
                   <div>
                     <h2 className="text-xl font-semibold text-gray-900">{t("wizard.step8Title")}</h2>
@@ -2153,7 +2227,7 @@ export function NewCompetencyPage() {
                 </div>
               )}
 
-              {currentStep === 9 && (
+              {currentStep === 10 && (
                 <div data-presence-fragment="international">
                 <InternationalMappingStep
                   value={formData.internationalMapping}
@@ -2169,7 +2243,7 @@ export function NewCompetencyPage() {
                 </div>
               )}
 
-              {currentStep === 10 && (
+              {currentStep === 11 && (
                 <div data-presence-fragment="harmoni-brics">
                   <HarmoniBricsStep
                     value={formData.harmoniBrics}
@@ -2182,7 +2256,7 @@ export function NewCompetencyPage() {
                 </div>
               )}
 
-              {isIntlMethodologist && currentStep === 11 && (
+              {isIntlMethodologist && currentStep === 12 && (
                 <div data-presence-fragment="intl-harmonization">
                   <HarmonizationStep92 competenceId={competenceId} />
                 </div>
@@ -2538,6 +2612,105 @@ export function NewCompetencyPage() {
                     })()}
                   </section>
 
+                  <section className="rounded-xl border border-gray-200 bg-white p-5 space-y-5">
+                    <h3 className="text-sm font-semibold uppercase tracking-wide text-primary">
+                      6.1. {t("wizard.step61")}
+                    </h3>
+                    {(() => {
+                      const assessmentV2 = normalizeAssessmentByLevelV2(formData.assessmentV2);
+                      const knowledge = listKnowledgeComponents(formData.structure);
+                      const practical = listPracticalComponents(formData.structure);
+                      const byId = new Map(
+                        [...knowledge, ...practical].map((item) => [item.id, item]),
+                      );
+                      return (
+                        <>
+                          {FORMATION_LEVELS.map((level) => {
+                            const block = assessmentV2[level];
+                            const filledTests = block.tests.filter((item) => item.prompt.trim());
+                            const filledPractical = block.practicalTasks.filter((item) => item.prompt.trim());
+                            const coverage = practicalCoverage(formData.structure, block.practicalTasks);
+                            return (
+                              <div key={`v2-${level}`} className="rounded-lg border border-gray-100 bg-gray-50 p-4 space-y-3">
+                                <h4 className="text-sm font-semibold text-gray-900">
+                                  {translateKeyed(t, FORMATION_I18N_KEYS, level)}
+                                </h4>
+                                <p className="text-xs text-gray-600">
+                                  {t("assessmentV2.coverage", {
+                                    covered: coverage.covered,
+                                    total: coverage.total,
+                                  })}
+                                  {block.compositionDone ? ` · ${t("assessmentV2.coverageComplete")}` : null}
+                                </p>
+                                <div className="space-y-2">
+                                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                                    {t("assessmentV2.knowledgeTitle")}
+                                  </p>
+                                  {filledTests.length === 0 ? (
+                                    <p className="text-sm text-gray-400">{t("wizard.empty")}</p>
+                                  ) : (
+                                    <ul className="space-y-2">
+                                      {filledTests.map((item) => {
+                                        const codes = (item.componentIds || [])
+                                          .map((id) => byId.get(id)?.code)
+                                          .filter(Boolean)
+                                          .join(", ");
+                                        return (
+                                          <li key={item.id} className="text-sm text-gray-800">
+                                            <span className="font-medium">{codes || "A"}.</span>{" "}
+                                            <span className="whitespace-pre-line">{item.prompt}</span>
+                                          </li>
+                                        );
+                                      })}
+                                    </ul>
+                                  )}
+                                </div>
+                                <div className="space-y-2">
+                                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                                    {t("assessmentV2.practicalTitle")}
+                                  </p>
+                                  {block.practicalTasks.length === 0 ? (
+                                    <p className="text-sm text-gray-400">{t("wizard.empty")}</p>
+                                  ) : (
+                                    <ul className="space-y-3">
+                                      {block.practicalTasks.map((task) => {
+                                        const codes = (task.componentIds || [])
+                                          .map((id) => byId.get(id)?.code)
+                                          .filter(Boolean)
+                                          .join(", ");
+                                        return (
+                                          <li key={task.id} className="text-sm text-gray-800">
+                                            <div className="font-medium">
+                                              {task.name || t("assessmentV2.practicalCardTitle")}
+                                            </div>
+                                            {codes ? (
+                                              <div className="text-xs text-gray-500 mt-0.5">
+                                                {t("detail.covers")} {codes}
+                                              </div>
+                                            ) : null}
+                                            {filledPractical.some((item) => item.id === task.id) ? (
+                                              <p className="whitespace-pre-line leading-snug mt-1">{task.prompt}</p>
+                                            ) : null}
+                                            {task.criteria.some((c) => c.trim()) ? (
+                                              <p className="text-xs text-gray-600 mt-1 whitespace-pre-line">
+                                                {t("wizard.criteria")}{" "}
+                                                {task.criteria.filter((c) => c.trim()).join("; ")}
+                                              </p>
+                                            ) : null}
+                                          </li>
+                                        );
+                                      })}
+                                    </ul>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </>
+                      );
+                    })()}
+                  </section>
+
                   <section className="rounded-xl border border-gray-200 bg-white p-5 space-y-4">
                     <h3 className="text-sm font-semibold uppercase tracking-wide text-primary">
                       7. {t("wizard.sectionResources")}
@@ -2605,7 +2778,7 @@ export function NewCompetencyPage() {
 
                   <section className="rounded-xl border border-gray-200 bg-white p-5 space-y-4">
                     <h3 className="text-sm font-semibold uppercase tracking-wide text-primary">
-                      9. {t("wizard.sectionMapping")}
+                      9. {t("wizard.step9")}
                     </h3>
                     <InternationalMappingPreview value={formData.internationalMapping} />
                   </section>
