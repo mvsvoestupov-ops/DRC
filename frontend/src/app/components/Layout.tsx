@@ -1,5 +1,5 @@
 import { Outlet, Link, useNavigate, useLocation } from "react-router";
-import { Search, User, LogOut, FolderOpen, BookOpen, GraduationCap, Play, ScrollText, ClipboardList, Users, Globe2 } from "lucide-react";
+import { Search, User, LogOut, FolderOpen, BookOpen, GraduationCap, Play, ScrollText, ClipboardList, Users, Globe2, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useI18n } from "@/context/I18nContext";
 import { cn } from "@/lib/utils";
 import { LanguageSwitcher } from "@/app/components/LanguageSwitcher";
+import { FooterFeedbackForm } from "@/app/components/FooterFeedbackForm";
 
 function NavLink({ to, children }: { to: string; children: React.ReactNode }) {
   const { pathname } = useLocation();
@@ -199,12 +200,17 @@ export function Layout() {
                 <NavLink to="/admin">{isModerator ? t("nav.moderation") : t("nav.expert")}</NavLink>
               )}
               {isAdmin && !isImpersonating && (
-                <NavLink to="/admin/users">
-                  <Users className="w-3.5 h-3.5" />
-                  {t("nav.users")}
-                </NavLink>
+                <>
+                  <NavLink to="/admin/users">
+                    <Users className="w-3.5 h-3.5" />
+                    {t("nav.users")}
+                  </NavLink>
+                  <NavLink to="/admin/feedback">
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    {t("nav.feedback")}
+                  </NavLink>
+                </>
               )}
-              <NavLink to="/integration">{t("nav.integration")}</NavLink>
             </nav>
           </div>
         </div>
@@ -216,7 +222,7 @@ export function Layout() {
 
       <footer className="bg-footer text-footer-muted">
         <div className="site-wrap py-12">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
             <div>
               <h3 className="font-semibold text-white mb-4">{t("footer.aboutRegistry")}</h3>
               <ul className="space-y-2 text-base">
@@ -238,26 +244,6 @@ export function Layout() {
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold text-white mb-4">{t("footer.forDevs")}</h3>
-              <ul className="space-y-2 text-base">
-                <li>
-                  <Link to="/integration" className="text-footer-muted hover:text-white transition-colors">
-                    {t("footer.api")}
-                  </Link>
-                </li>
-                <li>
-                  <a href="#" className="text-footer-muted hover:text-white transition-colors">
-                    {t("footer.support")}
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-footer-muted hover:text-white transition-colors">
-                    {t("footer.examples")}
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
               <h3 className="font-semibold text-white mb-4">{t("footer.help")}</h3>
               <ul className="space-y-2 text-base">
                 <li>
@@ -270,20 +256,10 @@ export function Layout() {
                     {t("footer.faq")}
                   </a>
                 </li>
-                <li>
-                  <a href="#" className="text-footer-muted hover:text-white transition-colors">
-                    {t("footer.feedback")}
-                  </a>
-                </li>
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold text-white mb-4">{t("footer.contacts")}</h3>
-              <ul className="space-y-2 text-base text-footer-muted">
-                <li>Email: info@nrk.edu.ru</li>
-                <li>{t("footer.phone")} +7 (495) 123-45-67</li>
-                <li>{t("footer.address")}</li>
-              </ul>
+              <FooterFeedbackForm />
             </div>
           </div>
           <div className="border-t border-gray-700 pt-6 flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center text-sm">

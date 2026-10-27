@@ -9,7 +9,6 @@ import { NewCompetencyPage } from "./pages/NewCompetencyPage";
 import { AdminPage } from "./pages/AdminPage";
 import { UsersAdminPage } from "./pages/UsersAdminPage";
 import { InternationalMappingAdminPage } from "./pages/InternationalMappingAdminPage";
-import { IntegrationPage } from "./pages/IntegrationPage";
 import { MethodologyPage } from "./pages/MethodologyPage";
 import { MethodologyTopicPage } from "./pages/MethodologyTopicPage";
 import { AboutPage } from "./pages/AboutPage";
@@ -22,6 +21,7 @@ import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { MyProjectsPage } from "./pages/MyProjectsPage";
 import { InDevelopmentPage } from "./pages/InDevelopmentPage";
+import { AdminFeedbackPage } from "./pages/AdminFeedbackPage";
 import {
   StandardsPage,
   QualificationsListPage,
@@ -162,6 +162,14 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: "admin/feedback",
+        element: (
+          <RequireAdmin>
+            <AdminFeedbackPage />
+          </RequireAdmin>
+        ),
+      },
+      {
         path: "admin/international-mapping",
         element: (
           <RequireIntlMethodologist>
@@ -184,7 +192,7 @@ export const router = createBrowserRouter([
       { path: "about", Component: AboutPage },
       { path: "user-guide", Component: UserGuidePage },
       { path: "guide", element: <Navigate to="/user-guide" replace /> },
-      { path: "integration", Component: IntegrationPage },
+      { path: "integration", element: <Navigate to="/" replace /> },
       { path: "login", Component: LoginPage },
       { path: "register", Component: RegisterPage },
       { path: "forgot-password", Component: ForgotPasswordPage },

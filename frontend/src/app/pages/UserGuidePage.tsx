@@ -317,13 +317,6 @@ export function UserGuidePage() {
               <li>{t("guide.s1")}</li>
               <li>{t("guide.s2")}</li>
               <li>{t("guide.s3")}</li>
-              <li>
-                {t("guide.s4a")}{" "}
-                <Link to="/integration" className="text-primary font-medium hover:underline">
-                  {t("guide.s4b")}
-                </Link>{" "}
-                {t("guide.s4c")}
-              </li>
             </ul>
           </div>
         </section>

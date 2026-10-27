@@ -673,8 +673,74 @@ class ApiClient {
     });
 
   // Feedback
-  sendFeedback = (section: string, text: string) => this.post('/feedback', { section, text });
-  getFeedback = () => this.get<any[]>('/feedback');
+  sendFeedback = (payload: {
+    section: string;
+    text: string;
+    attachments?: Array<{
+      id: string;
+      kind: string;
+      name: string;
+      mime: string;
+      url: string;
+      size: number;
+    }>;
+  }) => this.post<{ status: string; id: number }>('/feedback', payload);
+
+  getFeedback = () =>
+    this.get<
+      Array<{
+        id: number;
+        section: string;
+        text: string;
+        attachments: Array<{
+          id: string;
+          kind: string;
+          name: string;
+          mime: string;
+          url: string;
+          size: number;
+        }>;
+        user_id: number | null;
+        user_email: string | null;
+        user_name: string | null;
+        created_at: string | null;
+      }>
+    >('/feedback');
+
+  uploadFeedbackMedia = (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.post<{
+      id: string;
+      kind: string;
+      name: string;
+      mime: string;
+      url: string;
+      size: number;
+    }>('/feedback-media', formData);
+  };
+
+  openFeedbackMedia = async (fileId: string, fileName?: string) => {
+    const token = this.getToken();
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const response = await fetch(`${BASE_URL}/feedback-media/${fileId}`, { headers });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        typeof errorData.detail === 'string' ? errorData.detail : `HTTP error ${response.status}`,
+      );
+    }
+    const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = objectUrl;
+    anchor.target = '_blank';
+    anchor.rel = 'noopener noreferrer';
+    if (fileName) anchor.download = fileName;
+    anchor.click();
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+  };
 
   // Registrations
   getRegistrations = () => this.get<any[]>('/registrations');

@@ -141,6 +141,7 @@ from .db.schema import (
     ensure_assessment_tools_columns,
     ensure_competence_public_code_column,
     ensure_competence_activity_columns,
+    ensure_feedback_columns,
 )
 from .level_matrix import load_matrix, load_structured_matrix, matrix_summary, DOCX_PATH
 from .reference_data import (
@@ -162,6 +163,7 @@ from .competence_profile import (
     validate_competence_payload,
 )
 from .assessment_media import router as assessment_media_router
+from .feedback_media import router as feedback_media_router
 from .prof_training_registry import (
     ensure_prof_training_seeded,
     import_prof_training_from_path,
@@ -204,6 +206,8 @@ for col in ensure_assessment_tools_columns():
 for col in ensure_competence_public_code_column():
     print(f"DB migration: added column {col}")
 for col in ensure_competence_activity_columns():
+    print(f"DB migration: added column {col}")
+for col in ensure_feedback_columns():
     print(f"DB migration: added column {col}")
 
 
@@ -326,6 +330,7 @@ app.add_middleware(
 )
 
 app.include_router(assessment_media_router)
+app.include_router(feedback_media_router)
 
 
 @app.on_event("startup")
@@ -476,9 +481,19 @@ class CoverageRequest(BaseModel):
     standard_id: int
     selected_tf_codes: List[str]
 
+class FeedbackAttachmentIn(BaseModel):
+    id: str
+    kind: str = "text"
+    name: str = ""
+    mime: str = ""
+    url: str = ""
+    size: int = 0
+
+
 class FeedbackCreate(BaseModel):
-    section: str
+    section: str = "project"
     text: str
+    attachments: Optional[List[FeedbackAttachmentIn]] = None
 
 
 class UserCreate(BaseModel):
@@ -5620,9 +5635,29 @@ async def calculate_coverage(req: CoverageRequest, current_user: User = Depends(
 
 @app.post("/feedback")
 async def create_feedback(data: FeedbackCreate, current_user: User = Depends(get_current_user)):
+    text = (data.text or "").strip()
+    if len(text) < 5:
+        raise HTTPException(400, detail="Опишите предложение или замечание подробнее")
+    attachments = [
+        {
+            "id": item.id,
+            "kind": item.kind,
+            "name": item.name,
+            "mime": item.mime,
+            "url": item.url or f"/feedback-media/{item.id}",
+            "size": item.size,
+        }
+        for item in (data.attachments or [])
+        if item and item.id
+    ]
     session = SessionLocal()
     try:
-        feedback = Feedback(section=data.section, text=data.text)
+        feedback = Feedback(
+            section=(data.section or "project").strip() or "project",
+            text=text,
+            user_id=current_user.id,
+            attachments=attachments,
+        )
         session.add(feedback)
         session.commit()
         session.refresh(feedback)
@@ -5638,15 +5673,31 @@ async def list_feedback(current_user: User = Depends(get_current_admin)):
     session = SessionLocal()
     try:
         items = session.query(Feedback).order_by(Feedback.created_at.desc()).all()
-        return [
-            {
-                "id": f.id,
-                "section": f.section,
-                "text": f.text,
-                "created_at": f.created_at.isoformat() if f.created_at else None
-            }
-            for f in items
-        ]
+        out = []
+        for item in items:
+            user = session.query(User).filter(User.id == item.user_id).first() if item.user_id else None
+            out.append(
+                {
+                    "id": item.id,
+                    "section": item.section,
+                    "text": item.text,
+                    "attachments": item.attachments or [],
+                    "user_id": item.user_id,
+                    "user_email": getattr(user, "email", None),
+                    "user_name": " ".join(
+                        part
+                        for part in [
+                            getattr(user, "last_name", None) or "",
+                            getattr(user, "first_name", None) or "",
+                            getattr(user, "middle_name", None) or "",
+                        ]
+                        if part
+                    ).strip()
+                    or None,
+                    "created_at": item.created_at.isoformat() if item.created_at else None,
+                }
+            )
+        return out
     finally:
         session.close()
 

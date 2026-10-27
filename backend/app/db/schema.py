@@ -171,3 +171,16 @@ def ensure_assessment_tools_columns() -> list[str]:
     ):
         added.append("assessment_tools.status")
     return added
+
+
+def ensure_feedback_columns() -> list[str]:
+    """Обратная связь: автор и вложения."""
+    added: list[str] = []
+    specs = (
+        ("feedback", "user_id", "user_id INTEGER"),
+        ("feedback", "attachments", "attachments JSON"),
+    )
+    for table, column, ddl in specs:
+        if _add_column_if_missing(table, column, ddl):
+            added.append(f"{table}.{column}")
+    return added
