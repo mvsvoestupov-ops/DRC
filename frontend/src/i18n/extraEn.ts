@@ -288,12 +288,19 @@ export const extraEn: ExtraMessages = {
     accept: "Accept",
     reject: "Decline",
     empty: "No projects",
+    emptyModerator:
+      "Moderators do not take part in development. Applications for review are in Moderation.",
     createEmpty: "Create a project",
     leader: "Leader",
     member: "Member",
     qualification: "Qualification: {name}",
     develop: "Develop",
     approved: "Approved",
+  },
+  notifications: {
+    title: "Notifications",
+    empty: "No notifications",
+    markAll: "Mark all as read",
   },
   inDev: {
     title: "In development",
@@ -499,7 +506,8 @@ export const extraEn: ExtraMessages = {
     loadError: "Could not load applications.",
     moderatorTitle: "Moderator panel",
     expertTitle: "Expert panel",
-    moderatorLead: "Competencies under review. Assign at least three experts.",
+    moderatorLead:
+      "Competencies under review. Assign at least three experts. You get notifications when step 7 (MTO) is filled and when a competency is submitted for review.",
     expertLead: "Approved competencies and applications assigned to you for expert review.",
     total: "Total",
     pending: "Under review",
@@ -1012,8 +1020,8 @@ export const extraEn: ExtraMessages = {
     reviewLead:
       "An application with “under review” status appears in the staff panel. The moderator assigns reviewers; the expert completes the checklist on the competency card.",
     moderator: "Moderator",
-    m1: "Open “Moderation” in the header.",
-    m2: "Select an application under review and go to the card.",
+    m1: "Moderators do not develop passports: use notifications (bell) and “Moderation”.",
+    m2: "Select an application under review and open the card (content is view-only).",
     m3: "Assign at least three experts from the list. Without this the expert review is not considered staffed.",
     expert: "Expert",
     e1: "Open the “Expert panel” and the card of the assigned application.",

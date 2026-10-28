@@ -285,12 +285,19 @@ export const extraVi: ExtraMessages = {
     accept: "Chấp nhận",
     reject: "Từ chối",
     empty: "Không có dự án",
+    emptyModerator:
+      "Người kiểm duyệt không tham gia phát triển. Hồ sơ thẩm định nằm ở «Kiểm duyệt».",
     createEmpty: "Tạo dự án",
     leader: "Trưởng nhóm",
     member: "Thành viên",
     qualification: "Trình độ: {name}",
     develop: "Phát triển",
     approved: "Đã phê duyệt",
+  },
+  notifications: {
+    title: "Thông báo",
+    empty: "Không có thông báo",
+    markAll: "Đánh dấu đã đọc tất cả",
   },
   inDev: {
     title: "Đang phát triển",

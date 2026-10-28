@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef, type SyntheticEvent } from "react";
-import { Link, useNavigate, useParams } from "react-router";
+import { Link, Navigate, useNavigate, useParams } from "react-router";
 import { ArrowLeft, ArrowRight, Award, FileDown, Loader2, Plus, Save, Send, X } from "lucide-react";
 import { DESCRIPTOR_CATEGORIES, FORMATION_LEVELS, formationLevelsForEducation } from "@/lib/competenceMappers";
 import { DISCIPLINE_CONTROL_I18N_KEYS } from "@/lib/disciplineControl";
@@ -1480,6 +1480,10 @@ export function NewCompetencyPage() {
         </Link>
       </PageShell>
     );
+  }
+
+  if (user?.role === "moderator") {
+    return <Navigate to="/admin" replace />;
   }
 
   if (hydrating) {

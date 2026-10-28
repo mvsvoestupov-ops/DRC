@@ -10,6 +10,7 @@ from .esco_models import EscoOccupation, EscoSkill, EscoOccupationSkill, EscoMet
 from .harmonization_models import HarmonizationVersion, HarmonizationStepState, PassportHarmonization  # noqa: F401
 from .session import engine, SessionLocal
 from .feedback_models import Feedback
+from .notification_models import Notification  # noqa: F401
 from .registration_models import Registration
 from .fts_models import FtsStandard  # noqa: F401 — таблица fts_standards для поиска
 from .prof_training_models import ProfTrainingProfession  # noqa: F401

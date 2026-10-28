@@ -61,8 +61,9 @@ function StatCard({ to, state, icon: Icon, color, bg, value, label, trend, loadi
 }
 
 export function HomePage() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { t, intlLocale } = useI18n();
+  const isModeratorOnly = user?.role === "moderator";
   const [recentCompetencies, setRecentCompetencies] = useState<CompetenceListItem[]>([]);
   const [stats, setStats] = useState<CompetenceStats>({
     total: 0,
@@ -133,13 +134,22 @@ export function HomePage() {
                 <Search className="w-5 h-5" />
                 {t("home.find")}
               </Link>
-              <Link
-                to="/new"
-                className="inline-flex items-center gap-3 px-8 py-4 bg-white/10 text-white rounded-lg text-base font-semibold border-2 border-white/30 hover:bg-white/20 transition-all"
-              >
-                <Plus className="w-5 h-5" />
-                {t("home.propose")}
-              </Link>
+              {!isModeratorOnly ? (
+                <Link
+                  to="/new"
+                  className="inline-flex items-center gap-3 px-8 py-4 bg-white/10 text-white rounded-lg text-base font-semibold border-2 border-white/30 hover:bg-white/20 transition-all"
+                >
+                  <Plus className="w-5 h-5" />
+                  {t("home.propose")}
+                </Link>
+              ) : (
+                <Link
+                  to="/admin"
+                  className="inline-flex items-center gap-3 px-8 py-4 bg-white/10 text-white rounded-lg text-base font-semibold border-2 border-white/30 hover:bg-white/20 transition-all"
+                >
+                  {t("nav.moderation")}
+                </Link>
+              )}
             </div>
           </div>
         </div>

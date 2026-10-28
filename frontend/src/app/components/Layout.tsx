@@ -8,6 +8,7 @@ import { useI18n } from "@/context/I18nContext";
 import { cn } from "@/lib/utils";
 import { LanguageSwitcher } from "@/app/components/LanguageSwitcher";
 import { FooterFeedbackForm } from "@/app/components/FooterFeedbackForm";
+import { NotificationBell } from "@/app/components/NotificationBell";
 
 function NavLink({ to, children }: { to: string; children: React.ReactNode }) {
   const { pathname } = useLocation();
@@ -119,6 +120,7 @@ export function Layout() {
 
               {isAuthenticated ? (
                 <div className="flex items-center gap-3 shrink-0">
+                  {user?.role === "moderator" ? <NotificationBell /> : null}
                   <Button variant="outline" size="default" className="gap-2" asChild>
                     <Link to="/profile">
                       <User className="w-4 h-4" />
@@ -161,7 +163,9 @@ export function Layout() {
             <nav className="flex gap-6 h-14 items-center text-base overflow-x-auto whitespace-nowrap">
               <NavLink to="/">{t("nav.home")}</NavLink>
               <NavLink to="/search">{t("nav.search")}</NavLink>
-              <NavLink to="/new">{t("nav.propose")}</NavLink>
+              {user?.role !== "moderator" ? (
+                <NavLink to="/new">{t("nav.propose")}</NavLink>
+              ) : null}
               {isAuthenticated && isAdmin && (
                 <>
                   <NavLink to="/strategic-session">

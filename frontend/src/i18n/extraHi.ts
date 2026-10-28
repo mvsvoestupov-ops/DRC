@@ -284,12 +284,19 @@ export const extraHi: ExtraMessages = {
     accept: "स्वीकार करें",
     reject: "अस्वीकार करें",
     empty: "कोई परियोजना नहीं",
+    emptyModerator:
+      "मॉडरेटर विकास में भाग नहीं लेते। समीक्षा के लिए आवेदन «मॉडरेशन» में हैं।",
     createEmpty: "परियोजना बनाएँ",
     leader: "प्रमुख",
     member: "सदस्य",
     qualification: "योग्यता: {name}",
     develop: "विकसित करें",
     approved: "स्वीकृत",
+  },
+  notifications: {
+    title: "सूचनाएँ",
+    empty: "कोई सूचना नहीं",
+    markAll: "सभी पढ़ें",
   },
   inDev: {
     title: "विकास में",

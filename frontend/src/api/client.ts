@@ -672,6 +672,27 @@ class ApiClient {
       selected_tf_codes: selectedTfCodes,
     });
 
+  // Notifications
+  getNotifications = (unreadOnly = false) =>
+    this.get<{
+      items: Array<{
+        id: number;
+        kind: string;
+        title: string;
+        body: string;
+        competence_id: number | null;
+        link: string | null;
+        read_at: string | null;
+        created_at: string | null;
+        is_read: boolean;
+      }>;
+      unread_count: number;
+    }>(`/notifications${unreadOnly ? '?unread_only=true' : ''}`);
+
+  markNotificationRead = (id: number) => this.post(`/notifications/${id}/read`);
+
+  markAllNotificationsRead = () => this.post<{ status: string; updated: number }>('/notifications/read-all');
+
   // Feedback
   sendFeedback = (payload: {
     section: string;

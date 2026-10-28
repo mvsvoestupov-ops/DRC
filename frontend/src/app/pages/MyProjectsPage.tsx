@@ -15,8 +15,9 @@ import { DevelopmentProgressBar } from '@/app/components/ProjectActivityPanel';
 
 export function MyProjectsPage() {
   const navigate = useNavigate();
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const { t } = useI18n();
+  const isModeratorOnly = user?.role === 'moderator';
   const createHref = isAdmin ? '/strategic-session' : '/new';
   const [projects, setProjects] = useState<Competence[]>([]);
   const [invites, setInvites] = useState<CompetenceInvite[]>([]);
@@ -94,10 +95,12 @@ export function MyProjectsPage() {
         title={t('projects.title')}
         description={t('projects.lead')}
         actions={
-          <Button onClick={() => navigate(createHref)}>
-            <Plus className="w-4 h-4 mr-2" />
-            {t('projects.create')}
-          </Button>
+          isModeratorOnly ? undefined : (
+            <Button onClick={() => navigate(createHref)}>
+              <Plus className="w-4 h-4 mr-2" />
+              {t('projects.create')}
+            </Button>
+          )
         }
       />
 
@@ -109,7 +112,7 @@ export function MyProjectsPage() {
         </div>
       )}
 
-      {invites.length > 0 && (
+      {!isModeratorOnly && invites.length > 0 && (
         <Card>
           <CardContent className="p-4 space-y-3">
             <h3 className="text-base font-semibold text-gray-900">{t('projects.invites')}</h3>
@@ -139,10 +142,18 @@ export function MyProjectsPage() {
         <Card className="border-dashed">
           <CardContent className="p-12 text-center">
             <Plus className="w-12 h-12 mx-auto text-muted-foreground/50 mb-3" />
-            <p className="text-muted-foreground">{t('projects.empty')}</p>
-            <Button variant="outline" className="mt-4" onClick={() => navigate(createHref)}>
-              {t('projects.createEmpty')}
-            </Button>
+            <p className="text-muted-foreground">
+              {isModeratorOnly ? t('projects.emptyModerator') : t('projects.empty')}
+            </p>
+            {!isModeratorOnly ? (
+              <Button variant="outline" className="mt-4" onClick={() => navigate(createHref)}>
+                {t('projects.createEmpty')}
+              </Button>
+            ) : (
+              <Button variant="outline" className="mt-4" onClick={() => navigate('/admin')}>
+                {t('nav.moderation')}
+              </Button>
+            )}
           </CardContent>
         </Card>
       ) : (

@@ -36,8 +36,17 @@ from .db.competence_models import (
     CompetenceActivityLog,
 )
 from .db.feedback_models import Feedback
+from .db.notification_models import Notification
 from .db.user_models import User
 from .db.registration_models import Registration
+from .notifications import (
+    KIND_REVIEW_SUBMITTED,
+    KIND_STEP7_DONE,
+    mark_notification_read,
+    notify_moderators,
+    resources_mto_filled,
+    serialize_notification,
+)
 from .db.fgos_models import FgosSpo
 from .esco_registry import (
     occupation_skills,
@@ -4241,12 +4250,14 @@ def _serialize_competence_for_user(
 ) -> dict:
     role = _collaboration_role(session, user, comp)
     admin = user_role(user) == "admin"
+    moderator_only = user_role(user) == "moderator"
     intl_only = user_role(user) == "intl_methodologist"
     intl = is_intl_methodologist_role(user)
     status = comp.status
-    can_invite = (admin or role == "leader") and status != CompetenceStatus.APPROVED
+    can_invite = (admin or role == "leader") and status != CompetenceStatus.APPROVED and not moderator_only
     # Методист-международник может открывать паспорт для 9.2 (и править поля при необходимости).
-    can_edit = (
+    # Модератор только смотрит и назначает экспертов — без участия в разработке.
+    can_edit = (not moderator_only) and (
         admin
         or intl_only
         or role == "leader"
@@ -4450,6 +4461,11 @@ async def get_public_competence_document_docx(comp_id: int):
 
 @app.post("/competences")
 async def create_competence(data: CompetenceCreate, current_user: User = Depends(get_current_user)):
+    if user_role(current_user) == "moderator":
+        raise HTTPException(
+            403,
+            "Модератор не участвует в разработке компетенций. Доступны просмотр и назначение экспертов.",
+        )
     session = SessionLocal()
     try:
         competence_kind = data.competence_kind or "professional"
@@ -4581,12 +4597,8 @@ async def list_competences(mine: bool = False, current_user: User = Depends(get_
         elif role == "intl_methodologist":
             pass  # все активные паспорта
         elif role == "moderator":
-            query = query.filter(
-                or_(
-                    Competence.status == CompetenceStatus.REVIEW,
-                    *own_or_group,
-                )
-            )
+            # Модератор не разрабатывает: только заявки на экспертизе (просмотр + назначение экспертов)
+            query = query.filter(Competence.status == CompetenceStatus.REVIEW)
         elif role == "expert":
             assigned_ids = _assigned_competence_ids(session, current_user.id)
             filters = [
@@ -4737,6 +4749,8 @@ def _respond_to_invite(invite_id: int, current_user: User, status: str):
 
 @app.post("/competences/invites/{invite_id}/accept")
 async def accept_competence_invite(invite_id: int, current_user: User = Depends(get_current_user)):
+    if user_role(current_user) == "moderator":
+        raise HTTPException(403, "Модератор не участвует в разработке компетенций")
     return _respond_to_invite(invite_id, current_user, COLLABORATOR_ACCEPTED)
 
 
@@ -4830,6 +4844,8 @@ async def invite_competence_collaborator(
     request: Request,
     current_user: User = Depends(get_current_user),
 ):
+    if user_role(current_user) == "moderator":
+        raise HTTPException(403, "Модератор не участвует в разработке компетенций")
     session = SessionLocal()
     try:
         comp = session.query(Competence).filter(Competence.id == comp_id).first()
@@ -4855,6 +4871,8 @@ async def invite_competence_collaborator(
             raise HTTPException(400, "Нельзя пригласить самого себя")
         if not is_user_active(target):
             raise HTTPException(400, "Этот пользователь отключён")
+        if user_role(target) == "moderator":
+            raise HTTPException(400, "Модератор не участвует в разработке компетенций")
         if target.id == comp.user_id:
             raise HTTPException(400, "Этот пользователь уже руководитель рабочей группы")
         existing = _collaborator_link(session, comp.id, target.id)
@@ -4910,6 +4928,8 @@ async def remove_competence_collaborator(
     user_id: int,
     current_user: User = Depends(get_current_user),
 ):
+    if user_role(current_user) == "moderator":
+        raise HTTPException(403, "Модератор не участвует в разработке компетенций")
     session = SessionLocal()
     try:
         comp = session.query(Competence).filter(Competence.id == comp_id).first()
@@ -5374,6 +5394,11 @@ async def update_competence_development(
 
 @app.put("/competences/{comp_id}")
 async def update_competence(comp_id: int, data: CompetenceUpdate, current_user: User = Depends(get_current_user)):
+    if user_role(current_user) == "moderator":
+        raise HTTPException(
+            403,
+            "Модератор не участвует в разработке компетенций. Назначение экспертов — отдельная операция.",
+        )
     session = SessionLocal()
     try:
         comp = session.query(Competence).filter(Competence.id == comp_id).first()
@@ -5383,6 +5408,8 @@ async def update_competence(comp_id: int, data: CompetenceUpdate, current_user: 
             raise HTTPException(403, "Доступ запрещён")
 
         before_snapshot = snapshot_competence(comp)
+        before_resources_filled = resources_mto_filled(comp.resources)
+        before_status = comp.status
         update_data = data.dict(exclude_unset=True)
         expected_ts = update_data.pop("expected_updated_at", None)
         if expected_ts is not None and str(expected_ts).strip():
@@ -5573,6 +5600,30 @@ async def update_competence(comp_id: int, data: CompetenceUpdate, current_user: 
         # Явно двигаем updated_at — иначе optimistic lock на клиенте не сдвинется
         # при правках только через raw_data / flag_modified.
         comp.updated_at = datetime.datetime.utcnow()
+
+        # Уведомления модераторам: шаг 7 (МТО) заполнен; отправка на экспертизу
+        if resources_mto_filled(comp.resources) and not before_resources_filled:
+            notify_moderators(
+                session,
+                kind=KIND_STEP7_DONE,
+                title="Завершён шаг 7 (МТО)",
+                body=f"В компетенции «{comp.name}» заполнена материально-техническая база.",
+                competence_id=comp.id,
+                link=f"/competency/{comp.id}",
+            )
+        if (
+            comp.status == CompetenceStatus.REVIEW
+            and before_status != CompetenceStatus.REVIEW
+        ):
+            notify_moderators(
+                session,
+                kind=KIND_REVIEW_SUBMITTED,
+                title="Компетенция на экспертизе",
+                body=f"«{comp.name}» отправлена на экспертизу. Назначьте не менее трёх экспертов.",
+                competence_id=comp.id,
+                link=f"/competency/{comp.id}",
+            )
+
         session.commit()
         session.refresh(comp)
         reviewers = _reviewers_map(session, [comp.id]).get(comp.id, [])
@@ -5594,7 +5645,9 @@ async def delete_competence(comp_id: int, current_user: User = Depends(get_curre
             raise HTTPException(404, "Компетенция не найдена")
         if not is_staff_role(current_user) and comp.user_id != current_user.id:
             raise HTTPException(403, "Доступ запрещён")
-        if user_role(current_user) in ("expert", "moderator") and comp.user_id != current_user.id:
+        if user_role(current_user) == "moderator":
+            raise HTTPException(403, "Модератор не участвует в разработке компетенций")
+        if user_role(current_user) == "expert" and comp.user_id != current_user.id:
             raise HTTPException(403, "Удалять можно только свои компетенции")
         comp.is_active = 0
         session.commit()
@@ -5630,6 +5683,75 @@ async def calculate_coverage(req: CoverageRequest, current_user: User = Depends(
         return result
     finally:
         session.close()
+
+# ---------- Уведомления ----------
+
+@app.get("/notifications")
+async def list_notifications(
+    unread_only: bool = False,
+    current_user: User = Depends(get_current_user),
+):
+    session = SessionLocal()
+    try:
+        query = session.query(Notification).filter(Notification.user_id == current_user.id)
+        if unread_only:
+            query = query.filter(Notification.read_at.is_(None))
+        items = query.order_by(Notification.created_at.desc()).limit(100).all()
+        unread_count = (
+            session.query(Notification)
+            .filter(Notification.user_id == current_user.id, Notification.read_at.is_(None))
+            .count()
+        )
+        return {
+            "items": [serialize_notification(row) for row in items],
+            "unread_count": unread_count,
+        }
+    finally:
+        session.close()
+
+
+@app.post("/notifications/{notification_id}/read")
+async def read_notification(notification_id: int, current_user: User = Depends(get_current_user)):
+    session = SessionLocal()
+    try:
+        row = (
+            session.query(Notification)
+            .filter(Notification.id == notification_id, Notification.user_id == current_user.id)
+            .first()
+        )
+        if not row:
+            raise HTTPException(404, "Уведомление не найдено")
+        mark_notification_read(session, row)
+        session.commit()
+        session.refresh(row)
+        return serialize_notification(row)
+    except HTTPException:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+
+@app.post("/notifications/read-all")
+async def read_all_notifications(current_user: User = Depends(get_current_user)):
+    session = SessionLocal()
+    try:
+        now = datetime.datetime.utcnow()
+        rows = (
+            session.query(Notification)
+            .filter(Notification.user_id == current_user.id, Notification.read_at.is_(None))
+            .all()
+        )
+        for row in rows:
+            row.read_at = now
+        session.commit()
+        return {"status": "ok", "updated": len(rows)}
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
 
 # ---------- Обратная связь ----------
 

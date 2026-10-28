@@ -284,12 +284,18 @@ export const extraZh: ExtraMessages = {
     accept: "接受",
     reject: "拒绝",
     empty: "暂无项目",
+    emptyModerator: "审核员不参与开发。待评审申请请到「审核」。",
     createEmpty: "创建项目",
     leader: "负责人",
     member: "成员",
     qualification: "资格：{name}",
     develop: "继续开发",
     approved: "已批准",
+  },
+  notifications: {
+    title: "通知",
+    empty: "暂无通知",
+    markAll: "全部标为已读",
   },
   inDev: {
     title: "开发中",
