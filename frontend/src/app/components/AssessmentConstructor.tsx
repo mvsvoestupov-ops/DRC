@@ -1,12 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
-import { ArrowLeft, ArrowRight, Paperclip, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { apiClient } from "@/api/client";
 import { FORMATION_LEVELS, FORMATION_LEVEL_LABELS } from "@/lib/competenceMappers";
 import type { FormationLevel } from "@/api/types";
 import type { StructureABC } from "@/lib/structureFromLaborFunctions";
-import { AssessmentFosPreview, ASSESSMENT_MEDIA_ACCEPT } from "@/app/components/AssessmentFosPreview";
+import { AssessmentFosPreview } from "@/app/components/AssessmentFosPreview";
+import { AssessmentTaskAttachments } from "@/app/components/AssessmentTaskAttachments";
 import { AssessmentTestingFields } from "@/app/components/AssessmentTestingFields";
 import { useI18n } from "@/context/I18nContext";
 import { FORMATION_I18N_KEYS, translateKeyed } from "@/i18n/helpers";
@@ -16,12 +16,10 @@ import {
   assessmentMethodLabel,
   collectExtraMethods,
   createCustomAssessmentMethodId,
-  formatAttachmentSize,
   getAssessmentCoverage,
   getDevelopmentProgress,
   isAssessmentTaskComplete,
   isCustomAssessmentMethodId,
-  ASSESSMENT_MEDIA_KIND_LABELS,
   listStructureComponents,
   methodFitsCategory,
   normalizeAssessmentByLevel,
@@ -30,7 +28,6 @@ import {
   togglePlanMethod,
   unassignedComponents,
   withSharedExtraMethods,
-  type AssessmentAttachment,
   type AssessmentByLevel,
   type AssessmentMethodId,
   type AssessmentTask,
@@ -616,7 +613,7 @@ function DevelopStep({
               {customActive ? (
                 <div className="space-y-4">
                   <MethodFields task={activeTask} onChange={onChange} />
-                  <TaskAttachments
+                  <AssessmentTaskAttachments
                     attachments={activeTask.attachments || []}
                     onChange={(attachments) => onChange({ attachments })}
                   />
@@ -655,7 +652,7 @@ function DevelopStep({
               {editorStage === "content" ? (
                 <div className="space-y-4">
                   <MethodFields task={activeTask} onChange={onChange} />
-                  <TaskAttachments
+                  <AssessmentTaskAttachments
                     attachments={activeTask.attachments || []}
                     onChange={(attachments) => onChange({ attachments })}
                   />
@@ -881,94 +878,6 @@ function ProgressStep({
         </table>
       </div>
       <p className="text-xs text-gray-500">Нажмите на незаполненную ячейку, чтобы открыть следующее задание метода.</p>
-    </div>
-  );
-}
-
-function TaskAttachments({
-  attachments,
-  onChange,
-}: {
-  attachments: AssessmentAttachment[];
-  onChange: (next: AssessmentAttachment[]) => void;
-}) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const addFiles = async (files: FileList | null) => {
-    if (!files?.length) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const uploaded: AssessmentAttachment[] = [];
-      for (const file of Array.from(files)) {
-        uploaded.push(await apiClient.uploadAssessmentMedia(file));
-      }
-      onChange([...attachments, ...uploaded]);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Не удалось загрузить файл");
-    } finally {
-      setBusy(false);
-      if (inputRef.current) inputRef.current.value = "";
-    }
-  };
-
-  return (
-    <div className="space-y-2 border-t border-gray-100 pt-3">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-sm font-medium text-gray-700">Файлы к заданию</p>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={busy}
-          onClick={() => inputRef.current?.click()}
-          className="gap-1.5"
-        >
-          <Paperclip className="w-3.5 h-3.5" />
-          {busy ? "Загрузка…" : "Загрузить"}
-        </Button>
-      </div>
-      <p className="text-xs text-gray-500">
-        Изображения, PDF, видео и аудио: схемы, инструкции, образцы, фрагменты профессиональной ситуации.
-      </p>
-      <input
-        ref={inputRef}
-        type="file"
-        className="hidden"
-        multiple
-        accept={ASSESSMENT_MEDIA_ACCEPT}
-        onChange={(e) => addFiles(e.target.files)}
-      />
-      {error ? <p className="text-xs text-red-600">{error}</p> : null}
-      {attachments.length > 0 ? (
-        <ul className="space-y-1">
-          {attachments.map((item) => (
-            <li
-              key={item.id}
-              className="flex items-center justify-between gap-2 text-sm rounded-md border border-gray-200 px-2 py-1.5"
-            >
-              <span className="truncate">
-                {item.name}
-                <span className="ml-2 text-xs text-gray-500">
-                  {ASSESSMENT_MEDIA_KIND_LABELS[item.kind]}
-                  {item.size ? ` · ${formatAttachmentSize(item.size)}` : ""}
-                </span>
-              </span>
-              <button
-                type="button"
-                className="text-red-600 text-xs hover:underline shrink-0"
-                onClick={() => onChange(attachments.filter((row) => row.id !== item.id))}
-              >
-                Удалить
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="text-xs text-gray-400">Файлы не прикреплены</p>
-      )}
     </div>
   );
 }

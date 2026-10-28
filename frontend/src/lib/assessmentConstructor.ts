@@ -39,7 +39,7 @@ export type AssessmentOption = {
   isCorrect: boolean;
 };
 
-export type AssessmentMediaKind = "image" | "pdf" | "video" | "audio";
+export type AssessmentMediaKind = "image" | "pdf" | "text" | "video" | "audio";
 
 export type AssessmentAttachment = {
   id: string;
@@ -53,6 +53,7 @@ export type AssessmentAttachment = {
 export const ASSESSMENT_MEDIA_KIND_LABELS: Record<AssessmentMediaKind, string> = {
   image: "Изображение",
   pdf: "PDF",
+  text: "Текст",
   video: "Видео",
   audio: "Аудио",
 };
@@ -328,7 +329,7 @@ function asString(value: unknown): string {
   return String(value ?? "").trim();
 }
 
-const MEDIA_KINDS = new Set<AssessmentMediaKind>(["image", "pdf", "video", "audio"]);
+const MEDIA_KINDS = new Set<AssessmentMediaKind>(["image", "pdf", "text", "video", "audio"]);
 
 export function createAssessmentAttachmentId(): string {
   return uid("am");
@@ -339,6 +340,16 @@ function inferMediaKind(mime: string, name: string): AssessmentMediaKind | null 
   const ext = name.toLowerCase().replace(/^.*\./, ".");
   if (type.startsWith("image/") || [".jpg", ".jpeg", ".png", ".gif", ".webp"].includes(ext)) return "image";
   if (type === "application/pdf" || ext === ".pdf") return "pdf";
+  if (
+    type.startsWith("text/") ||
+    type === "application/rtf" ||
+    type === "application/msword" ||
+    type.includes("wordprocessingml") ||
+    type.includes("opendocument.text") ||
+    [".txt", ".md", ".csv", ".rtf", ".doc", ".docx", ".odt"].includes(ext)
+  ) {
+    return "text";
+  }
   if (type.startsWith("video/") || [".mp4", ".webm", ".mov", ".ogg"].includes(ext)) return "video";
   if (type.startsWith("audio/") || [".mp3", ".wav", ".m4a", ".aac", ".oga"].includes(ext)) return "audio";
   return null;

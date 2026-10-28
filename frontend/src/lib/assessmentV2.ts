@@ -17,6 +17,8 @@ import {
   isCustomAssessmentMethodId,
   normalizeAssessmentByLevel,
   normalizeAssessmentTask,
+  normalizeAttachments,
+  type AssessmentAttachment,
   type AssessmentByLevel,
   type AssessmentMethodId,
   type AssessmentTask,
@@ -48,6 +50,8 @@ export type AssessmentV2PracticalTask = {
   /** id компонентов B/C, входящих в задание */
   componentIds: string[];
   criteria: string[];
+  /** PDF, текстовые и графические материалы к заданию */
+  attachments: AssessmentAttachment[];
 };
 
 export type AssessmentV2LevelBlock = {
@@ -242,6 +246,7 @@ export function mapV1TaskToV2Practical(
     location: "",
     componentIds,
     criteria: splitCriteriaLines(task.criteria),
+    attachments: normalizeAttachments(task.attachments),
   };
 }
 
@@ -421,6 +426,7 @@ function normalizePractical(raw: AssessmentV2PracticalTask & { groupKey?: string
       ? raw.componentIds.map((id) => String(id))
       : [],
     criteria: criteria.length ? criteria : [""],
+    attachments: normalizeAttachments(raw?.attachments),
   };
 }
 
@@ -553,6 +559,7 @@ export function createPracticalTask(index: number): AssessmentV2PracticalTask {
     location: "",
     componentIds: [],
     criteria: [""],
+    attachments: [],
   };
 }
 

@@ -1237,6 +1237,18 @@ export const extraVi: ExtraMessages = {
     criteria: "Tiêu chí đánh giá",
     criteriaPh: "Nhập tiêu chí…",
     addCriterion: "Thêm tiêu chí",
+    attachments: "Tệp đính kèm bài tập",
+    attachmentsHint:
+      "PDF, tài liệu văn bản (TXT, MD, DOC, DOCX, ODT…) và hình ảnh. Có thể đính kèm hướng dẫn, sơ đồ hoặc mẫu đáp án.",
+    attachmentsUpload: "Tải lên",
+    attachmentsUploading: "Đang tải…",
+    attachmentsEmpty: "Chưa có tệp đính kèm",
+    attachmentsUploadError: "Không tải lên được tệp",
+    attachmentsView: "Xem",
+    attachmentsPreviewError: "Không mở được tệp để xem trước",
+    attachmentsOpenTab: "Mở trong tab mới",
+    attachmentsOpenExternal: "Không xem trước được. Hãy mở tệp ở tab ngoài.",
+    attachmentsOfficeHint: "Tài liệu Word/ODT/RTF nên mở ở tab ngoài hoặc ứng dụng.",
   },
   structure: {
     title: "Cấu trúc năng lực (A/B/C)",

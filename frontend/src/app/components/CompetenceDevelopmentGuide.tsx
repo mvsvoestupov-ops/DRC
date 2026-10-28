@@ -22,25 +22,29 @@ function GuideFigure({
   caption,
   eager,
   fallback,
+  skipImage,
 }: {
   file: string;
   alt: string;
   caption: string;
   eager?: boolean;
   fallback: ReactNode;
+  /** Не показывать устаревший PNG — сразу схема. */
+  skipImage?: boolean;
 }) {
   return (
     <figure className="space-y-2 w-full">
-      {/* Весь скрин целиком: без object-cover и без обрезки по max-height */}
       <div className="rounded-xl border border-gray-200 bg-slate-100/80 shadow-sm">
-        <img
-          src={mediaSrc(file)}
-          alt={alt}
-          className="block w-full h-auto object-contain"
-          loading={eager ? "eager" : "lazy"}
-          onError={onMediaError}
-        />
-        <div data-fallback hidden className="p-4 md:p-6">
+        {!skipImage ? (
+          <img
+            src={mediaSrc(file)}
+            alt={alt}
+            className="block w-full h-auto object-contain"
+            loading={eager ? "eager" : "lazy"}
+            onError={onMediaError}
+          />
+        ) : null}
+        <div data-fallback hidden={!skipImage} className="p-4 md:p-6">
           {fallback}
         </div>
       </div>
@@ -56,7 +60,9 @@ function StepFigure({ step }: { step: (typeof STEPS)[number] }) {
       file={`step${step}.png`}
       alt={t(`devGuide.s${step}figAlt`)}
       caption={t(`devGuide.s${step}figCap`)}
-      fallback={<StepSvg step={step} />}
+      // step6.png ещё показывает старый конструктор (таблица методов) — схема актуальнее
+      skipImage={step === 6}
+      fallback={step === 6 ? <Step6Svg /> : <StepSvg step={step} />}
     />
   );
 }
@@ -105,6 +111,71 @@ function StepSvg({ step }: { step: (typeof STEPS)[number] }) {
   );
 }
 
+/** Схема актуального конструктора ОС: Теория | Практика. */
+function Step6Svg() {
+  const { t } = useI18n();
+  return (
+    <svg viewBox="0 0 720 400" className="w-full h-auto" role="img" aria-label={t("devGuide.s6figAlt")}>
+      <rect width="720" height="400" rx="12" fill="#f8fafc" />
+      <text x="28" y="36" fontSize="16" fontWeight="700" fill="#0f172a" fontFamily="Segoe UI, sans-serif">
+        {t("devGuide.s6title")}
+      </text>
+      <text x="28" y="58" fontSize="12" fill="#64748b" fontFamily="Segoe UI, sans-serif">
+        {t("devGuide.s6box1")}
+      </text>
+
+      <rect x="28" y="78" width="320" height="140" rx="12" fill="#eff6ff" stroke="#bfdbfe" />
+      <text x="48" y="108" fontSize="14" fontWeight="700" fill="#1e40af" fontFamily="Segoe UI, sans-serif">
+        {t("assessmentV2.theoryTitle")}
+      </text>
+      <text x="48" y="136" fontSize="12" fill="#334155" fontFamily="Segoe UI, sans-serif">
+        {t("devGuide.s6box2")}
+      </text>
+      <text x="48" y="162" fontSize="12" fill="#64748b" fontFamily="Segoe UI, sans-serif">
+        A → тест · содержание · критерии
+      </text>
+      <rect x="48" y="180" width="120" height="22" rx="6" fill="#1e40af" />
+      <text x="108" y="195" textAnchor="middle" fontSize="11" fill="#fff" fontFamily="Segoe UI, sans-serif">
+        {t("assessmentV2.editor")}
+      </text>
+
+      <rect x="372" y="78" width="320" height="140" rx="12" fill="#ecfdf5" stroke="#a7f3d0" />
+      <text x="392" y="108" fontSize="14" fontWeight="700" fill="#047857" fontFamily="Segoe UI, sans-serif">
+        {t("assessmentV2.practiceTitleShort")}
+      </text>
+      <text x="392" y="136" fontSize="12" fill="#334155" fontFamily="Segoe UI, sans-serif">
+        {t("devGuide.s6box3")}
+      </text>
+      <text x="392" y="162" fontSize="12" fill="#64748b" fontFamily="Segoe UI, sans-serif">
+        {t("devGuide.s6box4")}
+      </text>
+      <rect x="392" y="180" width="120" height="22" rx="6" fill="#047857" />
+      <text x="452" y="195" textAnchor="middle" fontSize="11" fill="#fff" fontFamily="Segoe UI, sans-serif">
+        {t("assessmentV2.editor")}
+      </text>
+
+      {[0, 1, 2, 3].map((i) => (
+        <g key={i}>
+          <circle cx="48" cy={260 + i * 32} r="12" fill="#1e40af" />
+          <text
+            x="48"
+            y={264 + i * 32}
+            textAnchor="middle"
+            fontSize="11"
+            fill="#fff"
+            fontFamily="Segoe UI, sans-serif"
+          >
+            {i + 1}
+          </text>
+          <text x="72" y={265 + i * 32} fontSize="13" fill="#334155" fontFamily="Segoe UI, sans-serif">
+            {t(`devGuide.s6p${i + 1}title`)}
+          </text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
 function OverviewFallback() {
   const { t } = useI18n();
   return (
@@ -137,6 +208,110 @@ function OverviewFigure() {
         fallback={<span className="text-sm text-gray-500">{t("devGuide.overviewAlt")}</span>}
       />
     </div>
+  );
+}
+
+function Step6Body() {
+  const { t } = useI18n();
+  const phases = [1, 2, 3, 4] as const;
+
+  return (
+    <>
+      <p className="text-sm text-gray-700 leading-relaxed">{t("devGuide.s6purpose")}</p>
+      <StepFigure step={6} />
+
+      <div className="space-y-3">
+        <h4 className="text-sm font-semibold text-gray-900">{t("devGuide.s6flowTitle")}</h4>
+        <ol className="space-y-3">
+          {phases.map((n) => (
+            <li
+              key={n}
+              className="rounded-xl border border-gray-200 bg-white p-4 flex gap-3 items-start"
+            >
+              <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-white text-xs font-bold">
+                {n}
+              </span>
+              <div className="space-y-1 min-w-0">
+                <div className="text-sm font-semibold text-gray-900">{t(`devGuide.s6p${n}title`)}</div>
+                <p className="text-sm text-gray-700 leading-relaxed">{t(`devGuide.s6p${n}body`)}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4 space-y-2">
+          <h4 className="text-sm font-semibold text-primary">{t("devGuide.whatTitle")}</h4>
+          <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1.5">
+            <li>{t("devGuide.s6w1")}</li>
+            <li>{t("devGuide.s6w2")}</li>
+            <li>{t("devGuide.s6w3")}</li>
+            <li>{t("devGuide.s6w4")}</li>
+          </ul>
+        </div>
+        <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-4 space-y-2">
+          <h4 className="text-sm font-semibold text-emerald-800">{t("devGuide.howTitle")}</h4>
+          <ol className="list-decimal pl-5 text-sm text-gray-700 space-y-1.5">
+            <li>{t("devGuide.s6h1")}</li>
+            <li>{t("devGuide.s6h2")}</li>
+            <li>{t("devGuide.s6h3")}</li>
+            <li>{t("devGuide.s6h4")}</li>
+            <li>{t("devGuide.s6h5")}</li>
+          </ol>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-2">
+        <h4 className="text-sm font-semibold text-gray-900">{t("devGuide.resultTitle")}</h4>
+        <p className="text-sm text-gray-700 leading-relaxed">{t("devGuide.s6result")}</p>
+        <p className="text-sm text-gray-600 leading-relaxed">
+          <span className="font-medium text-gray-800">{t("devGuide.noteLabel")}: </span>
+          {t("devGuide.s6note")}
+        </p>
+        <p className="text-sm pt-1">
+          <Link to="/methodology/fos" className="text-primary font-medium hover:underline">
+            {t("devGuide.s6fosLink")}
+          </Link>
+        </p>
+      </div>
+    </>
+  );
+}
+
+function GenericStepBody({ step }: { step: Exclude<(typeof STEPS)[number], 6> }) {
+  const { t } = useI18n();
+  return (
+    <>
+      <p className="text-sm text-gray-700 leading-relaxed">{t(`devGuide.s${step}purpose`)}</p>
+      <StepFigure step={step} />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4 space-y-2">
+          <h4 className="text-sm font-semibold text-primary">{t("devGuide.whatTitle")}</h4>
+          <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1.5">
+            <li>{t(`devGuide.s${step}w1`)}</li>
+            <li>{t(`devGuide.s${step}w2`)}</li>
+            <li>{t(`devGuide.s${step}w3`)}</li>
+          </ul>
+        </div>
+        <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-4 space-y-2">
+          <h4 className="text-sm font-semibold text-emerald-800">{t("devGuide.howTitle")}</h4>
+          <ol className="list-decimal pl-5 text-sm text-gray-700 space-y-1.5">
+            <li>{t(`devGuide.s${step}h1`)}</li>
+            <li>{t(`devGuide.s${step}h2`)}</li>
+            <li>{t(`devGuide.s${step}h3`)}</li>
+          </ol>
+        </div>
+      </div>
+      <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-2">
+        <h4 className="text-sm font-semibold text-gray-900">{t("devGuide.resultTitle")}</h4>
+        <p className="text-sm text-gray-700 leading-relaxed">{t(`devGuide.s${step}result`)}</p>
+        <p className="text-sm text-gray-600 leading-relaxed">
+          <span className="font-medium text-gray-800">{t("devGuide.noteLabel")}: </span>
+          {t(`devGuide.s${step}note`)}
+        </p>
+      </div>
+    </>
   );
 }
 
@@ -177,34 +352,7 @@ export function CompetenceDevelopmentGuide() {
             </span>
             <h3 className="text-xl font-semibold text-gray-900">{t(`devGuide.s${step}title`)}</h3>
           </div>
-          <p className="text-sm text-gray-700 leading-relaxed">{t(`devGuide.s${step}purpose`)}</p>
-          <StepFigure step={step} />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4 space-y-2">
-              <h4 className="text-sm font-semibold text-primary">{t("devGuide.whatTitle")}</h4>
-              <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1.5">
-                <li>{t(`devGuide.s${step}w1`)}</li>
-                <li>{t(`devGuide.s${step}w2`)}</li>
-                <li>{t(`devGuide.s${step}w3`)}</li>
-              </ul>
-            </div>
-            <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-4 space-y-2">
-              <h4 className="text-sm font-semibold text-emerald-800">{t("devGuide.howTitle")}</h4>
-              <ol className="list-decimal pl-5 text-sm text-gray-700 space-y-1.5">
-                <li>{t(`devGuide.s${step}h1`)}</li>
-                <li>{t(`devGuide.s${step}h2`)}</li>
-                <li>{t(`devGuide.s${step}h3`)}</li>
-              </ol>
-            </div>
-          </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-2">
-            <h4 className="text-sm font-semibold text-gray-900">{t("devGuide.resultTitle")}</h4>
-            <p className="text-sm text-gray-700 leading-relaxed">{t(`devGuide.s${step}result`)}</p>
-            <p className="text-sm text-gray-600 leading-relaxed">
-              <span className="font-medium text-gray-800">{t("devGuide.noteLabel")}: </span>
-              {t(`devGuide.s${step}note`)}
-            </p>
-          </div>
+          {step === 6 ? <Step6Body /> : <GenericStepBody step={step} />}
         </section>
       ))}
 

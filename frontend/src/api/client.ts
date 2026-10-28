@@ -757,7 +757,7 @@ class ApiClient {
     formData.append('file', file);
     return this.post<{
       id: string;
-      kind: 'image' | 'pdf' | 'video' | 'audio';
+      kind: 'image' | 'pdf' | 'text' | 'video' | 'audio';
       name: string;
       mime: string;
       url: string;

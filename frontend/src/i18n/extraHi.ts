@@ -1235,6 +1235,18 @@ export const extraHi: ExtraMessages = {
     criteria: "मूल्यांकन मानदंड",
     criteriaPh: "मानदंड लिखें…",
     addCriterion: "मानदंड जोड़ें",
+    attachments: "कार्य की फ़ाइलें",
+    attachmentsHint:
+      "PDF, पाठ दस्तावेज़ (TXT, MD, DOC, DOCX, ODT…) और चित्र। निर्देश, योजना या नमूना उत्तर संलग्न करें।",
+    attachmentsUpload: "अपलोड",
+    attachmentsUploading: "अपलोड हो रहा है…",
+    attachmentsEmpty: "कोई फ़ाइल संलग्न नहीं",
+    attachmentsUploadError: "फ़ाइल अपलोड नहीं हो सकी",
+    attachmentsView: "देखें",
+    attachmentsPreviewError: "पूर्वावलोकन के लिए फ़ाइल नहीं खोली जा सकी",
+    attachmentsOpenTab: "नए टैब में खोलें",
+    attachmentsOpenExternal: "पूर्वावलोकन उपलब्ध नहीं। फ़ाइल बाहरी टैब में खोलें।",
+    attachmentsOfficeHint: "Word/ODT/RTF दस्तावेज़ बाहरी टैब या ऐप में खोलना बेहतर है।",
   },
   structure: {
     title: "दक्षता संरचना (A/B/C)",

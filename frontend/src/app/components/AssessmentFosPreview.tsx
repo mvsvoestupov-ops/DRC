@@ -16,7 +16,7 @@ import {
 } from "@/lib/assessmentConstructor";
 
 const ACCEPT_MEDIA =
-  "image/jpeg,image/png,image/gif,image/webp,.jpg,.jpeg,.png,.gif,.webp,application/pdf,.pdf,audio/mpeg,audio/wav,audio/ogg,audio/mp4,audio/webm,audio/aac,.mp3,.wav,.ogg,.m4a,.aac,video/mp4,video/webm,video/ogg,video/quicktime,.mp4,.webm,.mov";
+  "image/jpeg,image/png,image/gif,image/webp,.jpg,.jpeg,.png,.gif,.webp,application/pdf,.pdf,text/plain,text/markdown,text/csv,application/rtf,text/rtf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.oasis.opendocument.text,.txt,.md,.csv,.rtf,.doc,.docx,.odt,audio/mpeg,audio/wav,audio/ogg,audio/mp4,audio/webm,audio/aac,.mp3,.wav,.ogg,.m4a,.aac,video/mp4,video/webm,video/ogg,video/quicktime,.mp4,.webm,.mov";
 
 export function FosAttachments({
   attachments,
@@ -46,6 +46,11 @@ export function FosAttachments({
               {item.kind === "pdf" ? (
                 <a href={src} target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline">
                   Открыть PDF
+                </a>
+              ) : null}
+              {item.kind === "text" ? (
+                <a href={src} target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline">
+                  Открыть документ
                 </a>
               ) : null}
               {item.kind === "video" ? (

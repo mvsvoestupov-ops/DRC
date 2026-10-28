@@ -18,6 +18,7 @@ import {
   type PracticalComponent,
 } from "@/lib/assessmentV2";
 import { isAssessmentTaskComplete } from "@/lib/assessmentConstructor";
+import { AssessmentTaskAttachments } from "@/app/components/AssessmentTaskAttachments";
 import { AssessmentTestingFields } from "@/app/components/AssessmentTestingFields";
 import { useI18n } from "@/context/I18nContext";
 import { Button } from "@/components/ui/button";
@@ -177,7 +178,7 @@ export function AssessmentConstructorV2({ structure, value, onChange }: Props) {
       </div>
 
       {screen === "dashboard" ? (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-stretch">
           <DashboardCard
             title={t("assessmentV2.theoryTitle")}
             progress={theory.percent}
@@ -358,10 +359,16 @@ export function AssessmentConstructorV2({ structure, value, onChange }: Props) {
                     </button>
                   </div>
                   {theoryStage === "content" ? (
-                    <AssessmentTestingFields
-                      task={activeTest}
-                      onChange={(patch) => updateTest(activeTest.id, patch)}
-                    />
+                    <div className="space-y-4">
+                      <AssessmentTestingFields
+                        task={activeTest}
+                        onChange={(patch) => updateTest(activeTest.id, patch)}
+                      />
+                      <AssessmentTaskAttachments
+                        attachments={activeTest.attachments || []}
+                        onChange={(attachments) => updateTest(activeTest.id, { attachments })}
+                      />
+                    </div>
                   ) : (
                     <div className="space-y-3">
                       <div>
@@ -599,41 +606,45 @@ function DashboardCard({
 }) {
   const { t } = useI18n();
   return (
-    <section className="rounded-2xl border border-gray-200 bg-slate-100/80 p-4 space-y-3 shadow-sm">
-      <div className="flex items-center gap-2">
+    <section className="rounded-2xl border border-gray-200 bg-slate-100/80 p-4 shadow-sm flex flex-col h-[28rem] min-h-[28rem]">
+      <div className="flex items-center gap-2 shrink-0 mb-3">
         <span className="inline-flex h-3 w-3 rounded-full bg-emerald-500" />
         <h3 className="text-base font-semibold text-sky-700">{title}</h3>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white p-3 overflow-x-auto">{children}</div>
-
-      {progressLabel ? (
-        <p className="text-xs font-medium text-gray-600">{progressLabel}</p>
-      ) : null}
-      <div className="h-7 rounded-md bg-sky-600 text-white text-sm font-semibold flex items-center justify-center">
-        {progress}%
+      <div className="rounded-xl border border-gray-200 bg-white p-3 flex-1 min-h-0 overflow-x-auto overflow-y-auto">
+        {children}
       </div>
 
-      {requirementsOpen ? (
-        <p className="text-xs text-gray-600 rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2">
-          {requirements}
-        </p>
-      ) : null}
+      <div className="shrink-0 space-y-3 mt-3">
+        {progressLabel ? (
+          <p className="text-xs font-medium text-gray-600">{progressLabel}</p>
+        ) : null}
+        <div className="h-7 rounded-md bg-sky-600 text-white text-sm font-semibold flex items-center justify-center">
+          {progress}%
+        </div>
 
-      <div className="flex flex-wrap gap-2 justify-between pt-1">
-        <Button
-          type="button"
-          size="sm"
-          onClick={onToggleRequirements}
-          className="gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-        >
-          <Check className="w-4 h-4" />
-          {t("assessmentV2.requirements")}
-        </Button>
-        <Button type="button" size="sm" onClick={onEditor} className="gap-1">
-          <FileEdit className="w-4 h-4" />
-          {t("assessmentV2.editor")}
-        </Button>
+        {requirementsOpen ? (
+          <p className="text-xs text-gray-600 rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2 max-h-24 overflow-y-auto">
+            {requirements}
+          </p>
+        ) : null}
+
+        <div className="flex flex-wrap gap-2 justify-between pt-1">
+          <Button
+            type="button"
+            size="sm"
+            onClick={onToggleRequirements}
+            className="gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+          >
+            <Check className="w-4 h-4" />
+            {t("assessmentV2.requirements")}
+          </Button>
+          <Button type="button" size="sm" onClick={onEditor} className="gap-1">
+            <FileEdit className="w-4 h-4" />
+            {t("assessmentV2.editor")}
+          </Button>
+        </div>
       </div>
     </section>
   );
@@ -864,6 +875,11 @@ function PracticalTaskCard({
           {t("assessmentV2.addCriterion")}
         </Button>
       </div>
+
+      <AssessmentTaskAttachments
+        attachments={task.attachments || []}
+        onChange={(attachments) => onChange({ attachments })}
+      />
     </article>
   );
 }

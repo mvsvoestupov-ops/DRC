@@ -1,4 +1,4 @@
-"""Загрузка графики, PDF, видео и аудио для заданий конструктора ФОС."""
+"""Загрузка графики, PDF, текстовых документов, видео и аудио для заданий конструктора ФОС."""
 
 from __future__ import annotations
 
@@ -21,6 +21,7 @@ UPLOAD_DIR = BACKEND_DIR / "uploads" / "assessment"
 KIND_LIMITS = {
     "image": 10 * 1024 * 1024,
     "pdf": 20 * 1024 * 1024,
+    "text": 15 * 1024 * 1024,
     "audio": 40 * 1024 * 1024,
     "video": 100 * 1024 * 1024,
 }
@@ -31,6 +32,14 @@ MIME_KIND = {
     "image/gif": "image",
     "image/webp": "image",
     "application/pdf": "pdf",
+    "text/plain": "text",
+    "text/markdown": "text",
+    "text/csv": "text",
+    "application/rtf": "text",
+    "text/rtf": "text",
+    "application/msword": "text",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "text",
+    "application/vnd.oasis.opendocument.text": "text",
     "audio/mpeg": "audio",
     "audio/mp3": "audio",
     "audio/wav": "audio",
@@ -53,6 +62,13 @@ EXT_KIND = {
     ".gif": "image",
     ".webp": "image",
     ".pdf": "pdf",
+    ".txt": "text",
+    ".md": "text",
+    ".csv": "text",
+    ".rtf": "text",
+    ".doc": "text",
+    ".docx": "text",
+    ".odt": "text",
     ".mp3": "audio",
     ".wav": "audio",
     ".ogg": "audio",
@@ -71,6 +87,13 @@ EXT_MIME = {
     ".gif": "image/gif",
     ".webp": "image/webp",
     ".pdf": "application/pdf",
+    ".txt": "text/plain",
+    ".md": "text/markdown",
+    ".csv": "text/csv",
+    ".rtf": "application/rtf",
+    ".doc": "application/msword",
+    ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ".odt": "application/vnd.oasis.opendocument.text",
     ".mp3": "audio/mpeg",
     ".wav": "audio/wav",
     ".ogg": "audio/ogg",
@@ -127,7 +150,7 @@ async def upload_assessment_media(
     if not kind:
         raise HTTPException(
             status_code=400,
-            detail="Допустимы изображения (JPEG, PNG, GIF, WebP), PDF, аудио и видео.",
+            detail="Допустимы изображения (JPEG, PNG, GIF, WebP), PDF, текстовые документы (TXT, MD, CSV, RTF, DOC, DOCX, ODT), аудио и видео.",
         )
     content = await file.read()
     limit = KIND_LIMITS[kind]
