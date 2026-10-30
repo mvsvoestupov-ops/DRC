@@ -139,6 +139,10 @@ venv/bin/pip install --disable-pip-version-check --no-input -r /tmp/drc-req-prod
 
 echo "==> repair TF/OTF codes and 148н levels (existing DB, in place)"
 venv/bin/python -u scripts/repair_tf_levels.py
+# Точечно: заголовки «3.3.6 Трудовая функция» без точки — доразбор только
+# затронутых ПС из source_html (без сети, без полного обхода всех HTML).
+echo "==> repair missing TF from source_html (headers without trailing dot)"
+venv/bin/python -u scripts/repair_missing_tf_from_html.py
 # Полный разбор HTML/XML всех ПС на VPS убивает процесс (OOM).
 # Список рекомендованных ПС по ФГОС ищет ОКСО прямо в source_html/xml.
 

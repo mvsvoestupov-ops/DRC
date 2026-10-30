@@ -466,8 +466,12 @@ def _parse_reference_units(lines: List[str]) -> dict[str, List[ClassifierUnit]]:
     return result
 
 
+# classinform иногда отдаёт «3.3.6 Трудовая функция» без точки после номера.
+PF_HEADER_RE = re.compile(r"^3\.\d+\.\d+\.?\s+Трудовая функция$")
+
+
 def pf_header_re_match(line: str) -> bool:
-    return bool(re.match(r"^3\.\d+\.\d+\.\s+Трудовая функция$", line))
+    return bool(PF_HEADER_RE.match(line))
 
 
 def _parse_section_iii(lines: List[str]) -> List[GeneralizedWorkFunction]:
@@ -480,7 +484,7 @@ def _parse_section_iii(lines: List[str]) -> List[GeneralizedWorkFunction]:
     current_lines: List[str] = []
 
     gf_header_re = re.compile(r"^3\.\d+\.\s+Обобщенная трудовая функция$")
-    pf_header_re = re.compile(r"^3\.\d+\.\d+\.\s+Трудовая функция$")
+    pf_header_re = PF_HEADER_RE
     for line in section:
         if gf_header_re.match(line):
             if current_header:
