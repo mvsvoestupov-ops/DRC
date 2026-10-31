@@ -19,13 +19,18 @@ from app.db import SessionLocal  # noqa: E402
 from app.repair_missing_tf_from_html import repair_missing_tf_from_html  # noqa: E402
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    argv = list(argv if argv is not None else sys.argv[1:])
+    reg_numbers = [a for a in argv if a and not a.startswith("-")]
     session = SessionLocal()
     try:
-        result = repair_missing_tf_from_html(session)
+        result = repair_missing_tf_from_html(
+            session,
+            reg_numbers=reg_numbers or None,
+        )
         print(json.dumps(result, ensure_ascii=False, indent=2), flush=True)
         print("repair_missing_tf_from_html: done", flush=True)
-        return 0 if not result.get("errors") else 0
+        return 0
     finally:
         session.close()
 

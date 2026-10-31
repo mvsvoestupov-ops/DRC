@@ -142,7 +142,11 @@ venv/bin/python -u scripts/repair_tf_levels.py
 # Точечно: заголовки «3.3.6 Трудовая функция» без точки — доразбор только
 # затронутых ПС из source_html (без сети, без полного обхода всех HTML).
 echo "==> repair missing TF from source_html (headers without trailing dot)"
-venv/bin/python -u scripts/repair_missing_tf_from_html.py
+if ! venv/bin/python -u scripts/repair_missing_tf_from_html.py; then
+  echo "WARNING: full missing-TF repair failed (OOM?) — trying reg 1674 only"
+  venv/bin/python -u scripts/repair_missing_tf_from_html.py 1674 || \
+    echo "WARNING: repair for 1674 also failed — continuing deploy"
+fi
 # Полный разбор HTML/XML всех ПС на VPS убивает процесс (OOM).
 # Список рекомендованных ПС по ФГОС ищет ОКСО прямо в source_html/xml.
 
