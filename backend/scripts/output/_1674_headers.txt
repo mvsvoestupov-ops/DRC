@@ -1,0 +1,111 @@
+reg_number: 1674
+standard_id: 3303
+source_used: source_html
+source_length: 708696
+
+========================================================================
+1) Lines matching 3.\d+.\d+[. ]*Трудовая function (raw newline lines)
+========================================================================
+  line 122: '<div style="font-family: Arial, serif; font-style: normal; font-weight: bold; font-size: medium; text-align: justify; padding-bottom: 6pt;">3.1.1. Трудовая функция</div>'
+    has_dot_after_third_number: True
+  line 124: '<div style="font-family: Arial, serif; font-style: normal; font-weight: bold; font-size: medium; text-align: justify; padding-bottom: 6pt;">3.1.2. Трудовая функция</div>'
+    has_dot_after_third_number: True
+  line 126: '<div style="font-family: Arial, serif; font-style: normal; font-weight: bold; font-size: medium; text-align: justify; padding-bottom: 6pt;">3.1.3. Трудовая функция</div>'
+    has_dot_after_third_number: True
+  line 146: '<div style="font-family: Arial, serif; font-style: normal; font-weight: bold; font-size: medium; text-align: justify; padding-bottom: 6pt;">3.2.1. Трудовая функция</div>'
+    has_dot_after_third_number: True
+  line 148: '<div style="font-family: Arial, serif; font-style: normal; font-weight: bold; font-size: medium; text-align: justify; padding-bottom: 6pt;">3.2.2. Трудовая функция</div>'
+    has_dot_after_third_number: True
+  line 150: '<div style="font-family: Arial, serif; font-style: normal; font-weight: bold; font-size: medium; text-align: justify; padding-bottom: 6pt;">3.2.3. Трудовая функция</div>'
+    has_dot_after_third_number: True
+  line 152: '<div style="font-family: Arial, serif; font-style: normal; font-weight: bold; font-size: medium; text-align: justify; padding-bottom: 6pt;">3.2.4 Трудовая функция</div>'
+    has_dot_after_third_number: False
+  line 170: '<div style="font-family: Arial, serif; font-style: normal; font-weight: bold; font-size: medium; text-align: justify; padding-bottom: 6pt;">3.3.1. Трудовая функция</div>'
+    has_dot_after_third_number: True
+  line 172: '<div style="font-family: Arial, serif; font-style: normal; font-weight: bold; font-size: medium; text-align: justify; padding-bottom: 6pt;">3.3.2. Трудовая функция</div>'
+    has_dot_after_third_number: True
+  line 174: '<div style="font-family: Arial, serif; font-style: normal; font-weight: bold; font-size: medium; text-align: justify; padding-bottom: 6pt;">3.3.3. Трудовая функция</div>'
+    has_dot_after_third_number: True
+  line 176: '<div style="font-family: Arial, serif; font-style: normal; font-weight: bold; font-size: medium; text-align: justify; padding-bottom: 6pt;">3.3.4. Трудовая функция</div>'
+    has_dot_after_third_number: True
+  line 178: '<div style="font-family: Arial, serif; font-style: normal; font-weight: bold; font-size: medium; text-align: justify; padding-bottom: 6pt;">3.3.5. Трудовая функция</div>'
+    has_dot_after_third_number: True
+  line 180: '<div style="font-family: Arial, serif; font-style: normal; font-weight: bold; font-size: medium; text-align: justify; padding-bottom: 6pt;">3.3.6 Трудовая функция</div>'
+    has_dot_after_third_number: False
+  line 198: '<div style="font-family: Arial, serif; font-style: normal; font-weight: bold; font-size: medium; text-align: justify; padding-bottom: 6pt;">3.4.1. Трудовая функция</div>'
+    has_dot_after_third_number: True
+  line 200: '<div style="font-family: Arial, serif; font-style: normal; font-weight: bold; font-size: medium; text-align: justify; padding-bottom: 6pt;">3.4.2. Трудовая функция</div>'
+    has_dot_after_third_number: True
+  line 202: '<div style="font-family: Arial, serif; font-style: normal; font-weight: bold; font-size: medium; text-align: justify; padding-bottom: 6pt;">3.4.3. Трудовая функция</div>'
+    has_dot_after_third_number: True
+  line 204: '<div style="font-family: Arial, serif; font-style: normal; font-weight: bold; font-size: medium; text-align: justify; padding-bottom: 6pt;">3.4.4. Трудовая функция</div>'
+    has_dot_after_third_number: True
+
+--- Exact headers for 3.3.5 and 3.3.6 (from raw source lines) ---
+  3.3.5: line 178: '<div style="font-family: Arial, serif; font-style: normal; font-weight: bold; font-size: medium; text-align: justify; padding-bottom: 6pt;">3.3.5. Трудовая функция</div>'
+    has_dot_after_third_number: True
+  3.3.6: line 180: '<div style="font-family: Arial, serif; font-style: normal; font-weight: bold; font-size: medium; text-align: justify; padding-bottom: 6pt;">3.3.6 Трудовая функция</div>'
+    has_dot_after_third_number: False
+
+========================================================================
+2) Parsed text lines (_page_lines) matching labor-function headers
+========================================================================
+  '3.1.1. Трудовая функция'  | dot_after_third: True
+  '3.1.2. Трудовая функция'  | dot_after_third: True
+  '3.1.3. Трудовая функция'  | dot_after_third: True
+  '3.2.1. Трудовая функция'  | dot_after_third: True
+  '3.2.2. Трудовая функция'  | dot_after_third: True
+  '3.2.3. Трудовая функция'  | dot_after_third: True
+  '3.2.4 Трудовая функция'  | dot_after_third: False
+  '3.3.1. Трудовая функция'  | dot_after_third: True
+  '3.3.2. Трудовая функция'  | dot_after_third: True
+  '3.3.3. Трудовая функция'  | dot_after_third: True
+  '3.3.4. Трудовая функция'  | dot_after_third: True
+  '3.3.5. Трудовая функция'  | dot_after_third: True
+  '3.3.6 Трудовая функция'  | dot_after_third: False
+  '3.4.1. Трудовая функция'  | dot_after_third: True
+  '3.4.2. Трудовая функция'  | dot_after_third: True
+  '3.4.3. Трудовая функция'  | dot_after_third: True
+  '3.4.4. Трудовая функция'  | dot_after_third: True
+
+========================================================================
+3) Occurrences of C/01.6 through C/06.6 in source
+========================================================================
+  C/01.6: count=2 positions=[36175, 399824]
+  C/02.6: count=2 positions=[37317, 424834]
+  C/03.6: count=2 positions=[38362, 450764]
+  C/04.6: count=2 positions=[39375, 487172]
+  C/05.6: count=2 positions=[40445, 514217]
+  C/06.6: count=2 positions=[41431, 538024]
+
+All C/0x.6 matches (regex C/0[1-6].6):
+  @36175 'C/01.6' context: 'e: 12pt; text-align: center;">C/01.6</div></td><td valign="top" al'
+  @37317 'C/02.6' context: 'e: 12pt; text-align: center;">C/02.6</div></td><td valign="top" al'
+  @38362 'C/03.6' context: 'e: 12pt; text-align: center;">C/03.6</div></td><td valign="top" al'
+  @39375 'C/04.6' context: 'e: 12pt; text-align: center;">C/04.6</div></td><td valign="top" al'
+  @40445 'C/05.6' context: 'e: 12pt; text-align: center;">C/05.6</div></td><td valign="top" al'
+  @41431 'C/06.6' context: 'e: 12pt; text-align: center;">C/06.6</div></td><td valign="top" al'
+  @399824 'C/01.6' context: 'e: 12pt; text-align: center;">C/01.6</div></td><td valign="middle"'
+  @424834 'C/02.6' context: 'e: 12pt; text-align: center;">C/02.6</div></td><td valign="middle"'
+  @450764 'C/03.6' context: 'e: 12pt; text-align: center;">C/03.6</div></td><td valign="middle"'
+  @487172 'C/04.6' context: 'e: 12pt; text-align: center;">C/04.6</div></td><td valign="middle"'
+  @514217 'C/05.6' context: 'e: 12pt; text-align: center;">C/05.6</div></td><td valign="middle"'
+  @538024 'C/06.6' context: 'e: 12pt; text-align: center;">C/06.6</div></td><td valign="middle"'
+
+========================================================================
+4) OTF B: B/04.5 in raw_particular_functions
+========================================================================
+  OTF B row: id=12569 code='B' name='Обеспечение деятельности по заправке воздушных судов авиационными ГСМ ОКЗ 3139 Техники (операторы) по управлению технологическими процессами, не входящие в другие группы ЕКС - Мастер участка ОКПДТР 23796 Мастер 24110 Механик ОКСО 2.23.02.01 Организация перевозок и управление на транспорте (по видам) 2.23.02.03 Техническое обслуживание и ремонт автомобильного транспорта 2.25.02.02 Обслуживание летательных аппаратов горюче-смазочными материалами 2.27.02.01 Метрология 2.27.02.04 Автоматические системы управления 2.23.03.01 Технология транспортных процессов 2.23.03.02 Наземные транспортно-технологические комплексы 2.23.03.03 Эксплуатация транспортно-технологических машин и комплексов 2.25.03.01 Техническая эксплуатация летательных аппаратов и двигателей 2.25.03.02 Техническая эксплуатация авиационных электросистем и пилотажно-навигационных комплексов 2.25.03.04 Эксплуатация аэропортов и обеспечение полетов воздушных судов 2.27.03.01 Стандартизация и метрология 2.27.03.04 Управление в технических системах'
+  All PF codes under B: ['B/01.5', 'B/02.5', 'B/03.5', 'B/04.5']
+  B/04.5 present in raw_particular_functions: True
+
+========================================================================
+5) Parsed TF codes under OTF C (parse_classinform_html)
+========================================================================
+  OTF C: 'Организационно-техническое сопровождение деятельности по заправке воздушных судов авиационными ГСМ ОКЗ 2141 Инженеры в промышленности и на производстве ОКПДТР 22141 Заведующий складом ОКСО 2.23.03.01 Технология транспортных процессов 2.23.03.02 Наземные транспортно-технологические комплексы 2.23.03.03 Эксплуатация транспортно-технологических машин и комплексов 2.25.03.02 Техническая эксплуатация авиационных электросистем и пилотажно-навигационных комплексов 2.25.03.04 Эксплуатация аэропортов и обеспечение полетов воздушных судов 2.27.03.01 Стандартизация и метрология 2.27.03.04 Управление в технических системах 2.25.04.01 Техническая эксплуатация летательных аппаратов и двигателей' level='6'
+    'C/01.6' | Обеспечение учетных операций (балансов нефтепродуктов) и складского учета движения авиационных ГСМ и специальных жидкост
+    'C/02.6' | Сопровождение деятельности по приему авиационных ГСМ на склад, по хранению, подготовке и выдаче на заправку воздушных су
+    'C/03.6' | Организационно-техническое обеспечение ТОиР спецавтотранспорта для заправки воздушных судов и оборудования объектов опер
+    'C/04.6' | Контроль выполнения производственных показателей подразделениями по заправке воздушных судов авиационными ГСМ
+    'C/05.6' | Разработка и внедрение предложений по повышению эффективности работы оборудования объектов оператора авиационных ГСМ и с
+    'C/06.6' | Организация работ по повышению эффективности деятельности по учету авиационных ГСМ

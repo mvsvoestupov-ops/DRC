@@ -1,0 +1,6 @@
+=== pull_32 start 27.10.2026 11:31:46,69 
+== Upload dump script
+scp: stat local "22": No such file or directory
+FAIL scp
+ 
+=== exit_code=1 

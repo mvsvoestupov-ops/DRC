@@ -1,0 +1,15 @@
+=== verify 1674 C/05.6 (from deploy-remote repair stdout, server 201.34.149.65) ===
+deploy_commit=968c0b6e0c374a13975e704ca2883c2a46c44e32
+deploy_time=2026-10-31T08:19:19+00:00 .. 08:22:06+00:00 (see _agent_push_deploy.log)
+
+repair_missing_tf_from_html: full run completed (no OOM, no 1674-only fallback WARNING)
+
+1674 sample from server repair JSON:
+  reg_number=1674 ps_code=19.085
+  added=["B/03.5", "C/05.6"]
+  tf_before=15 tf_after=17
+
+has_C_05_6_in_raw_particular_functions=true
+C/05.6_name=Разработка и внедрение предложений по повышению эффективности работы оборудования объектов оператора авиационных ГСМ и спецавтотранспорта для заправки воздушных судов
+
+Note: direct post-deploy sqlite SSH query not run in this session (local shell blocked). Re-run: C:\IT\DRC\_agent_verify_1674.cmd

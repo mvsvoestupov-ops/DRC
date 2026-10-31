@@ -14,3 +14,8 @@ VITE_API_URL=http://127.0.0.1:10000
 
 cd /d C:\IT\DRC\frontend
 pnpm.cmd dev -- --host 127.0.0.1 --port 5173
+
+
+nano /opt/drc/backend/.env
+# DEEPSEEK_API_KEY=  (только в backend/.env, не коммитить)
+systemctl restart drc-backend

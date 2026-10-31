@@ -1,0 +1,27 @@
+{
+  "note": "Local PS 1674 rebuilt during repair_missing_tf_from_html run (interrupted full scan); verification confirms OTF C TFs.",
+  "matched_missing_dot_header": 1,
+  "rebuilt": 1,
+  "unchanged": 0,
+  "errors": [],
+  "samples": [
+    {
+      "reg_number": "1674",
+      "ps_code": "19.085",
+      "added": [
+        "C/05.6"
+      ],
+      "removed": [],
+      "tf_before": 16,
+      "tf_after": 17,
+      "otf_c_tf_codes_after": [
+        "C/01.6",
+        "C/02.6",
+        "C/03.6",
+        "C/04.6",
+        "C/05.6",
+        "C/06.6"
+      ]
+    }
+  ]
+}

@@ -48,7 +48,9 @@ def main() -> int:
         )
         print(
             f"Готово: занятий {result['occupations']}, навыков {result['skills']}, "
-            f"связей {result['relations']} (source={result['source']})"
+            f"связей {result['relations']} (source={result['source']}); "
+            f"blobs={result.get('blobs')}, parsed={result.get('parsed')}, "
+            f"concepts={result.get('concepts')}"
         )
         return 0
     except Exception as exc:

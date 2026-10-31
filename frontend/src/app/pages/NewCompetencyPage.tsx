@@ -81,6 +81,7 @@ import {
   tfDisabledReason,
   tfLevelRangeHint,
 } from "@/lib/tfLevelRules";
+import { hydrateCompetenceStandards } from "@/lib/hydrateCompetenceStandards";
 import {
   DescriptorEditor,
   createEmptyDescriptors,
@@ -766,35 +767,24 @@ export function NewCompetencyPage() {
           } as FgosSearchItem);
         }
         const lfList = Array.isArray(comp.labor_functions) ? comp.labor_functions : [];
-        const standardId = comp.prof_standard_id || lfList[0]?.standard_id;
-        if (standardId) {
-          const first = lfList[0] || {};
-          setSelectedStandards([{
-            id: Number(standardId),
-            name: first.standard_name || "Профессиональный стандарт",
-            reg_number: first.standard_reg_number || "",
-          }]);
-          try {
-            const data = await apiClient.getLaborFunctions(Number(standardId));
-            if (cancelled) return;
-            const tagged: LaborFunctionDetail[] = (Array.isArray(data) ? data : []).map((lf) => ({
-              ...lf,
-              standard_id: lf.standard_id ?? Number(standardId),
-              standard_reg_number: lf.standard_reg_number ?? first.standard_reg_number,
-              standard_name: lf.standard_name ?? first.standard_name,
-              otf_level: formatTfLevel(lf.otf_level, lf.code) ?? "",
-            }));
-            setLaborFunctions(tagged);
-            const selectedCodes = new Set(lfList.map((item: { code?: string }) => item.code).filter(Boolean));
-            const selectedIds = tagged.filter((item) => selectedCodes.has(item.code)).map((item) => item.id);
-            setExpandedTfIds(selectedIds);
+        try {
+          const hydrated = await hydrateCompetenceStandards({
+            profStandardId: comp.prof_standard_id,
+            laborFunctions: lfList,
+          });
+          if (cancelled) return;
+          if (hydrated.standards.length > 0) {
+            setSelectedStandards(hydrated.standards);
+            setLaborFunctions(hydrated.laborFunctions);
+            setExpandedTfIds(hydrated.selectedLaborFunctionIds);
             setFormData((prev) => ({
               ...prev,
-              selectedLaborFunctionIds: selectedIds,
+              profStandardId: hydrated.profStandardId ?? prev.profStandardId,
+              selectedLaborFunctionIds: hydrated.selectedLaborFunctionIds,
             }));
-          } catch {
-            /* структура уже загружена из паспорта */
           }
+        } catch {
+          /* структура уже загружена из паспорта */
         }
       })
       .catch((err: unknown) => {

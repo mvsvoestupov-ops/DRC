@@ -100,6 +100,7 @@ git restore --staged -- ^
   "DRCFigma" ^
   "пароли и команды.txt" ^
   "PassForDRC_mail.txt" ^
+  "Локальный старт.txt" ^
   "backend/venv" ^
   "backend/profstandart.db" ^
   "ESCO" ^

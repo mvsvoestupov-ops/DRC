@@ -1,0 +1,100 @@
+Push reject diagnosis — 2026-10-31
+Repo: C:\IT\DRC  |  remote: https://github.com/mvsvoestupov-ops/DRC.git
+
+=== git status -sb (from refs + last agent log; re-run locally to refresh) ===
+## main...origin/main [ahead 1]
+Local HEAD:  e8b5f1d3f69bad6e7a40ecf85dade05f9cc2899c
+origin/main: 968c0b6e0c374a13975e704ca2883c2a46c44e32
+
+=== Commits not on origin (origin/main..HEAD) ===
+e8b5f1d Методология: скриншоты конструктора (шаги 1–7) и вёрстка без обрезки рисунков
+
+(Created by push-and-deploy.cmd after 968c0b6 was already pushed successfully earlier today.)
+
+=== Remote error (user report) ===
+! [remote rejected] main -> main (push declined due to repository rule violations)
+(No GH001 / large-file line in the snippet — typical of GH013 rulesets, often secret push protection.)
+
+=== Files >1 MB in origin/main..HEAD ===
+Agent could not run git in this environment (PowerShell execution policy blocks the shell).
+Manual check (cmd.exe):
+
+  cd /d C:\IT\DRC
+  backend\scripts\output\_push_reject_diag_run.cmd
+  type backend\scripts\output\_push_reject_diag_raw.txt
+
+Expected from static analysis of the one unpushed commit:
+- ESCO/esco-v1.2.0.rdf: should NOT be in this range (parent 968c0b6 is on origin; push-and-deploy unstages ESCO). If findstr still shows ESCO → run fix-push-lfs.cmd (see below).
+- backend/profstandart.db: excluded from index by push-and-deploy.
+- backend/scripts/output/competence_32_server.json: ~732 KB (under 1 MB) — may still be in the commit if git add -A picked it up.
+- frontend/public/methodology-media/*.png: likely already on origin from earlier methodology commits; any re-add is probably <1 MB each unless screenshots grew.
+
+=== Secrets / .env in unpushed commit ===
+HIGH CONFIDENCE: Локальный старт.txt (modified before push, NOT in push-and-deploy “restore --staged” list) contains a commented DeepSeek API key line:
+  # DEEPSEEK_API_KEY=sk-2f02…1ff
+GitHub push protection / “restrict secrets” rulesets reject pushes containing sk-* keys (GH013), often without naming the file in a short error.
+
+push-and-deploy.cmd already unstages backend/.env, frontend/.env, PassForDRC_mail.txt, пароли и команды.txt — but NOT “Локальный старт.txt”.
+
+Verify in cmd:
+  git show HEAD:"Локальный старт.txt" | findstr /I "DEEPSEEK sk-"
+
+No other sk-* patterns found in tracked source (.ts/.py/.env.example) besides false positives.
+
+=== Likely rule violated ===
+Primary: Secret scanning / push protection (GH013 — “Push cannot contain secrets”), not GH001 large-file.
+Secondary (if secret scan passes): file-size or path push ruleset — check GitHub Rule insights.
+
+  gh api repos/mvsvoestupov-ops/DRC/rulesets
+
+=== Intended recovery (fix-push-lfs.cmd) ===
+fix-push-lfs.cmd is for ESCO RDF (>100 MB) in unpushed history — reset --mixed to origin/main, recommit without ESCO/*.rdf.
+Use it ONLY if rev-list shows ESCO/ or *.rdf in origin/main..HEAD. For THIS failure, secret removal is the first fix.
+
+=== Exact cmd commands for Mikhail (no force-push) ===
+
+cd /d C:\IT\DRC
+git fetch origin main
+git status -sb
+git log --oneline origin/main..HEAD
+git show --name-only --pretty=format: HEAD
+
+REM --- confirm secret in the unpushed commit ---
+git show HEAD:"Локальный старт.txt" | findstr /I "DEEPSEEK sk-"
+
+REM --- 1) Redact the key in the working tree (delete line 20 or replace with placeholder) ---
+notepad "Локальный старт.txt"
+
+REM --- 2) Rewrite the single unpushed commit (safe: never reached GitHub) ---
+git reset --mixed origin/main
+git add -A
+git restore --staged -- "backend/.env" "frontend/.env" ".env" "chat 2.txt" "chat_290726.txt" "chat_Фулстек-разработчик_20260728_170951.txt" "frontend_old_backup" "DRCFigma" "пароли и команды.txt" "PassForDRC_mail.txt" "backend/venv" "backend/profstandart.db" "ESCO" "ESCO/esco-v1.2.0.rdf" "Локальный старт.txt" 2>nul
+
+git diff --cached --name-only | findstr /I "sk- DEEPSEEK .env ESCO/ .rdf profstandart.db"
+if errorlevel 1 (
+  git commit -m "fix: restore PS on wizard step 2 via reg_number; methodology UI"
+) else (
+  echo Still sensitive or blocked paths in index — fix before commit.
+  exit /b 1
+)
+
+REM --- 3) Pre-push checks ---
+git rev-list --objects origin/main..HEAD > "%TEMP%\drc-objs.txt"
+findstr /I /C:"ESCO/" /C:"esco-v1.2.0.rdf" /C:"sk-" "%TEMP%\drc-objs.txt"
+if errorlevel 1 (
+  git push origin main
+) else (
+  echo ESCO or sk- still in unpushed objects — run fix-push-lfs.cmd and/or redact more files.
+  exit /b 1
+)
+
+REM --- 4) Rotate exposed DeepSeek key (comment in notes file may still be in local reflog) ---
+REM Update DEEPSEEK_API_KEY in backend\.env and on server /opt/drc/backend/.env, then restart backend.
+
+Optional verbose push trace:
+  set GIT_TRACE=1
+  set GIT_CURL_VERBOSE=1
+  git push origin main
+
+After successful push:
+  deploy-only.cmd

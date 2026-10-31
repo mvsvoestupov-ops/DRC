@@ -1,0 +1,21 @@
+success=true
+competence_id=32
+name=�������� ���������� ��������� � ������������ ����������� ������ � �������������� � �������� ��������� �������� ��� ��������� ������-���������� ������
+public_code=RUS-PK-0032
+owner_email=stol1@mail.ru
+error=
+import_stdout=Inserting local competence id=32
+{
+  "ok": true,
+  "id": 32,
+  "public_code": "RUS-PK-0032",
+  "name": "�������� ���������� ��������� � ������������ ����������� ������ � �������������� � �������� ��������� �������� ��� ��������� ������-���������� ������",
+  "status": "������",
+  "owner_user_id": 1,
+  "owner_email": "stol1@mail.ru",
+  "source_db": "/opt/drc/backend/profstandart.db",
+  "has_structure": true,
+  "assessment_tools": 64,
+  "assessment_tools_v2": false,
+  "wizard_step": 10
+}

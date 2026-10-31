@@ -1,0 +1,13 @@
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<script language="VBScript">
+Sub Window_OnLoad
+  Set sh = CreateObject("WScript.Shell")
+  sh.Run "cmd /c C:\IT\DRC\backend\scripts\output\_run_pull_32.cmd", 0, True
+  self.close
+End Sub
+</script>
+</head>
+<body>Running pull...</body>
+</html>
