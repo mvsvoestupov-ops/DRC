@@ -1,0 +1,158 @@
+=== DRC server health raw 02.11.2026 13:03:52,57 ===
+
+=== 1. curl -I (public) ===
+HTTP/1.1 200 OK
+Server: nginx/1.24.0 (Ubuntu)
+Date: Mon, 02 Nov 2026 10:03:53 GMT
+Content-Type: text/html
+Content-Length: 1185
+Last-Modified: Sat, 31 Oct 2026 08:39:14 GMT
+Connection: keep-alive
+ETag: "6ae5a932-4a1"
+Accept-Ranges: bytes
+
+
+HTTP/1.1 404 Not Found
+Server: nginx/1.24.0 (Ubuntu)
+Date: Mon, 02 Nov 2026 10:04:00 GMT
+Content-Type: application/json
+Content-Length: 22
+Connection: keep-alive
+
+
+HTTP/1.1 200 OK
+Server: nginx/1.24.0 (Ubuntu)
+Date: Mon, 02 Nov 2026 10:04:00 GMT
+Content-Type: text/html
+Content-Length: 1185
+Last-Modified: Sat, 31 Oct 2026 08:39:14 GMT
+Connection: keep-alive
+ETag: "6ae5a932-4a1"
+Accept-Ranges: bytes
+
+
+HTTP/1.1 200 OK
+Server: nginx/1.24.0 (Ubuntu)
+Date: Mon, 02 Nov 2026 10:04:01 GMT
+Content-Type: text/html
+Content-Length: 1185
+Last-Modified: Sat, 31 Oct 2026 08:39:14 GMT
+Connection: keep-alive
+ETag: "6ae5a932-4a1"
+Accept-Ranges: bytes
+
+
+=== 2. systemctl drc-backend nginx ===
+active
+active
+---
+● drc-backend.service - DRC FastAPI
+     Loaded: loaded (/etc/systemd/system/drc-backend.service; enabled; preset: enabled)
+    Drop-In: /etc/systemd/system/drc-backend.service.d
+             └─mail.conf
+     Active: active (running) since Sat 2026-10-31 08:38:48 UTC; 2 days ago
+   Main PID: 31563 (uvicorn)
+      Tasks: 8 (limit: 4653)
+     Memory: 2.2G (peak: 2.2G)
+        CPU: 25min 4.164s
+     CGroup: /system.slice/drc-backend.service
+             └─31563 /opt/drc/backend/venv/bin/python3 /opt/drc/backend/venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8001
+
+Nov 02 10:04:05 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     5.164.12.45:0 - "GET /competences/67/chat/summary HTTP/1.0" 200 OK
+Nov 02 10:04:05 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     195.170.52.98:0 - "POST /competences/85/presence HTTP/1.0" 200 OK
+Nov 02 10:04:05 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     195.170.52.98:0 - "GET /competences/85/chat/4 HTTP/1.0" 200 OK
+Nov 02 10:04:05 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     195.170.52.98:0 - "GET /competences/85/chat/summary HTTP/1.0" 200 OK
+Nov 02 10:04:05 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     5.164.12.45:0 - "GET /competences/67/chat/5 HTTP/1.0" 200 OK
+Nov 02 10:04:05 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     5.164.12.45:0 - "GET /competences/67/chat/summary HTTP/1.0" 200 OK
+Nov 02 10:04:05 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     194.186.72.194:0 - "GET /competences/63/chat/5 HTTP/1.0" 200 OK
+Nov 02 10:04:05 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     194.186.72.194:0 - "GET /competences/63/chat/summary HTTP/1.0" 200 OK
+Nov 02 10:04:05 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     91.79.140.128:0 - "POST /competences/49/presence HTTP/1.0" 200 OK
+Nov 02 10:04:05 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     72.63.23.130:0 - "GET /competences?limit=1 HTTP/1.0" 401 Unauthorized
+Nov 02 10:04:05 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     194.85.207.122:0 - "GET /competences?mine=true HTTP/1.0" 200 OK
+Nov 02 10:04:05 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     194.85.207.122:0 - "GET /competences/invites HTTP/1.0" 200 OK
+---
+● nginx.service - A high performance web server and a reverse proxy server
+     Loaded: loaded (/usr/lib/systemd/system/nginx.service; enabled; preset: enabled)
+     Active: active (running) since Wed 2026-10-28 06:47:13 UTC; 5 days ago
+       Docs: man:nginx(8)
+    Process: 3035323 ExecStartPre=/usr/sbin/nginx -t -q -g daemon on; master_process on; (code=exited, status=0/SUCCESS)
+    Process: 3035325 ExecStart=/usr/sbin/nginx -g daemon on; master_process on; (code=exited, status=0/SUCCESS)
+    Process: 31749 ExecReload=/usr/sbin/nginx -g daemon on; master_process on; -s reload (code=exited, status=0/SUCCESS)
+   Main PID: 3035351 (nginx)
+      Tasks: 3 (limit: 4653)
+     Memory: 39.5M (peak: 47.3M)
+        CPU: 3min 32.696s
+     CGroup: /system.slice/nginx.service
+             ├─ 716968 "nginx: worker process"
+             ├─ 716969 "nginx: worker process"
+             └─3035351 "nginx: master process /usr/sbin/nginx -g daemon on; master_process on;"
+
+Oct 28 07:14:31 9064351-zv869578.twc1.net systemd[1]: Reloading nginx.service - A high performance web server and a reverse proxy server...
+Oct 28 07:14:31 9064351-zv869578.twc1.net nginx[3044014]: 2026/10/28 07:14:31 [notice] 3044014#3044014: signal process started
+Oct 28 07:14:31 9064351-zv869578.twc1.net systemd[1]: Reloaded nginx.service - A high performance web server and a reverse proxy server.
+Oct 29 11:38:20 9064351-zv869578.twc1.net systemd[1]: Reloading nginx.service - A high performance web server and a reverse proxy server...
+Oct 29 11:38:20 9064351-zv869578.twc1.net nginx[3502128]: 2026/10/29 11:38:20 [notice] 3502128#3502128: signal process started
+Oct 29 11:38:20 9064351-zv869578.twc1.net systemd[1]: Reloaded nginx.service - A high performance web server and a reverse proxy server.
+Oct 31 08:22:28 9064351-zv869578.twc1.net systemd[1]: Reloading nginx.service - A high performance web server and a reverse proxy server...
+Oct 31 08:22:29 9064351-zv869578.twc1.net nginx[27243]: 2026/10/31 08:22:28 [notice] 27243#27243: signal process started
+Oct 31 08:22:29 9064351-zv869578.twc1.net systemd[1]: Reloaded nginx.service - A high performance web server and a reverse proxy server.
+Oct 31 08:39:14 9064351-zv869578.twc1.net systemd[1]: Reloading nginx.service - A high performance web server and a reverse proxy server...
+Oct 31 08:39:14 9064351-zv869578.twc1.net nginx[31749]: 2026/10/31 08:39:14 [notice] 31749#31749: signal process started
+Oct 31 08:39:14 9064351-zv869578.twc1.net systemd[1]: Reloaded nginx.service - A high performance web server and a reverse proxy server.
+
+=== 3. memory disk uptime ===
+               total        used        free      shared  buff/cache   available
+Mem:           3.8Gi       2.4Gi       132Mi        29Mi       1.6Gi       1.5Gi
+Swap:             0B          0B          0B
+---
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1        29G   19G  9.3G  67% /
+---
+ 10:04:07 up 13 days,  1:05,  2 users,  load average: 0.73, 0.19, 0.10
+
+=== 4. journalctl drc-backend ===
+Nov 02 10:04:08 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     72.63.23.131:0 - "GET /harmonize/brics/status HTTP/1.0" 401 Unauthorized
+Nov 02 10:04:08 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     85.142.11.3:0 - "GET /competences/49/chat/7 HTTP/1.0" 200 OK
+Nov 02 10:04:08 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     85.142.11.3:0 - "GET /competences/49/chat/summary HTTP/1.0" 200 OK
+Nov 02 10:04:08 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     195.170.52.98:0 - "POST /competences/85/presence HTTP/1.0" 200 OK
+Nov 02 10:04:08 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     213.80.236.113:0 - "POST /competences/81/presence HTTP/1.0" 200 OK
+Nov 02 10:04:08 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     213.80.236.113:0 - "GET /competences/81/chat/5 HTTP/1.0" 200 OK
+Nov 02 10:04:08 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     213.80.236.113:0 - "GET /competences/81/chat/summary HTTP/1.0" 200 OK
+Nov 02 10:04:09 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     91.79.140.128:0 - "GET /competences/49/chat/7 HTTP/1.0" 200 OK
+Nov 02 10:04:09 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     91.79.140.128:0 - "GET /competences/49/chat/summary HTTP/1.0" 200 OK
+Nov 02 10:04:09 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     91.79.140.128:0 - "POST /competences/49/presence HTTP/1.0" 200 OK
+Nov 02 10:04:09 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     195.170.52.98:0 - "GET /competences/85/chat/4 HTTP/1.0" 200 OK
+Nov 02 10:04:09 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     195.170.52.98:0 - "GET /competences/85/chat/summary HTTP/1.0" 200 OK
+Nov 02 10:04:09 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     5.164.12.45:0 - "GET /competences/67/chat/5 HTTP/1.0" 200 OK
+Nov 02 10:04:09 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     5.164.12.45:0 - "GET /competences/67/chat/summary HTTP/1.0" 200 OK
+Nov 02 10:04:09 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     194.186.72.194:0 - "GET /competences/63/chat/5 HTTP/1.0" 200 OK
+Nov 02 10:04:09 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     194.186.72.194:0 - "GET /competences/63/chat/summary HTTP/1.0" 200 OK
+Nov 02 10:04:09 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     195.170.52.98:0 - "GET /competences/85/chat/4 HTTP/1.0" 200 OK
+Nov 02 10:04:09 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     195.170.52.98:0 - "GET /competences/85/chat/summary HTTP/1.0" 200 OK
+Nov 02 10:04:09 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     5.164.12.45:0 - "GET /competences/67/chat/5 HTTP/1.0" 200 OK
+Nov 02 10:04:09 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     194.186.72.194:0 - "GET /competences/63/chat/5 HTTP/1.0" 200 OK
+Nov 02 10:04:09 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     5.164.12.45:0 - "GET /competences/67/chat/summary HTTP/1.0" 200 OK
+Nov 02 10:04:09 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     195.170.52.98:0 - "GET /competences/85/chat/4 HTTP/1.0" 200 OK
+Nov 02 10:04:09 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     194.186.72.194:0 - "GET /competences/63/chat/summary HTTP/1.0" 200 OK
+Nov 02 10:04:09 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     195.170.52.98:0 - "GET /competences/85/chat/summary HTTP/1.0" 200 OK
+Nov 02 10:04:09 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     5.164.12.45:0 - "GET /competences/67/chat/5 HTTP/1.0" 200 OK
+Nov 02 10:04:09 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     195.170.52.98:0 - "GET /competences/85/chat/4 HTTP/1.0" 200 OK
+Nov 02 10:04:09 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     5.164.12.45:0 - "GET /competences/67/chat/summary HTTP/1.0" 200 OK
+Nov 02 10:04:09 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     195.170.52.98:0 - "GET /competences/85/chat/summary HTTP/1.0" 200 OK
+Nov 02 10:04:09 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     5.164.12.45:0 - "GET /competences/67/chat/5 HTTP/1.0" 200 OK
+Nov 02 10:04:09 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     195.170.52.98:0 - "GET /competences/85/chat/4 HTTP/1.0" 200 OK
+Nov 02 10:04:09 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     5.164.12.45:0 - "GET /competences/67/chat/summary HTTP/1.0" 200 OK
+Nov 02 10:04:09 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     195.170.52.98:0 - "GET /competences/85/chat/summary HTTP/1.0" 200 OK
+Nov 02 10:04:09 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     5.164.12.45:0 - "GET /competences/67/chat/5 HTTP/1.0" 200 OK
+Nov 02 10:04:09 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     5.164.12.45:0 - "GET /competences/67/chat/summary HTTP/1.0" 200 OK
+Nov 02 10:04:09 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     195.170.52.98:0 - "GET /competences/85/chat/4 HTTP/1.0" 200 OK
+Nov 02 10:04:09 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     195.170.52.98:0 - "GET /competences/85/chat/summary HTTP/1.0" 200 OK
+Nov 02 10:04:09 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     72.63.23.214:0 - "GET /harmonize/brics/status HTTP/1.0" 401 Unauthorized
+Nov 02 10:04:10 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     72.63.23.132:0 - "GET /harmonize/brics/status HTTP/1.0" 401 Unauthorized
+Nov 02 10:04:10 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     85.142.11.3:0 - "POST /competences/49/presence HTTP/1.0" 200 OK
+Nov 02 10:04:10 9064351-zv869578.twc1.net uvicorn[31563]: INFO:     5.164.12.45:0 - "POST /competences/67/presence HTTP/1.0" 200 OK
+
+=== 5. nginx error log tail ===
+
+=== 6. frontend dist ===
+--- nginx root hint ---

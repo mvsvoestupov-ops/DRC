@@ -1,0 +1,42 @@
+DRC production health summary
+Host: root@201.34.149.65  App: /opt/drc
+Captured: 2026-11-02 ~13:03 MSK (raw: _server_health_raw.txt)
+
+=== Quick answers ===
+Site up?           YES — HTTPS 200, nginx/1.24.0, SPA index Last-Modified Sat 31 Oct 2026 08:39:14 GMT
+API up?            YES — uvicorn active; proxied routes return JSON (GET /api/ → 404 JSON, not nginx HTML); live 200s on /competences/*, /harmonize/*; unauth probes → 401
+Backend unit:      active (running) since Sat 2026-10-31 08:38:48 UTC (~2 days), PID 31563 uvicorn :8001
+Nginx unit:        active (running) since Wed 2026-10-28 06:47:13 UTC
+
+=== Resources ===
+Memory: 3.8 Gi total, 2.4 Gi used, 132 Mi free, 1.5 Gi available; backend RSS ~2.2 Gi (peak 2.2 Gi)
+Swap:   none (0 B)
+Disk /: 29G total, 19G used, 9.3G avail, 67% — OK
+Uptime: 13 days, load 0.73 / 0.19 / 0.10
+
+=== OOM / errors ===
+OOM in journal:    none in last 40 lines
+Nginx error log:   no recent lines captured (tail empty or quiet)
+Disk critical:     no (<90%)
+
+=== HTTP probes (curl -I) ===
+https://drc.ao-nk.online/           → 200 OK (text/html)
+https://drc.ao-nk.online/api/       → 404 Not Found (application/json — backend reached)
+https://drc.ao-nk.online/docs       → 200 text/html (SPA shell, not OpenAPI)
+https://drc.ao-nk.online/health     → 200 text/html (no dedicated health route at edge)
+
+=== Frontend static ===
+Public index matches last deploy reload (31 Oct 08:39 UTC).
+Deploy log: vite dist built, synced to /opt/drc/frontend/build (and veche_rg mirror).
+Remote dist/build stat block did not return in this run (see _server_health_run.cmd section 6); re-run if mtime needed.
+
+=== Last useful drc-backend log lines ===
+Nov 02 10:04:05 uvicorn[31563]: GET /competences?mine=true HTTP/1.0" 200 OK
+Nov 02 10:04:05 uvicorn[31563]: GET /competences/67/chat/summary HTTP/1.0" 200 OK
+Nov 02 10:04:08 uvicorn[31563]: GET /harmonize/brics/status HTTP/1.0" 401 Unauthorized
+Nov 02 10:04:10 uvicorn[31563]: POST /competences/67/presence HTTP/1.0" 200 OK
+(no tracebacks, no systemd stop/restart in tail)
+
+=== Notes ===
+- Backend memory is high (~2.2G on 3.8G VM, no swap); watch for pressure under load.
+- Re-run full check: C:\IT\DRC\backend\scripts\output\_server_health_run.cmd

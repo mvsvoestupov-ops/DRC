@@ -10,7 +10,7 @@ import re
 
 from sqlalchemy.orm import defer, joinedload, undefer
 
-from .classinform_parser import parse_classinform_html
+from .classinform_parser import looks_like_okz_occupation_name, parse_classinform_html
 from .db.raw_models import GeneralizedFunctionRaw, StandardRaw
 from .db_operations import save_raw_standard
 from .tf_codes import compact_tf_code
@@ -89,6 +89,7 @@ def repair_missing_tf_from_html(
         reg_number = std.reg_number
         ps_code = std.ps_code
         element_id = std.element_id
+        previous_name = (std.name or "").strip()
         try:
             parsed = parse_classinform_html(html)
         except Exception as exc:  # noqa: BLE001 — keep going on bad HTML
@@ -106,6 +107,10 @@ def repair_missing_tf_from_html(
         # Keep registration number aligned with DB row (HTML meta can drift).
         if reg_number:
             parsed.registration_number = reg_number
+        # Never let a TF-only reparse overwrite a good PS title with an ОКЗ label.
+        if previous_name and not looks_like_okz_occupation_name(previous_name):
+            if not (parsed.name or "").strip() or looks_like_okz_occupation_name(parsed.name):
+                parsed.name = previous_name
 
         new_codes = _tf_codes(parsed)
         # Drop large HTML from identity map before rebuild/commit.

@@ -181,6 +181,99 @@ def _slice_lines(lines: List[str], start: str, end_markers: List[str] | None = N
     return lines[start_idx:end_idx]
 
 
+_OKZ_NAME_MARKERS = (
+    "не входящие в другие группы",
+    "не входящих в другие группы",
+)
+_OKZ_NAME_PREFIXES = (
+    "квалифицированные рабочие",
+    "специалисты в области",
+    "специалисты-",
+    "руководители подразделений",
+    "руководители",
+    "техники (",
+    "техники по",
+    "операторы",
+    "сборщики",
+    "рабочие",
+)
+
+
+def looks_like_okz_occupation_name(value: str | None) -> bool:
+    """True if text looks like an ОКЗ occupation title, not a PS short name."""
+    text = re.sub(r"\s+", " ", (value or "").strip())
+    if not text:
+        return False
+    low = text.lower()
+    if any(marker in low for marker in _OKZ_NAME_MARKERS):
+        return True
+    if any(low.startswith(prefix) for prefix in _OKZ_NAME_PREFIXES) and len(text) > 40:
+        return True
+    return False
+
+
+def _name_from_ps_block(full_text: str) -> tuple[str, str]:
+    """Return (name, reg_number) from «ПРОФЕССИОНАЛЬНЫЙ СТАНДАРТ» block if present."""
+    m = re.search(
+        r"ПРОФЕССИОНАЛЬНЫЙ\s+СТАНДАРТ\s*\n\s*([^\n]+?)\s*\n\s*(\d{2,4})\s*\n\s*Регистрационный\s+номер",
+        full_text,
+        re.I,
+    )
+    if not m:
+        return "", ""
+    return m.group(1).strip(), m.group(2)
+
+
+def _name_from_index(ps_code: str) -> str:
+    if not ps_code:
+        return ""
+    try:
+        index = load_ps_index_cache()
+    except Exception:
+        return ""
+    entry = (index or {}).get(ps_code) or {}
+    return str(entry.get("name") or "").strip()
+
+
+def load_ps_index_cache() -> dict:
+    global _ps_index
+    if _ps_index is not None:
+        return _ps_index
+    if os.path.isfile(INDEX_CACHE_PATH):
+        with open(INDEX_CACHE_PATH, encoding="utf-8") as fh:
+            _ps_index = json.load(fh)
+            return _ps_index
+    _ps_index = {}
+    return _ps_index
+
+
+def _normalize_ps_title(value: str) -> str:
+    text = re.sub(r"\s+", " ", (value or "").strip())
+    if not text:
+        return ""
+    # Official block often prints the title in ALL CAPS.
+    if text.isupper() and any(ch.isalpha() for ch in text):
+        return text.capitalize()
+    return text
+
+
+def pick_professional_standard_name(
+    *candidates: str,
+    okz_names: list[str] | None = None,
+) -> str:
+    """Prefer a real PS title; never keep an ОКЗ occupation label as PS name."""
+    okz_set = {re.sub(r"\s+", " ", n.strip()) for n in (okz_names or []) if n and n.strip()}
+    cleaned: list[str] = []
+    for raw in candidates:
+        text = _normalize_ps_title(raw)
+        if not text:
+            continue
+        if text in okz_set or looks_like_okz_occupation_name(text):
+            continue
+        cleaned.append(text)
+    return cleaned[0] if cleaned else ""
+
+
 def _extract_metadata(lines: List[str], soup: BeautifulSoup) -> dict:
     h1 = soup.find("h1")
     h2 = soup.find("h2")
@@ -189,8 +282,9 @@ def _extract_metadata(lines: List[str], soup: BeautifulSoup) -> dict:
         m = PS_CODE_IN_TITLE_RE.search(h1.get_text(" ", strip=True))
         title_code = m.group(1) if m else ""
 
-    name = h2.get_text(" ", strip=True) if h2 else ""
+    h2_name = h2.get_text(" ", strip=True) if h2 else ""
     full_text = "\n".join(lines)
+    block_name, block_reg = _name_from_ps_block(full_text)
 
     reg_number = ""
     for i, line in enumerate(lines):
@@ -199,11 +293,17 @@ def _extract_metadata(lines: List[str], soup: BeautifulSoup) -> dict:
             if re.fullmatch(r"\d{2,4}", candidate):
                 reg_number = candidate
                 break
+    if not reg_number and block_reg:
+        reg_number = block_reg
     if not reg_number:
-        m = re.search(r"ПРОФЕССИОНАЛЬНЫЙ СТАНДАРТ\s*\n\s*([^\n]+)\s*\n\s*(\d{2,4})\s*\n\s*Регистрационный номер", full_text, re.I)
+        m = re.search(
+            r"ПРОФЕССИОНАЛЬНЫЙ\s+СТАНДАРТ\s*\n\s*([^\n]+)\s*\n\s*(\d{2,4})\s*\n\s*Регистрационный номер",
+            full_text,
+            re.I,
+        )
         if m:
-            if not name:
-                name = m.group(1).strip()
+            if not block_name:
+                block_name = m.group(1).strip()
             reg_number = m.group(2)
 
     order_number = ""
@@ -276,9 +376,11 @@ def _extract_metadata(lines: List[str], soup: BeautifulSoup) -> dict:
                     names.append(m.group(2).strip(" -"))
                     j += 1
                     continue
-                # В HTML-таблице код и имя часто в соседних ячейках/строках
+                # В HTML-таблице код и имя часто в соседних ячейках/строках.
+                # Важно: не использовать имя переменной ``name`` — иначе Python
+                # перезапишет наименование ПС названием группы занятий ОКЗ.
                 if re.fullmatch(r"\d{3,4}", cell):
-                    name = ""
+                    okz_title = ""
                     if j + 1 < len(section_i):
                         nxt = section_i[j + 1].strip()
                         if (
@@ -287,10 +389,10 @@ def _extract_metadata(lines: List[str], soup: BeautifulSoup) -> dict:
                             and not nxt.startswith("(")
                             and "код ОКЗ" not in nxt.lower()
                         ):
-                            name = nxt.strip(" -")
+                            okz_title = nxt.strip(" -")
                             j += 1
                     codes.append(cell)
-                    names.append(name)
+                    names.append(okz_title)
                     j += 1
                     continue
                 if "код ОКЗ" in cell.lower() or cell.startswith("("):
@@ -320,6 +422,18 @@ def _extract_metadata(lines: List[str], soup: BeautifulSoup) -> dict:
                         opd_name = m.group(2).strip()
                         break
             break
+
+    okz_name_list = [n.strip() for n in (okz_group_name or "").split(";") if n.strip()]
+    index_name = _name_from_index(ps_code)
+    name = pick_professional_standard_name(
+        block_name,
+        h2_name,
+        index_name,
+        okz_names=okz_name_list,
+    )
+    # Last resort: keep previous h2/block even if suspicious, better than empty.
+    if not name:
+        name = block_name or h2_name or index_name
 
     return {
         "name": name,
