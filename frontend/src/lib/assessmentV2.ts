@@ -411,13 +411,15 @@ function emptyAssessmentByLevelFrom(source: AssessmentByLevel): AssessmentByLeve
 }
 
 function normalizePractical(raw: AssessmentV2PracticalTask & { groupKey?: string; tfCode?: string; tdText?: string }): AssessmentV2PracticalTask {
+  // Do not trim editable strings here: syncAssessmentByLevelV2 runs on every
+  // keystroke, and trim() eats Space while the user is typing criteria/name.
   const criteria = Array.isArray(raw?.criteria)
-    ? raw.criteria.map((c) => String(c || "").trim()).filter(Boolean)
+    ? raw.criteria.map((c) => String(c ?? ""))
     : [];
-  const name = String(raw?.name || "").trim();
+  const name = String(raw?.name ?? "");
   return {
     id: String(raw?.id || nid("p")),
-    name: name || "Задание",
+    name: name.trim() ? name : "Задание",
     prompt: String(raw?.prompt || ""),
     instruction: String(raw?.instruction || ""),
     description: String(raw?.description || ""),
@@ -605,11 +607,15 @@ export function syncAssessmentByLevelV2(
 
   for (const level of FORMATION_LEVELS) {
     const prev = existing[level] || emptyAssessmentV2Level();
-    const practicalTasks = (prev.practicalTasks || []).map((task, index) => ({
-      ...normalizePractical(task),
-      name: String(task.name || "").trim() || `Задание ${index + 1}`,
-      componentIds: (task.componentIds || []).filter((id) => validPracticalIds.has(id)),
-    }));
+    const practicalTasks = (prev.practicalTasks || []).map((task, index) => {
+      const normalized = normalizePractical(task);
+      const rawName = String(task.name ?? normalized.name ?? "");
+      return {
+        ...normalized,
+        name: rawName.trim() ? rawName : `Задание ${index + 1}`,
+        componentIds: (task.componentIds || []).filter((id) => validPracticalIds.has(id)),
+      };
+    });
     const coverage = practicalCoverage(structure, practicalTasks);
 
     next[level] = {

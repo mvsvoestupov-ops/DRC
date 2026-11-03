@@ -244,6 +244,18 @@ describe("assessmentV2", () => {
     expect(seeded.базовый.practicalTasks[0].prompt).toBe("Кейс");
   });
 
+  it("keeps spaces in practical criteria while syncing (typing Space)", () => {
+    const base = emptyAssessmentByLevelV2();
+    const task = {
+      ...createPracticalTask(1),
+      componentIds: ["b1"],
+      criteria: ["полный ответ "],
+    };
+    base.базовый.practicalTasks = [task];
+    const synced = syncAssessmentByLevelV2(structure, base);
+    expect(synced.базовый.practicalTasks[0].criteria[0]).toBe("полный ответ ");
+  });
+
   it("migrates legacy componentId test shape", () => {
     const restored = assessmentToolsV2ToByLevel(
       {

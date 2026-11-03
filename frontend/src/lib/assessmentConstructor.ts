@@ -329,6 +329,11 @@ function asString(value: unknown): string {
   return String(value ?? "").trim();
 }
 
+/** Editable free-text: do not trim — otherwise Space while typing is eaten on re-normalize. */
+function asText(value: unknown): string {
+  return String(value ?? "");
+}
+
 const MEDIA_KINDS = new Set<AssessmentMediaKind>(["image", "pdf", "text", "video", "audio"]);
 
 export function createAssessmentAttachmentId(): string {
@@ -406,7 +411,7 @@ function normalizeOptions(raw: unknown): AssessmentOption[] {
     const row = item && typeof item === "object" ? (item as Record<string, unknown>) : {};
     return {
       id: asString(row.id) || createAssessmentOptionId(),
-      text: asString(row.text),
+      text: asText(row.text),
       isCorrect: Boolean(row.isCorrect ?? row.is_correct),
     };
   });
@@ -427,15 +432,15 @@ export function normalizeAssessmentTask(raw: unknown, fallbackMethod: Assessment
   return {
     id: asString(row.id) || createAssessmentTaskId(),
     method,
-    prompt: asString(row.prompt ?? row.taskText ?? row.title),
+    prompt: asText(row.prompt ?? row.taskText ?? row.title),
     itemType: (TEST_ITEM_TYPES.some((item) => item.value === row.itemType || item.value === row.item_type)
       ? ((row.itemType || row.item_type) as TestItemType)
       : "single"),
     options: normalizeOptions(row.options),
-    context: asString(row.context),
-    roles: asString(row.roles),
-    product: asString(row.product),
-    criteria: asString(row.criteria),
+    context: asText(row.context),
+    roles: asText(row.roles),
+    product: asText(row.product),
+    criteria: asText(row.criteria),
     componentIds,
     forNok: Boolean(row.forNok ?? row.for_nok),
     planKey: asString(row.planKey || row.plan_key) || undefined,
