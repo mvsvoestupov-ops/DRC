@@ -602,6 +602,14 @@ export const extraZh: ExtraMessages = {
     nameBar: "能力",
     memberNotice:
       "您是工作组成员。可以编辑并保存草稿；只有工作组负责人可以提交能力进行评审。",
+    onlyLeaderCanSubmit: "只有工作组负责人可以将能力送交验证。",
+    confirmSubmitReview:
+      "将能力送交验证？确认后状态变为“评审中”，由协调员或管理员指定专家。",
+    validationWaiting:
+      "能力已送交验证。协调员或管理员指定专家；专家在能力卡片上完成评审。后续步骤在批准后解锁。",
+    validationDone: "评审已完成。能力现为有效状态。可以继续后续步骤。",
+    openReviewCard: "打开能力卡片",
+    stepLocked: "在评审完成前此步骤不可用",
     newName: "新能力",
     step1: "基本信息",
     step2: "职业标准与等级",

@@ -87,7 +87,7 @@ const ruCore = {
     draft: "Проект",
     review: "На экспертизе",
     archived: "Архив",
-    approved: "Утверждена",
+    approved: "Действующая",
   },
   loginPage: {
     title: "Вход в систему",
@@ -219,7 +219,7 @@ export const translations: Record<Locale, Messages> = {
       draft: "Draft",
       review: "Under review",
       archived: "Archive",
-      approved: "Approved",
+      approved: "Active",
     },
     loginPage: {
       title: "Sign in",

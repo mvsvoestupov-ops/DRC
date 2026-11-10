@@ -112,7 +112,6 @@ import {
   syncAssessmentByLevelV2,
   type AssessmentByLevelV2,
 } from "@/lib/assessmentV2";
-import { ExpertiseChecklistForm } from "@/app/components/ExpertiseChecklist";
 import {
   InternationalMappingPreview,
   InternationalMappingStep,
@@ -184,6 +183,9 @@ function PreviewField({ label, value }: { label: string; value?: string | null }
 let newCompetenceBootstrapInFlight: Promise<Competence | null> | null = null;
 const AUTOSAVE_INTERVAL_MS = 5 * 60 * 1000;
 const DRAFT_PLACEHOLDER_NAME = "DRAFT-PENDING";
+/** Внутренние номера: 8 = МТО (лейбл «7»), 9 = валидация (лейбл «8»). */
+const DEVELOPMENT_END_STEP = 8;
+const VALIDATION_STEP = 9;
 
 export function NewCompetencyPage() {
   const navigate = useNavigate();
@@ -755,7 +757,11 @@ export function NewCompetencyPage() {
         }));
         const savedStep = Number(comp.wizard_step);
         if (Number.isFinite(savedStep) && savedStep >= 1) {
-          const clamped = Math.min(lastStep, Math.floor(savedStep));
+          const status = comp.status || "проект";
+          let statusCap = DEVELOPMENT_END_STEP;
+          if (status === "утверждена") statusCap = lastStep;
+          else if (status === "на экспертизе") statusCap = VALIDATION_STEP;
+          const clamped = Math.min(statusCap, lastStep, Math.floor(savedStep));
           setCurrentStep(skipHiddenWizardStep(clamped, 1));
         }
         if (comp.fgos_id) {
@@ -1099,11 +1105,6 @@ export function NewCompetencyPage() {
           return t("wizard.needResources");
         }
         return null;
-      case 9:
-        if (EXPERTISE_CRITERIA.some((_, index) => !formData.expertise[criterionKey(index)]?.value)) {
-          return t("wizard.needValidation");
-        }
-        return null;
       default:
         return null;
     }
@@ -1117,15 +1118,34 @@ export function NewCompetencyPage() {
     return null;
   };
 
+  const competenceStatus = workingCompetence?.status || "проект";
+
+  /** Максимальный шаг конструктора по статусу и роли. */
+  const maxAllowedStep = useMemo(() => {
+    if (competenceStatus === "утверждена") return lastStep;
+    if (competenceStatus === "на экспертизе") return VALIDATION_STEP;
+    // Разработка («проект»): не дальше МТО (лейбл 7).
+    return DEVELOPMENT_END_STEP;
+  }, [competenceStatus, lastStep]);
+
+  useEffect(() => {
+    if (hydrating) return;
+    if (currentStep <= maxAllowedStep) return;
+    setCurrentStep(skipHiddenWizardStep(maxAllowedStep, -1));
+  }, [hydrating, currentStep, maxAllowedStep]);
+
   const validateForm = (status: string) => {
     if (status === "проект") {
       if (!formData.title.trim()) return t("wizard.needTitle");
       return null;
     }
 
-    const stepError = validateStepsUpTo(lastStep);
+    // На валидацию/экспертизу достаточно шагов разработки 1–7 (МТО).
+    const stepError = validateStepsUpTo(DEVELOPMENT_END_STEP + 1);
     if (stepError) return stepError;
     if (status === "на экспертизе") {
+      const endErr = validateStep(DEVELOPMENT_END_STEP);
+      if (endErr) return endErr;
       const missingDescriptor = (["A", "B", "C"] as const).some((cat) =>
         formationLevelsForEducation(formData.educationLevel).some(
           (level) => !formData.descriptors[cat][level]?.trim(),
@@ -1244,9 +1264,11 @@ export function NewCompetencyPage() {
   }, [hydrating, currentStep]);
 
   const persistDraft = async (stepToStore: number) => {
-    const payload = { ...buildPayload("проект"), wizard_step: stepToStore };
     const working = workingCompetenceRef.current;
-    if (working?.collaboration_role === "member") {
+    // Не сбрасываем статус «на экспертизе» / «утверждена» при автосохранении и переходах.
+    const statusToKeep = working?.status || "проект";
+    const payload = { ...buildPayload(statusToKeep), wizard_step: stepToStore };
+    if (working?.collaboration_role === "member" || statusToKeep !== "проект") {
       delete payload.status;
     }
     // Название по умолчанию — ID компетенции в системе
@@ -1321,7 +1343,10 @@ export function NewCompetencyPage() {
     setSubmitting(true);
     setError("");
     try {
-      const payload = buildPayload(status);
+      const payload = {
+        ...buildPayload(status),
+        ...(status === "на экспертизе" ? { wizard_step: VALIDATION_STEP } : {}),
+      };
       if (workingCompetence?.collaboration_role === "member" && status === "проект") {
         delete payload.status;
       }
@@ -1338,12 +1363,18 @@ export function NewCompetencyPage() {
         if (saved.updated_at) {
           expectedUpdatedAtRef.current = saved.updated_at;
         }
-        markDraftBaseline(currentStep);
-      }
-      if (status === "на экспертизе") {
-        navigate(`/competency/${saved.id}`);
-      } else if (!editId && saved?.id) {
-        navigate(`/competency/${saved.id}/edit`, { replace: true });
+        if (status === "на экспертизе") {
+          setCurrentStep(VALIDATION_STEP);
+          markDraftBaseline(VALIDATION_STEP);
+          if (!editId) {
+            navigate(`/competency/${saved.id}/edit`, { replace: true });
+          }
+        } else {
+          markDraftBaseline(currentStep);
+          if (!editId && saved?.id) {
+            navigate(`/competency/${saved.id}/edit`, { replace: true });
+          }
+        }
       }
     } catch (err: unknown) {
       if (isConflictError(err)) {
@@ -1392,7 +1423,9 @@ export function NewCompetencyPage() {
   };
 
   const goToStep = async (target: number) => {
-    const safeTarget = skipHiddenWizardStep(target, target >= currentStep ? 1 : -1);
+    const capped = Math.min(target, maxAllowedStep);
+    const safeTarget = skipHiddenWizardStep(capped, capped >= currentStep ? 1 : -1);
+    if (safeTarget > maxAllowedStep) return;
     if (safeTarget === currentStep || autoSaving || submitting) return;
     setError("");
     // Не гоняем полный PUT при «чистом» переходе: иначе после пересборки
@@ -1418,10 +1451,36 @@ export function NewCompetencyPage() {
     }
   };
 
+  const submitForValidation = async () => {
+    if (!canSubmitToReview) {
+      setError(t("wizard.onlyLeaderCanSubmit"));
+      return;
+    }
+    const stepError =
+      validateStep(DEVELOPMENT_END_STEP) || validateStepsUpTo(DEVELOPMENT_END_STEP + 1);
+    if (stepError) {
+      setError(stepError);
+      return;
+    }
+    if (!window.confirm(t("wizard.confirmSubmitReview"))) return;
+    await handleSubmit("на экспертизе");
+  };
+
   const goNext = async () => {
     if (autoSaving || submitting) return;
-    const next = skipHiddenWizardStep(Math.min(lastStep, currentStep + 1), 1);
-    if (next === currentStep) return;
+    // С шага 7 (МТО) руководитель отправляет компетенцию на валидацию.
+    if (
+      currentStep === DEVELOPMENT_END_STEP &&
+      competenceStatus === "проект"
+    ) {
+      await submitForValidation();
+      return;
+    }
+    const next = skipHiddenWizardStep(
+      Math.min(maxAllowedStep, lastStep, currentStep + 1),
+      1,
+    );
+    if (next === currentStep || next > maxAllowedStep) return;
     setError("");
     if (!isDraftDirty(currentStep)) {
       setCurrentStep(next);
@@ -1556,18 +1615,26 @@ export function NewCompetencyPage() {
       ) : null}
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8 w-full">
-        {visibleSteps.map((step) => (
+        {visibleSteps.map((step) => {
+          const locked = step.number > maxAllowedStep;
+          return (
           <div key={step.number} className="flex items-center min-w-0">
             <button
               type="button"
-              onClick={() => void goToStep(step.number)}
-              title={step.name}
-              className={`relative w-10 h-10 shrink-0 rounded-full flex items-center justify-center font-semibold text-sm transition-colors cursor-pointer ${
-                currentStep === step.number
-                  ? "bg-primary text-white ring-2 ring-primary/30"
+              onClick={() => {
+                if (locked) return;
+                void goToStep(step.number);
+              }}
+              title={locked ? t("wizard.stepLocked") : step.name}
+              disabled={locked}
+              className={`relative w-10 h-10 shrink-0 rounded-full flex items-center justify-center font-semibold text-sm transition-colors ${
+                locked
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : currentStep === step.number
+                  ? "bg-primary text-white ring-2 ring-primary/30 cursor-pointer"
                   : currentStep > step.number
-                  ? "bg-green-500 text-white hover:bg-green-600"
-                  : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                  ? "bg-green-500 text-white hover:bg-green-600 cursor-pointer"
+                  : "bg-gray-200 text-gray-600 hover:bg-gray-300 cursor-pointer"
               }`}
             >
               {step.label}
@@ -1576,15 +1643,24 @@ export function NewCompetencyPage() {
             </button>
             <button
               type="button"
-              onClick={() => void goToStep(step.number)}
-              className={`ml-2 text-base font-medium text-left cursor-pointer hover:text-gray-900 truncate ${
-                currentStep === step.number ? "text-gray-900" : "text-gray-500"
+              onClick={() => {
+                if (locked) return;
+                void goToStep(step.number);
+              }}
+              disabled={locked}
+              className={`ml-2 text-base font-medium text-left truncate ${
+                locked
+                  ? "text-gray-400 cursor-not-allowed"
+                  : currentStep === step.number
+                  ? "text-gray-900 cursor-pointer hover:text-gray-900"
+                  : "text-gray-500 cursor-pointer hover:text-gray-900"
               }`}
             >
               {step.name}
             </button>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="flex flex-col xl:flex-row gap-6 xl:gap-8 w-full">
@@ -1622,17 +1698,19 @@ export function NewCompetencyPage() {
                         : t("wizard.autoSaved")}
                     </span>
                   ) : null}
-                  <Button
-                    variant="outline"
-                    className="gap-2 text-gray-700 border-gray-300 hover:bg-gray-50"
-                    disabled={submitting || autoSaving}
-                    onClick={() => handleSubmit("проект")}
-                  >
-                    <Save className="w-4 h-4" />
-                    {t("wizard.saveDraft")}
-                  </Button>
+                  {competenceStatus === "проект" ? (
+                    <Button
+                      variant="outline"
+                      className="gap-2 text-gray-700 border-gray-300 hover:bg-gray-50"
+                      disabled={submitting || autoSaving}
+                      onClick={() => handleSubmit("проект")}
+                    >
+                      <Save className="w-4 h-4" />
+                      {t("wizard.saveDraft")}
+                    </Button>
+                  ) : null}
 
-                  {currentStep === lastStep && (
+                  {currentStep === lastStep && competenceStatus === "утверждена" && (
                     <Button
                       variant="outline"
                       className="gap-2 text-gray-700 border-gray-300 hover:bg-gray-50"
@@ -1644,19 +1722,21 @@ export function NewCompetencyPage() {
                     </Button>
                   )}
 
-                  {currentStep < lastStep ? (
+                  {currentStep === DEVELOPMENT_END_STEP && competenceStatus === "проект" ? (
+                    canSubmitToReview ? (
+                      <Button
+                        className="gap-2 bg-green-600 hover:bg-green-700 text-white"
+                        disabled={submitting || autoSaving}
+                        onClick={() => void submitForValidation()}
+                      >
+                        <Send className="w-4 h-4" />
+                        {submitting ? t("wizard.submitting") : t("common.next")}
+                      </Button>
+                    ) : null
+                  ) : currentStep < maxAllowedStep ? (
                     <Button onClick={() => void goNext()} className="gap-2" disabled={autoSaving || submitting}>
                       {t("common.next")}
                       <ArrowRight className="w-4 h-4" />
-                    </Button>
-                  ) : canSubmitToReview ? (
-                    <Button
-                      className="gap-2 bg-green-600 hover:bg-green-700 text-white"
-                      disabled={submitting || autoSaving}
-                      onClick={() => handleSubmit("на экспертизе")}
-                    >
-                      <Send className="w-4 h-4" />
-                      {submitting ? t("wizard.submitting") : t("wizard.submitReview")}
                     </Button>
                   ) : null}
                 </div>
@@ -2235,12 +2315,25 @@ export function NewCompetencyPage() {
                     <h2 className="text-xl font-semibold text-gray-900">{t("wizard.step8Title")}</h2>
                     <p className="text-sm text-gray-500 mt-1">{t("wizard.step8Lead")}</p>
                   </div>
-                  <ExpertiseChecklistForm
-                    value={formData.expertise}
-                    onChange={(expertise) =>
-                      setFormData((prev) => ({ ...prev, expertise }))
-                    }
-                  />
+                  {competenceStatus === "утверждена" ? (
+                    <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+                      {t("wizard.validationDone")}
+                    </div>
+                  ) : (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 space-y-2">
+                      <p>{t("wizard.validationWaiting")}</p>
+                      {workingCompetence?.id ? (
+                        <p>
+                          <Link
+                            to={`/competency/${workingCompetence.id}`}
+                            className="font-medium text-primary underline-offset-2 hover:underline"
+                          >
+                            {t("wizard.openReviewCard")}
+                          </Link>
+                        </p>
+                      ) : null}
+                    </div>
+                  )}
                 </div>
               )}
 

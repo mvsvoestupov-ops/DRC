@@ -561,7 +561,7 @@ export const extraEn: ExtraMessages = {
   review: {
     expertsError: "Could not load the list of experts",
     saveError: "Could not save the expert review. Check that the API server is running.",
-    approved: "Competency approved",
+    approved: "Competency approved and is now active",
     returned: "Application returned for revision",
     statusError: "Could not update the status. Check that the API server is running.",
     needExperts: "Assign at least {n} experts",
@@ -608,6 +608,16 @@ export const extraEn: ExtraMessages = {
     nameBar: "Competency",
     memberNotice:
       "You are a member of the working group. You may edit and save the draft; only the group leader can submit the competency for expert review.",
+    onlyLeaderCanSubmit:
+      "Only the working group leader can submit the competency for validation.",
+    confirmSubmitReview:
+      "Send this competency for validation? After confirmation its status becomes “under review”, and a moderator or administrator will assign experts.",
+    validationWaiting:
+      "The competency has been sent for validation. A moderator or administrator assigns experts; experts complete the review on the competency card. Later wizard steps unlock after approval.",
+    validationDone:
+      "Expert review is complete. The competency is now active. You may continue with the following wizard steps.",
+    openReviewCard: "Open competency card",
+    stepLocked: "This step is locked until expert review is finished",
     newName: "New competency",
     step1: "General information",
     step2: "Professional standard and level",
@@ -772,7 +782,8 @@ export const extraEn: ExtraMessages = {
     resourcesForSkills: "Required to form skills / intellectual abilities",
     resourcesForPractice: "Required to form practical skills",
     step8Title: "Expertise and validation",
-    step8Lead: "Complete the validator checklist. For each criterion choose Yes/No and add a comment if needed.",
+    step8Lead:
+      "At this step the competency undergoes validation: a moderator or administrator assigns experts, and experts complete the checklist on the competency card.",
     needValidation: "Complete the validation checklist: for each criterion choose Yes or No",
     sectionResources: "Material and technical resources",
     sectionValidation: "Validation",

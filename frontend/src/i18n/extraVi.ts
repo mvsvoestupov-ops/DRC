@@ -604,6 +604,15 @@ export const extraVi: ExtraMessages = {
     nameBar: "Năng lực",
     memberNotice:
       "Bạn là thành viên nhóm công tác. Có thể chỉnh sửa và lưu bản nháp; chỉ trưởng nhóm mới được gửi năng lực đi thẩm định.",
+    onlyLeaderCanSubmit: "Chỉ trưởng nhóm mới được gửi năng lực đi thẩm định.",
+    confirmSubmitReview:
+      "Gửi năng lực đi thẩm định? Sau khi xác nhận trạng thái sẽ là “đang thẩm định”, điều phối viên hoặc quản trị viên sẽ chỉ định chuyên gia.",
+    validationWaiting:
+      "Năng lực đã được gửi đi thẩm định. Điều phối viên hoặc quản trị viên chỉ định chuyên gia; chuyên gia làm việc trên thẻ năng lực. Các bước tiếp theo mở sau khi phê duyệt.",
+    validationDone:
+      "Thẩm định hoàn tất. Năng lực đang ở trạng thái hoạt động. Có thể tiếp tục các bước tiếp theo.",
+    openReviewCard: "Mở thẻ năng lực",
+    stepLocked: "Bước bị khóa cho đến khi thẩm định kết thúc",
     newName: "Năng lực mới",
     step1: "Thông tin chung",
     step2: "Tiêu chuẩn nghề và bậc",

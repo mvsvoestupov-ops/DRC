@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Цифровой реестр компетенций — демонстрация</title>
+  <style>
+    :root {
+      --ink: #16303a;
+      --muted: #4d646d;
+      --line: #d5e1e6;
+      --paper: #f4f7f8;
+      --teal: #215e71;
+      --teal-deep: #0d2c36;
+      --teal-mid: #1a4c5c;
+      --gold: #c4a265;
+      --card: #ffffff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      background: #0b1c23;
+      color: var(--ink);
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    }
+
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 22px;
+      background: #082028;
+      color: #e7f1f4;
+      font-size: 14px;
+    }
+
+    .toolbar p { color: #b7c9d0; max-width: 760px; line-height: 1.35; }
+    .toolbar strong { color: #fff; font-weight: 650; }
+
+    .toolbar-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+    button {
+      appearance: none;
+      border: 0;
+      cursor: pointer;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font: inherit;
+      font-weight: 650;
+    }
+
+    .btn-main { background: #d7b56a; color: #1c1406; }
+    .btn-ghost { background: transparent; color: #e7f1f4; border: 1px solid #3e616d; }
+
+    .deck { padding: 22px 0 40px; }
+
+    .slide {
+      width: 1280px;
+      height: 720px;
+      margin: 0 auto 22px;
+      position: relative;
+      overflow: hidden;
+      background: #fff;
+      page-break-after: always;
+      break-after: page;
+    }
+
+    .slide:last-child { page-break-after: auto; break-after: auto; }
+
+    .pad { height: 100%; padding: 42px 56px 58px; display: flex; flex-direction: column; }
+
+    .kicker {
+      color: var(--teal);
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      font-size: 54px;
+      line-height: 1.05;
+      font-weight: 720;
+      letter-spacing: -0.03em;
+    }
+
+    h2 {
+      margin-top: 10px;
+      font-size: 40px;
+      line-height: 1.12;
+      font-weight: 720;
+      letter-spacing: -0.025em;
+      max-width: 1080px;
+    }
+
+    .lead { margin-top: 14px; font-size: 22px; line-height: 1.35; color: var(--muted); max-width: 980px; }
+
+    .foot {
+      position: absolute;
+      left: 56px;
+      right: 56px;
+      bottom: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #6d828a;
+      font-size: 14px;
+      letter-spacing: 0.02em;
+    }
+
+    .slide-logo {
+      position: absolute;
+      top: 16px;
+      right: 24px;
+      height: 54px;
+      width: auto;
+      z-index: 6;
+    }
+
+    .title-slide .slide-logo,
+    .close .slide-logo {
+      background: #fff;
+      border-radius: 12px;
+      padding: 8px 10px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+    }
+
+    .dark .foot { color: rgba(255,255,255,0.62); }
+
+    /* Title */
+    .title-slide {
+      background:
+        radial-gradient(circle at 12% 20%, rgba(196,162,101,0.18), transparent 28%),
+        radial-gradient(circle at 88% 80%, rgba(90,180,200,0.16), transparent 32%),
+        linear-gradient(160deg, #0b242e 0%, #154656 58%, #1d6274 100%);
+      color: #fff;
+    }
+
+    .title-slide .brand,
+    .close .brand {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-right: 210px;
+      font-size: 16px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.78);
+    }
+
+    .mark {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      background: var(--gold);
+      display: inline-block;
+      margin-right: 10px;
+      vertical-align: -1px;
+    }
+
+    .title-slide h1 { margin-top: 78px; max-width: 980px; font-size: 64px; }
+    .title-slide .sub {
+      margin-top: 22px;
+      font-size: 26px;
+      color: rgba(255,255,255,0.82);
+      max-width: 820px;
+    }
+
+    .speaker {
+      margin-top: auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding-bottom: 28px;
+    }
+
+    .speaker .who { font-size: 28px; font-weight: 720; }
+    .speaker .role { margin-top: 6px; font-size: 18px; color: rgba(255,255,255,0.75); }
+    .speaker .meta { text-align: right; font-size: 18px; color: rgba(255,255,255,0.75); line-height: 1.45; }
+
+    /* Grids */
+    .grid-3, .grid-2, .grid-4 { display: grid; gap: 16px; margin-top: 28px; }
+    .grid-3 { grid-template-columns: repeat(3, 1fr); }
+    .grid-2 { grid-template-columns: 1.15fr 0.85fr; }
+    .grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+    .card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 22px 22px 20px;
+      min-height: 0;
+    }
+
+    .card h3 { font-size: 22px; line-height: 1.2; margin: 10px 0 8px; }
+    .card p, .card li { font-size: 17px; line-height: 1.35; color: #345159; }
+    .card ol, .card ul { padding-left: 18px; }
+    .card li + li { margin-top: 6px; }
+
+    .num {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: var(--teal);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-weight: 720;
+      font-size: 16px;
+    }
+
+    .gold { background: #f8f1e3; border-color: #eadcc0; }
+    .navy {
+      background: var(--teal-deep);
+      color: #fff;
+      border-color: var(--teal-deep);
+    }
+    .navy p, .navy li { color: rgba(255,255,255,0.84); }
+    .navy h3 { color: #fff; }
+
+    .chain {
+      margin-top: 34px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .node {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-top: 5px solid var(--teal);
+      border-radius: 14px;
+      padding: 18px 16px 16px;
+      min-height: 250px;
+    }
+
+    .node .step { color: var(--gold); font-weight: 800; letter-spacing: 0.08em; font-size: 13px; }
+    .node h3 { margin: 12px 0 8px; font-size: 22px; line-height: 1.15; }
+    .node p { color: var(--muted); font-size: 16px; line-height: 1.35; }
+
+    .flow {
+      margin-top: 36px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+    }
+
+    .flow article {
+      background: var(--paper);
+      border-radius: 16px;
+      padding: 20px 16px 18px;
+      border: 1px solid var(--line);
+      min-height: 280px;
+    }
+
+    .flow .n {
+      font-size: 28px;
+      font-weight: 760;
+      color: var(--teal);
+      letter-spacing: -0.04em;
+    }
+
+    .flow h3 { margin: 14px 0 8px; font-size: 22px; }
+    .flow p { color: var(--muted); font-size: 16px; line-height: 1.35; }
+
+    .passport {
+      display: grid;
+      grid-template-columns: 1.25fr 0.75fr;
+      gap: 18px;
+      margin-top: 22px;
+      flex: 1;
+    }
+
+    .screen {
+      border: 1px solid #c9d8de;
+      border-radius: 18px;
+      overflow: hidden;
+      background: #fff;
+      box-shadow: 0 10px 30px rgba(13, 44, 54, 0.06);
+    }
+
+    .screen-top {
+      background: #f7fafb;
+      border-bottom: 1px solid var(--line);
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .dots { display: flex; gap: 6px; }
+    .dots i { width: 9px; height: 9px; border-radius: 50%; background: #c5d4da; display: block; }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 13px;
+      font-weight: 700;
+      background: #e5f4ea;
+      color: #1d7a45;
+    }
+
+    .screen-body { padding: 16px 18px 18px; }
+    .screen h3 { font-size: 22px; line-height: 1.25; }
+    .meta-row { margin-top: 8px; color: var(--muted); font-size: 14px; }
+
+    .tabs { display: flex; gap: 8px; margin: 14px 0; flex-wrap: wrap; }
+    .tabs span {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .tabs span.on { background: var(--teal); color: #fff; border-color: var(--teal); }
+
+    .abc { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .abc div { background: var(--paper); border-radius: 12px; padding: 10px 12px; }
+    .abc b { display: block; color: var(--teal); font-size: 13px; letter-spacing: 0.06em; margin-bottom: 4px; }
+    .abc span { font-size: 14px; line-height: 1.3; color: #294850; }
+
+    .side .card + .card { margin-top: 12px; }
+    .side h3 { font-size: 18px; }
+    .side p { font-size: 15px; }
+
+    .steps { margin-top: 26px; display: grid; gap: 12px; }
+    .step-row {
+      display: grid;
+      grid-template-columns: 64px 1fr 280px;
+      gap: 16px;
+      align-items: center;
+      background: var(--paper);
+      border-radius: 14px;
+      padding: 14px 18px;
+    }
+    .step-row b { font-size: 20px; }
+    .step-row span { color: var(--muted); font-size: 16px; }
+    .tag {
+      justify-self: end;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 14px;
+      color: var(--teal);
+      font-weight: 700;
+    }
+
+    .modules {
+      margin-top: 22px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px 18px;
+    }
+    .module {
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      gap: 14px;
+      align-items: center;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px 18px;
+    }
+    .module strong { display: block; font-size: 18px; line-height: 1.2; margin-bottom: 3px; }
+    .module span { display: block; color: var(--muted); font-size: 15px; line-height: 1.3; }
+
+    .close {
+      background:
+        linear-gradient(160deg, #0b242e 0%, #154656 100%);
+      color: #fff;
+    }
+    .close h1 { margin-top: 70px; font-size: 62px; }
+    .close .sub { margin-top: 16px; font-size: 24px; color: rgba(255,255,255,0.8); }
+    .contacts {
+      margin-top: 48px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+    .contacts article {
+      border-top: 2px solid rgba(196,162,101,0.85);
+      padding-top: 14px;
+    }
+    .contacts h3 { font-size: 15px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.62); font-weight: 700; }
+    .contacts p { margin-top: 8px; font-size: 22px; line-height: 1.3; }
+
+    .note {
+      margin-top: auto;
+      margin-bottom: 28px;
+      font-size: 15px;
+      color: #5d727a;
+    }
+
+    @page { size: 13.333in 7.5in; margin: 0; }
+
+    @media print {
+      html, body { background: #fff; }
+      .toolbar { display: none !important; }
+      .deck { padding: 0; zoom: 1 !important; }
+      .slide {
+        margin: 0;
+        box-shadow: none;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <p><strong>Демонстрация для печати в PDF, 16:9.</strong> Кнопка открывает диалог печати. Выберите «Сохранить как PDF», альбомную ориентацию, поля «нет», включите фоновую графику.</p>
+    <div class="toolbar-actions">
+      <button class="btn-ghost" type="button" id="prev">Назад</button>
+      <button class="btn-ghost" type="button" id="next">Дальше</button>
+      <button class="btn-main" type="button" id="save">Сохранить в PDF</button>
+    </div>
+  </div>
+
+  <main class="deck" id="deck">
+    <section class="slide title-slide dark" id="s1">
+      <div class="pad">
+        <div class="brand"><span>АО «Национальные квалификации»</span></div>
+        <h1>Цифровой реестр компетенций</h1>
+        <p class="sub">Единый паспорт компетенции: от профессионального стандарта и трудовой функции до образовательной программы и оценки.</p>
+        <div class="speaker">
+          <div>
+            <div class="who">Борисова Марина Петровна</div>
+            <div class="role">Президент АО «Национальные квалификации»</div>
+          </div>
+          <div class="meta">Ноябрь 2026<br />drc.ao-nk.online</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="s2">
+      <div class="pad">
+        <div class="kicker">Исходная задача</div>
+        <h2>Одна квалификация описана в трёх разных системах</h2>
+        <p class="lead">Вуз проектирует компетенцию. Работодатель смотрит на трудовую функцию. Независимая оценка подтверждает квалификацию. Связь между ними собирается вручную.</p>
+        <div class="grid-3">
+          <article class="card">
+            <div class="num">01</div>
+            <h3>Образование</h3>
+            <p>Компетенция живёт в ФГОС и в программе. Профессиональные компетенции программа формирует сама, на основе профессиональных стандартов.</p>
+          </article>
+          <article class="card">
+            <div class="num">02</div>
+            <h3>Труд</h3>
+            <p>Профессиональный стандарт задаёт трудовые функции, действия, знания и умения. Это язык работодателя и совета по профессиональным квалификациям.</p>
+          </article>
+          <article class="card gold">
+            <div class="num">03</div>
+            <h3>Подтверждение</h3>
+            <p>Диплом и свидетельство о квалификации — разные документы. Их реестры ведут разные операторы. Сопоставление нужно до экзамена, а не после спора о результате.</p>
+          </article>
+        </div>
+        <div class="foot"><span>АО «Национальные квалификации»</span><span>02</span></div>
+      </div>
+    </section>
+
+    <section class="slide" id="s3">
+      <div class="pad">
+        <div class="kicker">Решение</div>
+        <h2>Реестр хранит паспорт и связи, а не чужой юридический документ</h2>
+        <div class="grid-2">
+          <article class="card navy">
+            <h3>Что делает платформа</h3>
+            <ul>
+              <li>Ведёт цифровой паспорт: знания, умения, навыки, уровень, индикаторы.</li>
+              <li>Связывает паспорт с трудовыми функциями, квалификациями и дисциплинами программы.</li>
+              <li>Проводит паспорт через рабочую группу и экспертизу до публикации.</li>
+              <li>Отдаёт методисту матрицу, которую можно положить в программу.</li>
+            </ul>
+          </article>
+          <div>
+            <article class="card">
+              <h3>Что остаётся у своих операторов</h3>
+              <p>Диплом учитывается в федеральном реестре документов об образовании. Свидетельство о квалификации — в реестре независимой оценки. Решение о признании результата экзамена принимает уполномоченный совет.</p>
+            </article>
+            <article class="card gold" style="margin-top:16px">
+              <h3>Статус записи</h3>
+              <p>Опубликованный паспорт — методическая запись реестра. Он не заменяет документ об образовании и не заменяет свидетельство о квалификации.</p>
+            </article>
+          </div>
+        </div>
+        <div class="foot"><span>АО «Национальные квалификации»</span><span>03</span></div>
+      </div>
+    </section>
+
+    <section class="slide" id="s4">
+      <div class="pad">
+        <div class="kicker">Паспорт</div>
+        <h2>Карточка, с которой начинается работа</h2>
+        <div class="passport">
+          <div class="screen">
+            <div class="screen-top">
+              <div class="dots"><i></i><i></i><i></i></div>
+              <span class="pill">Утверждена</span>
+            </div>
+            <div class="screen-body">
+              <h3>Способен применять нормативные правовые акты в профессиональной деятельности</h3>
+              <div class="meta-row">RUS-PK-05 · версия 1 · юриспруденция · уровень программы высшего образования</div>
+              <div class="tabs">
+                <span class="on">Структура</span>
+                <span>Трудовые функции</span>
+                <span>Дисциплины</span>
+                <span>Оценка</span>
+              </div>
+              <div class="abc">
+                <div><b>ЗНАНИЯ</b><span>Нормы материального и процессуального права, пределы их применения</span></div>
+                <div><b>УМЕНИЯ</b><span>Квалифицировать ситуацию и выбрать применимую норму</span></div>
+                <div><b>НАВЫКИ</b><span>Готовить правовое заключение по документу</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="side">
+            <article class="card">
+              <h3>Трудовая функция</h3>
+              <p>Профессиональный стандарт «Специалист по юридическому сопровождению». Функция выбирается из загруженного стандарта, а не вписывается свободным текстом.</p>
+            </article>
+            <article class="card">
+              <h3>Программа</h3>
+              <p>Паспорт связывается с дисциплинами и модулями. Методист видит, где компетенция формируется и где проверяется.</p>
+            </article>
+            <article class="card">
+              <h3>Оценка</h3>
+              <p>К паспорту прилагаются типовые задания и форма оценочных материалов — заготовка для фонда и для сопоставления с независимой оценкой.</p>
+            </article>
+          </div>
+        </div>
+        <div class="foot"><span>АО «Национальные квалификации»</span><span>04</span></div>
+      </div>
+    </section>
+
+    <section class="slide" id="s5">
+      <div class="pad">
+        <div class="kicker">Сквозная связь</div>
+        <h2>От стандарта Минтруда до проверки результата</h2>
+        <div class="chain">
+          <article class="node">
+            <div class="step">01</div>
+            <h3>Профессиональный стандарт</h3>
+            <p>Официальный источник требований к виду деятельности.</p>
+          </article>
+          <article class="node">
+            <div class="step">02</div>
+            <h3>Трудовая функция</h3>
+            <p>Действия, знания и умения, которые работодатель считает работой.</p>
+          </article>
+          <article class="node">
+            <div class="step">03</div>
+            <h3>Компетенция</h3>
+            <p>Образовательный результат: что человек способен делать после программы.</p>
+          </article>
+          <article class="node">
+            <div class="step">04</div>
+            <h3>Дисциплина</h3>
+            <p>Место компетенции в учебном плане конкретной организации.</p>
+          </article>
+          <article class="node">
+            <div class="step">05</div>
+            <h3>Оценка</h3>
+            <p>Задание, индикатор и связь с материалами независимой оценки.</p>
+          </article>
+        </div>
+        <p class="note">Каждое звено хранит идентификатор источника. Паспорт можно проверить, а не только прочитать.</p>
+        <div class="foot"><span>АО «Национальные квалификации»</span><span>05</span></div>
+      </div>
+    </section>
+
+    <section class="slide" id="s6">
+      <div class="pad">
+        <div class="kicker">Порядок работы</div>
+        <h2>Паспорт публикуется после экспертизы, не из черновика</h2>
+        <div class="flow">
+          <article>
+            <div class="n">01</div>
+            <h3>Проект</h3>
+            <p>Автор собирает паспорт по шагам и приглашает рабочую группу.</p>
+          </article>
+          <article>
+            <div class="n">02</div>
+            <h3>Группа</h3>
+            <p>Участники правят структуру, связи и оценочные материалы.</p>
+          </article>
+          <article>
+            <div class="n">03</div>
+            <h3>Экспертиза</h3>
+            <p>Модератор назначает экспертов. Разработка на это время закрыта.</p>
+          </article>
+          <article>
+            <div class="n">04</div>
+            <h3>Публикация</h3>
+            <p>Утверждённый паспорт виден в открытом реестре с номером версии.</p>
+          </article>
+          <article>
+            <div class="n">05</div>
+            <h3>Пересмотр</h3>
+            <p>Новая версия не затирает прежнюю. Старая уходит в архив.</p>
+          </article>
+        </div>
+        <div class="foot"><span>АО «Национальные квалификации»</span><span>06</span></div>
+      </div>
+    </section>
+
+    <section class="slide" id="s7">
+      <div class="pad">
+        <div class="kicker">Демонстрация · образовательная организация</div>
+        <h2>Как методист берёт компетенцию в программу</h2>
+        <div class="steps">
+          <div class="step-row"><div class="num">1</div><div><b>Находит компетенцию</b><br /><span>Поиск по названию, области, профессиональному стандарту и статусу.</span></div><span class="tag">Открытый реестр</span></div>
+          <div class="step-row"><div class="num">2</div><div><b>Открывает паспорт</b><br /><span>Видит структуру, трудовые функции, уровень и версию.</span></div><span class="tag">Карточка</span></div>
+          <div class="step-row"><div class="num">3</div><div><b>Связывает с дисциплинами</b><br /><span>Отмечает, где результат формируется в учебном плане.</span></div><span class="tag">Матрица</span></div>
+          <div class="step-row"><div class="num">4</div><div><b>Забирает комплект</b><br /><span>Выгрузка для программы: паспорт, связи, оценочные материалы.</span></div><span class="tag">Результат работ</span></div>
+        </div>
+        <p class="note">Пилот считается по одной образовательной программе. Организация смотрит готовый комплект, а не описание платформы.</p>
+        <div class="foot"><span>АО «Национальные квалификации»</span><span>07</span></div>
+      </div>
+    </section>
+
+    <section class="slide" id="s8">
+      <div class="pad">
+        <div class="kicker">Демонстрация · сопряжение процедур</div>
+        <h2>Пакет для признания демонстрационного экзамена</h2>
+        <p class="lead">С 1 сентября 2026 года совет по профессиональным квалификациям может признать результат демонстрационного экзамена результатом независимой оценки. Реестр готовит сопоставление до подачи пакета.</p>
+        <div class="grid-3">
+          <article class="card">
+            <div class="num">01</div>
+            <h3>Квалификации</h3>
+            <p>Сопоставление квалификации программы среднего профессионального образования и наименования квалификации независимой оценки.</p>
+          </article>
+          <article class="card">
+            <div class="num">02</div>
+            <h3>Материалы</h3>
+            <p>Таблица соответствия контрольных измерительных материалов демонстрационного экзамена и оценочных средств независимой оценки.</p>
+          </article>
+          <article class="card">
+            <div class="num">03</div>
+            <h3>Решение</h3>
+            <p>Его принимает совет. Свидетельство учитывает Национальное агентство развития квалификаций. Реестр хранит статус и ссылку на пакет.</p>
+          </article>
+        </div>
+        <div class="foot"><span>АО «Национальные квалификации»</span><span>08</span></div>
+      </div>
+    </section>
+
+    <section class="slide" id="s9">
+      <div class="pad">
+        <div class="kicker">Участники</div>
+        <h2>У каждой стороны свой результат, не общий кабинет</h2>
+        <div class="grid-4">
+          <article class="card">
+            <h3>Вуз и колледж</h3>
+            <p>Паспорт под свою программу и матрица дисциплин. Меньше ручной сборки к учебному плану.</p>
+          </article>
+          <article class="card">
+            <h3>Работодатель</h3>
+            <p>Видит, какая трудовая функция стоит за компетенцией, и собирает пакет сопряжения.</p>
+          </article>
+          <article class="card">
+            <h3>Эксперт совета</h3>
+            <p>Проверяет полноту паспорта и соответствие стандарту. Не выдаёт свидетельство из реестра.</p>
+          </article>
+          <article class="card gold">
+            <h3>Открытый доступ</h3>
+            <p>Каталог опубликованных паспортов читается без договора. Платный контур — работа над своей программой.</p>
+          </article>
+        </div>
+        <p class="note">Персональные результаты экзаменов и тексты закрытых контрольных материалов в реестр не загружаются.</p>
+        <div class="foot"><span>АО «Национальные квалификации»</span><span>09</span></div>
+      </div>
+    </section>
+
+    <section class="slide" id="s10">
+      <div class="pad">
+        <div class="kicker">Состав платформы</div>
+        <h2>Разделы реестра</h2>
+        <div class="modules">
+          <article class="module"><div class="num">1</div><div><strong>Реестр и поиск</strong><span>Статусы, версии, область, профессиональный стандарт.</span></div></article>
+          <article class="module"><div class="num">2</div><div><strong>Конструктор паспорта</strong><span>Пошаговая сборка знаний, умений, навыков и уровней.</span></div></article>
+          <article class="module"><div class="num">3</div><div><strong>Стандарты и квалификации</strong><span>Опора на загруженные профессиональные стандарты и квалификации.</span></div></article>
+          <article class="module"><div class="num">4</div><div><strong>Рабочая группа</strong><span>Автор, участники, срок, журнал действий.</span></div></article>
+          <article class="module"><div class="num">5</div><div><strong>Экспертиза</strong><span>Назначение экспертов, чек-лист, возврат на доработку.</span></div></article>
+          <article class="module"><div class="num">6</div><div><strong>Матрица дисциплин</strong><span>Связь компетенции с учебным планом программы.</span></div></article>
+          <article class="module"><div class="num">7</div><div><strong>Оценочные материалы</strong><span>Типовые задания и форма фонда оценочных средств.</span></div></article>
+          <article class="module"><div class="num">8</div><div><strong>Международное сопоставление</strong><span>Связь формулировок с внешними классификаторами.</span></div></article>
+        </div>
+        <div class="foot"><span>АО «Национальные квалификации»</span><span>10</span></div>
+      </div>
+    </section>
+
+    <section class="slide" id="s11">
+      <div class="pad">
+        <div class="kicker">Следующий шаг</div>
+        <h2>Разработка завершается готовым комплектом</h2>
+        <div class="grid-3">
+          <article class="card">
+            <div class="num">01</div>
+            <h3>Выбрать программу</h3>
+            <p>Одна действующая программа вуза или одна квалификация, по которой уже идёт демонстрационный экзамен.</p>
+          </article>
+          <article class="card">
+            <div class="num">02</div>
+            <h3>Собрать паспорт</h3>
+            <p>Рабочая группа организации заполняет паспорт на платформе. АО сопровождает первую сборку.</p>
+          </article>
+          <article class="card navy">
+            <div class="num">03</div>
+            <h3>Принять результат</h3>
+            <p>На выходе — паспорт, матрица и, для колледжа, таблица сопряжения. По ним видно, продолжать ли работу по остальным программам.</p>
+          </article>
+        </div>
+        <p class="note">Открытый каталог доступен без оплаты. Договор нужен на сборку и сопровождение комплекта своей программы.</p>
+        <div class="foot"><span>АО «Национальные квалификации»</span><span>11</span></div>
+      </div>
+    </section>
+
+    <section class="slide close dark" id="s12">
+      <div class="pad">
+        <div class="brand"><span>АО «Национальные квалификации»</span><span>Цифровой реестр компетенций</span></div>
+        <h1>Спасибо за внимание!</h1>
+        <p class="sub">Борисова Марина Петровна, президент АО «Национальные квалификации»</p>
+        <div class="contacts">
+          <article>
+            <h3>Платформа</h3>
+            <p>drc.ao-nk.online</p>
+          </article>
+          <article>
+            <h3>Компания</h3>
+            <p>ao-nk.ru<br />aonk@ao-nk.ru</p>
+          </article>
+          <article>
+            <h3>Адрес</h3>
+            <p>Москва, пр-кт Маршала Жукова, д. 39, к. 1</p>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const slides = Array.from(document.querySelectorAll(".slide"));
+    const deck = document.getElementById("deck");
+
+    function fit() {
+      if (window.matchMedia("print").matches) {
+        deck.style.zoom = "1";
+        return;
+      }
+      const scale = Math.min((window.innerWidth - 32) / 1280, 1);
+      deck.style.zoom = String(scale);
+    }
+
+    function go(delta) {
+      const y = window.scrollY + window.innerHeight * 0.35;
+      let index = slides.findIndex((slide) => slide.getBoundingClientRect().top + window.scrollY > y);
+      if (index === -1) index = slides.length;
+      const next = Math.min(slides.length - 1, Math.max(0, index - 1 + delta));
+      slides[next].scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    slides.forEach((slide) => {
+      const logo = document.createElement("img");
+      logo.className = "slide-logo";
+      logo.src = "file:///C:/Users/Mihail/.cursor/projects/c-IT-DRC/assets/______________________________________________-f8fa6238-8053-476c-a538-b02b50bdf32b.png";
+      logo.alt = "Национальные Квалификации";
+      slide.appendChild(logo);
+    });
+
+    document.getElementById("save").addEventListener("click", () => window.print());
+    document.getElementById("prev").addEventListener("click", () => go(-1));
+    document.getElementById("next").addEventListener("click", () => go(1));
+    window.addEventListener("resize", fit);
+    window.addEventListener("beforeprint", () => { deck.style.zoom = "1"; });
+    window.addEventListener("afterprint", fit);
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowRight" || event.key === "PageDown") go(1);
+      if (event.key === "ArrowLeft" || event.key === "PageUp") go(-1);
+    });
+    fit();
+  </script>
+</body>
+</html>
