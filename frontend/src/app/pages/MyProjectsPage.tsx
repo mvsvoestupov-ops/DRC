@@ -195,14 +195,22 @@ export function MyProjectsPage() {
                     <Eye className="w-4 h-4 mr-1" />
                     {t('common.open')}
                   </Button>
-                  {project.can_edit && project.status === 'проект' ? (
+                  {project.can_edit &&
+                  (project.status === 'проект' ||
+                    project.status === 'на экспертизе' ||
+                    project.status === 'утверждена' ||
+                    project.status === 'draft' ||
+                    project.status === 'review' ||
+                    project.status === 'approved') ? (
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => navigate(`/competency/${project.id}/edit`)}
                     >
                       <Pencil className="w-4 h-4 mr-1" />
-                      {t('projects.develop')}
+                      {project.status === 'утверждена' || project.status === 'approved'
+                        ? t('projects.continueMapping')
+                        : t('projects.develop')}
                     </Button>
                   ) : null}
                   {project.collaboration_role !== 'member' ? (

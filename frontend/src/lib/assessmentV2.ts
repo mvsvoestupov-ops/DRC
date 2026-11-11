@@ -655,6 +655,67 @@ export function createOption(isCorrect = false) {
   return { ...opt, id: nid("o"), text: "", isCorrect };
 }
 
+/** Практическое задание 6.1 считается заполненным, если есть компоненты, формулировка и критерий. */
+export function isPracticalV2TaskComplete(task: AssessmentV2PracticalTask): boolean {
+  if (!(task.componentIds || []).length) return false;
+  if (!String(task.prompt || "").trim()) return false;
+  return (task.criteria || []).some((line) => String(line || "").trim());
+}
+
+/**
+ * Проверка готовности оценочных средств v2 (шаг 6) перед отправкой на экспертизу.
+ * Считает: тесты по каждому знанию A + практические задания с полным покрытием B/C —
+ * на каждом уровне сформированности.
+ */
+export function assessmentV2WizardErrorMessage(
+  structure: StructureABC,
+  byLevel: AssessmentByLevelV2,
+  levels: readonly FormationLevel[] = FORMATION_LEVELS,
+): string | null {
+  const synced = syncAssessmentByLevelV2(structure, byLevel);
+  const knowledge = listKnowledgeComponents(structure);
+  const practical = listPracticalComponents(structure);
+
+  if (knowledge.length === 0) {
+    return "Добавьте знания (A) в структуру, затем заполните тесты на шаге 6";
+  }
+  if (practical.length === 0) {
+    return "Добавьте умения и навыки (B/C) в структуру, затем составьте практические задания на шаге 6";
+  }
+
+  let planned = 0;
+  let complete = 0;
+
+  for (const level of levels) {
+    const block = synced[level];
+    for (const item of knowledge) {
+      planned += 1;
+      const test = (block.tests || []).find((row) => (row.componentIds || []).includes(item.id));
+      if (test && isAssessmentTaskComplete(test)) complete += 1;
+    }
+
+    const coverage = practicalCoverage(structure, block.practicalTasks || []);
+    if (!coverage.complete) {
+      return (
+        `На шаге 6 (${level}) включите все умения и навыки в практические задания: ` +
+        `покрыто ${coverage.covered} из ${coverage.total}`
+      );
+    }
+    if (!(block.practicalTasks || []).length) {
+      return `На шаге 6 (${level}) создайте хотя бы одно практическое задание`;
+    }
+    for (const task of block.practicalTasks) {
+      planned += 1;
+      if (isPracticalV2TaskComplete(task)) complete += 1;
+    }
+  }
+
+  if (complete < planned) {
+    return `Заполните оценочные средства на шаге 6: готово ${complete} из ${planned}`;
+  }
+  return null;
+}
+
 /** @deprecated kept for preview helpers that still reference TF–TD labels */
 export function listTfTdGroups(structure: StructureABC) {
   const tree = buildPracticalTree(structure);

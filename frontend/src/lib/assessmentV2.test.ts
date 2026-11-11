@@ -8,6 +8,7 @@ import {
 import {
   applyV2TestsToAssessmentByLevel,
   assessmentToolsV2ToByLevel,
+  assessmentV2WizardErrorMessage,
   assignComponentsToTask,
   buildPracticalTree,
   createPracticalTask,
@@ -23,6 +24,7 @@ import {
   syncAssessmentByLevelV2,
   toggleComponentInTask,
 } from "@/lib/assessmentV2";
+import type { FormationLevel } from "@/lib/competenceMappers";
 
 const structure: StructureABC = {
   A: [{ id: "a1", text: "Знание норм", tfCode: "A/01.4", tdText: "ТД1" }],
@@ -286,5 +288,26 @@ describe("assessmentV2", () => {
     expect(restored.базовый.tests[0].componentIds).toEqual(["a1"]);
     expect(restored.базовый.tests[0].prompt).toBe("Legacy");
     expect(restored.базовый.tests[0].method).toBe("testing");
+  });
+
+  it("wizard gate uses v2 completeness, not legacy slots", () => {
+    const levels: FormationLevel[] = ["базовый"];
+    const empty = syncAssessmentByLevelV2(structure, emptyAssessmentByLevelV2());
+    expect(assessmentV2WizardErrorMessage(structure, empty, levels)).toMatch(/шаге 6/);
+
+    const draft = syncAssessmentByLevelV2(structure, emptyAssessmentByLevelV2());
+    draft.базовый.tests[0].prompt = "Вопрос?";
+    draft.базовый.tests[0].itemType = "open";
+    draft.базовый.tests[0].criteria = "Верный ответ";
+    draft.базовый.practicalTasks = [
+      {
+        ...createPracticalTask(1),
+        componentIds: ["b1", "b2", "c1"],
+        prompt: "Сделайте",
+        criteria: ["Критерий"],
+      },
+    ];
+    draft.базовый.compositionDone = true;
+    expect(assessmentV2WizardErrorMessage(structure, draft, levels)).toBeNull();
   });
 });

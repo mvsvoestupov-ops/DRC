@@ -12,7 +12,7 @@ set "REMOTE_DIR=/opt/drc"
 set "BRANCH=main"
 set "VITE_API_URL=https://drc.ao-nk.online/api"
 set "SITE_URL=https://drc.ao-nk.online"
-set "COMMIT_MSG=fix: restore role-gated wizard — stop at step 7, validation at 8, active after expertise"
+set "COMMIT_MSG=fix: role-gated wizard submit, V2 FOS gate, unlock steps 9-9.2 after active status"
 REM =====================================================
 
 REM Запускайте из cmd.exe (не PowerShell Cursor):

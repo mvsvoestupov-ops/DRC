@@ -1,0 +1,17 @@
+Traceback (most recent call last):
+  File "C:\IT\DRC\backend\scripts\output\_check_fos_progress.py", line 252, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "C:\IT\DRC\backend\scripts\output\_check_fos_progress.py", line 28, in main
+    rows = cur.execute(
+           ~~~~~~~~~~~^
+        """
+        ^^^
+    ...<6 lines>...
+        """
+        ^^^
+    ).fetchall()
+    ^
+sqlite3.OperationalError: no such column: assessment_tools_v2
+EXIT=1
+The system cannot find the file specified.

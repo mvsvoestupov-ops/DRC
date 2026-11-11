@@ -151,7 +151,13 @@ export function CompetencyDetailPage() {
               <FileDown className="w-3.5 h-3.5" />
               {downloadingDocx ? t('common.docxBusy') : t('common.downloadDocx')}
             </Button>
-            {comp.can_edit && comp.status === 'проект' ? (
+            {(comp.can_edit || comp.can_harmonize) &&
+            (comp.status === 'проект' ||
+              comp.status === 'на экспертизе' ||
+              comp.status === 'утверждена' ||
+              comp.status === 'draft' ||
+              comp.status === 'review' ||
+              comp.status === 'approved') ? (
               <Button
                 variant="outline"
                 size="sm"
@@ -159,7 +165,9 @@ export function CompetencyDetailPage() {
                 onClick={() => navigate(`/competency/${comp.id}/edit`)}
               >
                 <Pencil className="w-3.5 h-3.5" />
-                {t('detail.continue')}
+                {comp.status === 'утверждена' || comp.status === 'approved'
+                  ? t('detail.continueMapping')
+                  : t('detail.continue')}
               </Button>
             ) : null}
             {isAuthenticated && (comp.collaboration_role || comp.can_invite || (comp.collaborators || []).length > 0) ? (

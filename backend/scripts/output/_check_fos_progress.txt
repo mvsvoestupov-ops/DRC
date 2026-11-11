@@ -1,0 +1,31 @@
+db=C:\IT\DRC\backend\profstandart.db (queried via local API /api/competences/24; Shell ExecutionPolicy blocked python script)
+source=assessment_tools_v2 column (also legacy assessment_tools len=69)
+---
+id=24 code=RUS-PK-0024 status=проект name=Способен легализовывать и тушить пожары
+education_level=среднее профессиональное образование
+structure A=27 B=20 C=0
+---
+level=базовый tests=27 practical=2 compositionDone=True
+  practical_coverage=20/20 tasks=2
+  tests_complete=0/27 (all missing_criteria)
+  practical_complete=0/2 (both missing_prompt)
+level=продвинутый tests=27 practical=1 compositionDone=False
+  practical_coverage=20/20 tasks=1
+  tests_complete=0/27 (all missing_criteria)
+  practical_complete=1/1
+level=экспертный tests=27 practical=1 compositionDone=True
+  practical_coverage=20/20 tasks=1
+  tests_complete=0/27 (all missing_criteria)
+  practical_complete=1/1
+  NOTE: SPO education excludes экспертный from UI gate (formationLevelsForEducation)
+---
+counter_like_gate (UI SPO 2 levels) complete=1 planned=57
+  math: knowledge(27)*levels(2) + practical_tasks(2+1)=54+3=57
+without_expert complete=1 planned=57
+with_expert complete=2 planned=85
+---
+top_incomplete_reasons:
+  test:missing_criteria = 54 (UI levels) / 81 (all 3 stored levels)
+  practical:missing_prompt = 2 (базовый only)
+  id_mismatch = 0 (componentIds match structure ids)
+  empty_expert_for_gate = N/A (expert not counted for SPO; expert block is NOT empty)

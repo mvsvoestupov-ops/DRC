@@ -102,6 +102,7 @@ import { AssessmentConstructorV2 } from "@/app/components/AssessmentConstructorV
 import {
   applyV2TestsToAssessmentByLevel,
   assessmentToolsV2ToByLevel,
+  assessmentV2WizardErrorMessage,
   emptyAssessmentByLevelV2,
   flattenAssessmentToolsV2,
   listKnowledgeComponents,
@@ -142,7 +143,6 @@ import {
 import {
   assessmentMethodLabel,
   assessmentToolsToByLevel,
-  assessmentWizardErrorMessage,
   emptyAssessmentByLevel,
   flattenAssessmentTools,
   getAssessmentCoverage,
@@ -183,9 +183,10 @@ function PreviewField({ label, value }: { label: string; value?: string | null }
 let newCompetenceBootstrapInFlight: Promise<Competence | null> | null = null;
 const AUTOSAVE_INTERVAL_MS = 5 * 60 * 1000;
 const DRAFT_PLACEHOLDER_NAME = "DRAFT-PENDING";
-/** Внутренние номера: 8 = МТО (лейбл «7»), 9 = валидация (лейбл «8»). */
+/** Внутренние номера: 8 = МТО (лейбл «7»), 9 = валидация (лейбл «8»), 10 = сопоставление (лейбл «9»). */
 const DEVELOPMENT_END_STEP = 8;
 const VALIDATION_STEP = 9;
+const POST_APPROVAL_START_STEP = 10;
 
 export function NewCompetencyPage() {
   const navigate = useNavigate();
@@ -686,7 +687,7 @@ export function NewCompetencyPage() {
     apiClient.getCompetenceById(editId)
       .then(async (comp) => {
         if (cancelled) return;
-        if (!comp?.can_edit) {
+        if (!comp?.can_edit && !comp?.can_harmonize) {
           setError(t("wizard.noCollabRights"));
           setHydrating(false);
           return;
@@ -761,8 +762,14 @@ export function NewCompetencyPage() {
           let statusCap = DEVELOPMENT_END_STEP;
           if (status === "утверждена") statusCap = lastStep;
           else if (status === "на экспертизе") statusCap = VALIDATION_STEP;
-          const clamped = Math.min(statusCap, lastStep, Math.floor(savedStep));
-          setCurrentStep(skipHiddenWizardStep(clamped, 1));
+          let target = Math.min(statusCap, lastStep, Math.floor(savedStep));
+          // После утверждения сразу открываем блок 9 / 9.1 / 9.2, а не экран валидации.
+          if (status === "утверждена" && target < POST_APPROVAL_START_STEP) {
+            target = Math.min(POST_APPROVAL_START_STEP, lastStep);
+          }
+          setCurrentStep(skipHiddenWizardStep(target, 1));
+        } else if ((comp.status || "проект") === "утверждена") {
+          setCurrentStep(skipHiddenWizardStep(Math.min(POST_APPROVAL_START_STEP, lastStep), 1));
         }
         if (comp.fgos_id) {
           setSelectedFgos({
@@ -1100,6 +1107,12 @@ export function NewCompetencyPage() {
           return t("wizard.needB");
         }
         return null;
+      case 7:
+        return assessmentV2WizardErrorMessage(
+          formData.structure,
+          formData.assessmentV2,
+          formationLevelsForEducation(formData.educationLevel),
+        );
       case 8:
         if (!resourcesFilled(formData.resources)) {
           return t("wizard.needResources");
@@ -1154,9 +1167,10 @@ export function NewCompetencyPage() {
       if (missingDescriptor) {
         return t("wizard.needDescriptors");
       }
-      const assessmentError = assessmentWizardErrorMessage(
+      const assessmentError = assessmentV2WizardErrorMessage(
         formData.structure,
-        formData.assessmentByLevel,
+        formData.assessmentV2,
+        formationLevelsForEducation(formData.educationLevel),
       );
       if (assessmentError) return assessmentError;
     }
@@ -1423,9 +1437,14 @@ export function NewCompetencyPage() {
   };
 
   const goToStep = async (target: number) => {
-    const capped = Math.min(target, maxAllowedStep);
+    // В статусе «проект» нельзя уйти дальше шага 7 (МТО) ни по клику, ни программно.
+    const hardCap =
+      competenceStatus === "проект"
+        ? Math.min(maxAllowedStep, DEVELOPMENT_END_STEP)
+        : maxAllowedStep;
+    const capped = Math.min(target, hardCap);
     const safeTarget = skipHiddenWizardStep(capped, capped >= currentStep ? 1 : -1);
-    if (safeTarget > maxAllowedStep) return;
+    if (safeTarget > hardCap) return;
     if (safeTarget === currentStep || autoSaving || submitting) return;
     setError("");
     // Не гоняем полный PUT при «чистом» переходе: иначе после пересборки
@@ -1468,12 +1487,8 @@ export function NewCompetencyPage() {
 
   const goNext = async () => {
     if (autoSaving || submitting) return;
-    // С шага 7 (МТО) руководитель отправляет компетенцию на валидацию.
-    if (
-      currentStep === DEVELOPMENT_END_STEP &&
-      competenceStatus === "проект"
-    ) {
-      await submitForValidation();
+    // С шага 7 (МТО) дальше только через «Направить на экспертизу» (руководитель).
+    if (currentStep >= DEVELOPMENT_END_STEP && competenceStatus === "проект") {
       return;
     }
     const next = skipHiddenWizardStep(
@@ -1708,6 +1723,34 @@ export function NewCompetencyPage() {
                       <Save className="w-4 h-4" />
                       {t("wizard.saveDraft")}
                     </Button>
+                  ) : competenceStatus === "утверждена" ? (
+                    <Button
+                      variant="outline"
+                      className="gap-2 text-gray-700 border-gray-300 hover:bg-gray-50"
+                      disabled={submitting || autoSaving}
+                      onClick={() => {
+                        void (async () => {
+                          setAutoSaving(true);
+                          setError("");
+                          try {
+                            await persistDraft(currentStep);
+                            setLastAutoSavedAt(Date.now());
+                          } catch (err: unknown) {
+                            if (isConflictError(err)) {
+                              setError(t("wizard.saveConflict"));
+                              reloadAfterConflict();
+                            } else {
+                              setError(err instanceof Error ? err.message : t("wizard.saveError"));
+                            }
+                          } finally {
+                            setAutoSaving(false);
+                          }
+                        })();
+                      }}
+                    >
+                      <Save className="w-4 h-4" />
+                      {t("common.save")}
+                    </Button>
                   ) : null}
 
                   {currentStep === lastStep && competenceStatus === "утверждена" && (
@@ -1723,17 +1766,28 @@ export function NewCompetencyPage() {
                   )}
 
                   {currentStep === DEVELOPMENT_END_STEP && competenceStatus === "проект" ? (
-                    canSubmitToReview ? (
+                    <>
+                      {!canSubmitToReview ? (
+                        <span className="text-sm text-amber-800 max-w-[14rem] hidden sm:inline">
+                          {t("wizard.onlyLeaderCanSubmit")}
+                        </span>
+                      ) : null}
                       <Button
-                        className="gap-2 bg-green-600 hover:bg-green-700 text-white"
-                        disabled={submitting || autoSaving}
+                        className="gap-2 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
+                        disabled={!canSubmitToReview || submitting || autoSaving}
+                        title={
+                          canSubmitToReview
+                            ? t("wizard.submitReview")
+                            : t("wizard.onlyLeaderCanSubmit")
+                        }
                         onClick={() => void submitForValidation()}
                       >
                         <Send className="w-4 h-4" />
-                        {submitting ? t("wizard.submitting") : t("common.next")}
+                        {submitting ? t("wizard.submitting") : t("wizard.submitReview")}
                       </Button>
-                    ) : null
-                  ) : currentStep < maxAllowedStep ? (
+                    </>
+                  ) : currentStep < maxAllowedStep &&
+                    !(currentStep >= DEVELOPMENT_END_STEP && competenceStatus === "проект") ? (
                     <Button onClick={() => void goNext()} className="gap-2" disabled={autoSaving || submitting}>
                       {t("common.next")}
                       <ArrowRight className="w-4 h-4" />
@@ -2316,8 +2370,9 @@ export function NewCompetencyPage() {
                     <p className="text-sm text-gray-500 mt-1">{t("wizard.step8Lead")}</p>
                   </div>
                   {competenceStatus === "утверждена" ? (
-                    <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-                      {t("wizard.validationDone")}
+                    <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 space-y-2">
+                      <p>{t("wizard.validationDone")}</p>
+                      <p>{t("wizard.validationNextSteps")}</p>
                     </div>
                   ) : (
                     <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 space-y-2">

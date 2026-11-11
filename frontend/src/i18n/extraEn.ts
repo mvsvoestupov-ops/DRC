@@ -295,6 +295,7 @@ export const extraEn: ExtraMessages = {
     member: "Member",
     qualification: "Qualification: {name}",
     develop: "Develop",
+    continueMapping: "Steps 9–9.2",
     approved: "Approved",
   },
   notifications: {
@@ -464,6 +465,7 @@ export const extraEn: ExtraMessages = {
     leader: "Group leader",
     member: "Group member",
     continue: "Continue development",
+    continueMapping: "Continue steps 9–9.2",
     tabMain: "Overview",
     tabLevels: "Attainment levels",
     tabStructure: "A/B/C structure",
@@ -616,6 +618,8 @@ export const extraEn: ExtraMessages = {
       "The competency has been sent for validation. A moderator or administrator assigns experts; experts complete the review on the competency card. Later wizard steps unlock after approval.",
     validationDone:
       "Expert review is complete. The competency is now active. You may continue with the following wizard steps.",
+    validationNextSteps:
+      "Steps 9 (alignment), 9.1 (Harmoni-BRICS) and 9.2 (international mapping) are available. Click Next.",
     openReviewCard: "Open competency card",
     stepLocked: "This step is locked until expert review is finished",
     newName: "New competency",
@@ -638,7 +642,7 @@ export const extraEn: ExtraMessages = {
     autoSaving: "Saving…",
     autoSaved: "Saved to My projects",
     autoSavedAt: "Autosaved at {{time}}",
-    submitReview: "Submit for expert review",
+    submitReview: "Send for expert review",
     submitting: "Submitting...",
     step1Title: "General information about the competency",
     name: "Competency name",

@@ -81,6 +81,8 @@ export function CompetenceReviewSection({ competence, onUpdated }: CompetenceRev
         status,
         expertise,
         ...(notes ? { validation_notes: notes } : {}),
+        // После утверждения конструктор открывает шаги 9 / 9.1 / 9.2.
+        ...(status === "утверждена" ? { wizard_step: 10 } : {}),
       });
       onUpdated(updated as Competence);
       setCommentText("");

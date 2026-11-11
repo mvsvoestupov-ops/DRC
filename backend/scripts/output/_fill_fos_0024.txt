@@ -1,0 +1,15 @@
+ts=2026-11-11T07:44:34.565929+00:00
+db=C:\IT\DRC\backend\profstandart.db exists=True
+cols_has_assessment_tools_v2=False
+cols_has_updated_at=True
+id=24 code=RUS-PK-0024 name=Способен легализовывать и тушить пожары
+status=DRAFT
+structure A=27 B=20 C=0
+prewrite all complete=85/85 gaps=0
+prewrite gate(базовый+продвинутый) complete=57/57 gaps=0
+wrote id=24 updated_at=2026-11-11 07:44:34
+assessment_tools rows=85
+v2 levels: базовый: tests=27 practical=2, продвинутый: tests=27 practical=1, экспертный: tests=27 practical=1
+verify gate complete=57 planned=57 gaps=0
+verify all complete=85 planned=85 gaps=0
+OK
