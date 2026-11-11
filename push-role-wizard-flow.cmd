@@ -20,7 +20,7 @@ REM    C:\IT\DRC\push-role-wizard-flow.cmd /push
 REM    C:\IT\DRC\push-role-wizard-flow.cmd /deploy
 REM ============================================================
 
-set "MSG=fix: role-gated wizard submit, V2 FOS gate, unlock steps 9-9.2 after active status"
+set "MSG=fix: role wizard flow, V2 FOS gate, unlock 9-9.2 when active, optional prof standard on review"
 
 if /I "%~1"=="/deploy" (
   call "%~dp0push-and-deploy.cmd" /deploy

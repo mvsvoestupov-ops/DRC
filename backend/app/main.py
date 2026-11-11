@@ -4486,8 +4486,7 @@ async def create_competence(data: CompetenceCreate, current_user: User = Depends
             std = session.query(StandardRaw).filter(StandardRaw.id == data.prof_standard_id).first()
             if not std:
                 raise HTTPException(404, "Профессиональный стандарт не найден")
-        elif competence_kind == "professional" and status != CompetenceStatus.DRAFT:
-            raise HTTPException(400, "Укажите профессиональный стандарт")
+        # Профстандарт необязателен даже при отправке на экспертизу.
         if data.qualification_id:
             qual = session.query(Qualification).filter(Qualification.id == data.qualification_id).first()
             if not qual:

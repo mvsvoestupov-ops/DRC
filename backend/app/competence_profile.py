@@ -107,8 +107,8 @@ def validate_competence_payload(
     if kind == "professional" and strict:
         if ql_code is None or ql_code < 1 or ql_code > 9:
             errors.append("Укажите уровень квалификации по приказу №148н (1–9)")
-        if not labor_functions:
-            errors.append("Для профессиональной компетенции выберите трудовую функцию")
+        # Профстандарт и ТФ необязательны для отправки на экспертизу.
+        # Если ТФ уже выбраны — оставляем их как есть, без требования минимум одной.
 
     normalized = normalize_descriptors(descriptors)
     if strict:

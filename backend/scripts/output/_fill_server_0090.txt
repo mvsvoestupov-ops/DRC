@@ -1,0 +1,22 @@
+/tmp/_fill_server_0090.py:369: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  comp.updated_at = datetime.utcnow()
+{
+  "ok": true,
+  "id": 90,
+  "public_code": "RUS-PK-0090",
+  "status": "проект",
+  "wizard_step": 8,
+  "education_level": "высшее образование - бакалавриат",
+  "structure": {
+    "A": 6,
+    "B": 5,
+    "C": 2
+  },
+  "fos_gate": "27/27",
+  "resources": {
+    "A": 2,
+    "B": 2,
+    "C": 2
+  },
+  "edit_url": "https://drc.ao-nk.online/competency/90/edit"
+}

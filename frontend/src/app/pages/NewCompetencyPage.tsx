@@ -1083,10 +1083,9 @@ export function NewCompetencyPage() {
         if (!formData.qualificationLevel) {
           return t("wizard.needQl");
         }
-        if (formData.competenceKind === "professional" && selectedStandards.length === 0) {
-          return t("wizard.needPs");
-        }
-        if (formData.competenceKind === "professional") {
+        // Профстандарт необязателен для отправки на экспертизу.
+        // ТФ / ТД–ЗУ проверяем только если стандарт уже выбран.
+        if (formData.competenceKind === "professional" && selectedStandards.length > 0) {
           if (selectedLaborFunctions.length === 0) return t("wizard.needTf");
           if (!formData.tdZu.confirmed) return t("wizard.needConfirmTf");
           const incomplete = incompleteTdZuCards(formData.tdZu.cards);
@@ -2019,7 +2018,7 @@ export function NewCompetencyPage() {
                     <>
                       <div data-presence-fragment="ps">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          {t("wizard.profStandard")} <span className="text-red-500">{t("common.required")}</span>
+                          {t("wizard.profStandard")}
                         </label>
                         {showRecommended && (
                           <div className="mb-4">
