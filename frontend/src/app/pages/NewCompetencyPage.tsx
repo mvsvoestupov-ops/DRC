@@ -102,7 +102,6 @@ import { AssessmentConstructorV2 } from "@/app/components/AssessmentConstructorV
 import {
   applyV2TestsToAssessmentByLevel,
   assessmentToolsV2ToByLevel,
-  assessmentV2WizardErrorMessage,
   emptyAssessmentByLevelV2,
   flattenAssessmentToolsV2,
   listKnowledgeComponents,
@@ -1107,11 +1106,8 @@ export function NewCompetencyPage() {
         }
         return null;
       case 7:
-        return assessmentV2WizardErrorMessage(
-          formData.structure,
-          formData.assessmentV2,
-          formationLevelsForEducation(formData.educationLevel),
-        );
+        // ФОС (шаг 6) больше не блокирует переход/отправку на экспертизу.
+        return null;
       case 8:
         if (!resourcesFilled(formData.resources)) {
           return t("wizard.needResources");
@@ -1166,12 +1162,7 @@ export function NewCompetencyPage() {
       if (missingDescriptor) {
         return t("wizard.needDescriptors");
       }
-      const assessmentError = assessmentV2WizardErrorMessage(
-        formData.structure,
-        formData.assessmentV2,
-        formationLevelsForEducation(formData.educationLevel),
-      );
-      if (assessmentError) return assessmentError;
+      // ФОС / assessment V2 completeness is not required for submit to review.
     }
     return null;
   };

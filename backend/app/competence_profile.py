@@ -122,12 +122,7 @@ def validate_competence_payload(
             errors.append(
                 "Заполните дескрипторы уровней сформированности (A/B/C × базовый/продвинутый/экспертный)"
             )
-        if not assessment_tools:
-            errors.append("Добавьте оценочные средства")
-        else:
-            covered_levels = {t.get("level") for t in assessment_tools if t.get("level")}
-            if not covered_levels.intersection(set(FORMATION_LEVEL_CODES)):
-                errors.append("Укажите оценочное средство хотя бы для одного уровня сформированности")
+        # assessment_tools: ФОС не обязательны для отправки на экспертизу (параметр оставлен для API).
 
     return errors
 
