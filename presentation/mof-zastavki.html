@@ -163,6 +163,7 @@
       letter-spacing: -0.03em;
       text-shadow: 0 8px 30px rgba(0, 30, 80, 0.45);
     }
+    h1:first-child { margin-top: 0; }
     .session-title {
       margin-top: 16px;
       max-width: 980px;
@@ -294,6 +295,35 @@
       letter-spacing: 0.12em;
       color: rgba(255,255,255,0.72);
     }
+    .home-btn {
+      position: absolute;
+      left: 24px;
+      bottom: 22px;
+      z-index: 5;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255,255,255,0.4);
+      border-radius: 50%;
+      background: rgba(8, 28, 72, 0.35);
+      color: #fff;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: background 0.2s, transform 0.2s, border-color 0.2s, opacity 0.2s;
+    }
+    .home-btn:hover {
+      background: rgba(255,255,255,0.16);
+      border-color: #fff;
+      transform: scale(1.06);
+    }
+    .home-btn svg {
+      width: 18px;
+      height: 18px;
+      display: block;
+    }
     .side-btn {
       position: absolute;
       top: 50%;
@@ -360,7 +390,6 @@
         <div class="event">III Международный образовательный форум · 11–14 ноября 2026</div>
         <div class="stage">
           <div class="hero-box">
-            <div class="group">Группа 1</div>
             <h1>Медицина</h1>
             <div class="person">Ильенко Лидия Ивановна</div>
             <div class="org">ФГБОУ ВО РНИМУ им. Н.И. Пирогова<br />Институт материнства и детства</div>
@@ -380,7 +409,6 @@
         <div class="event">III Международный образовательный форум · 11–14 ноября 2026</div>
         <div class="stage">
           <div class="hero-box">
-            <div class="group">Группа 2</div>
             <h1>Транспорт</h1>
             <div class="person">Мерзликина Александра Сергеевна</div>
             <div class="org">ФГБОУ ВО СПбГУ ГА им. А.А. Новикова</div>
@@ -399,7 +427,6 @@
         <div class="event">III Международный образовательный форум · 11–14 ноября 2026</div>
         <div class="stage">
           <div class="hero-box">
-            <div class="group">Группа 3</div>
             <h1>Сельское хозяйство</h1>
             <div class="person">Сергазиева Ольга Дмитриевна</div>
             <div class="org">ФГБОУ ВО Московский государственный университет технологий и управления имени К.Г. Разумовского (Первый казачий университет)</div>
@@ -418,7 +445,6 @@
         <div class="event">III Международный образовательный форум · 11–14 ноября 2026</div>
         <div class="stage">
           <div class="hero-box">
-            <div class="group">Группа 4</div>
             <h1>Промышленность</h1>
             <div class="person">Крючкова Ирина Николаевна</div>
             <div class="org">ФГБОУ ВО Воронежский государственный технический университет</div>
@@ -437,7 +463,6 @@
         <div class="event">III Международный образовательный форум · 11–14 ноября 2026</div>
         <div class="stage">
           <div class="hero-box">
-            <div class="group">Группа 5</div>
             <h1>Юриспруденция</h1>
             <div class="note">Работа с корпоративным стандартом в отдельной группе</div>
           </div>
@@ -466,7 +491,6 @@
         <div class="event">III Международный образовательный форум · 11–14 ноября 2026</div>
         <div class="stage">
           <div class="hero-box">
-            <div class="group">Группа 6</div>
             <h1>Эксперты</h1>
             <div class="person">Соболева Эрика Юрьевна</div>
             <div class="org">Международная сеть агентств гарантии качества высшего образования</div>
@@ -484,6 +508,13 @@
       <div class="dots" id="dots"></div>
       <button class="nav-btn" type="button" id="next" aria-label="Следующий слайд">›</button>
     </div>
+    <button class="home-btn" type="button" id="home" title="Домой" aria-label="Домой — на первый слайд">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 10.5 12 3l9 7.5" />
+        <path d="M5.5 9.5V20h13V9.5" />
+        <path d="M9.5 20v-6h5v6" />
+      </svg>
+    </button>
     <div class="counter" id="counter">1 / 7</div>
   </main>
 
@@ -532,6 +563,7 @@
       counter.textContent = (index + 1) + " / " + slides.length;
     }
 
+    document.getElementById("home").addEventListener("click", () => go(0));
     document.getElementById("prev").addEventListener("click", () => go(index - 1));
     document.getElementById("next").addEventListener("click", () => go(index + 1));
     document.getElementById("prevSide").addEventListener("click", () => go(index - 1));
