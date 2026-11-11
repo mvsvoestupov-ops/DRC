@@ -1,6 +1,7 @@
 """Профиль компетенции: валидация, матрица, formation_profile."""
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from .reference_data import (
@@ -13,6 +14,23 @@ from .reference_data import (
 )
 
 COMPETENCE_KINDS = ("professional", "general", "universal")
+
+
+def expert_formation_allowed(education_level: str | None = None) -> bool:
+    """Mirror of frontend expertFormationAllowed (competenceMappers)."""
+    text = str(education_level or "").lower()
+    if "среднее профессиональное" in text or re.search(r"\bспо\b", text):
+        return False
+    if "бакалавр" in text:
+        return False
+    return True
+
+
+def formation_levels_for_education(education_level: str | None = None) -> tuple[str, ...]:
+    """Mirror of frontend formationLevelsForEducation."""
+    if expert_formation_allowed(education_level):
+        return FORMATION_LEVEL_CODES
+    return tuple(level for level in FORMATION_LEVEL_CODES if level != "экспертный")
 
 
 def empty_descriptors() -> dict[str, dict[str, str]]:
@@ -98,6 +116,7 @@ def validate_competence_payload(
     labor_functions: list | None,
     descriptors: dict | None,
     assessment_tools: list | None,
+    education_level: str | None = None,
     strict: bool = False,
 ) -> list[str]:
     errors: list[str] = []
@@ -112,15 +131,17 @@ def validate_competence_payload(
 
     normalized = normalize_descriptors(descriptors)
     if strict:
+        required_levels = formation_levels_for_education(education_level)
         missing = [
             f"{cat}/{level}"
             for cat in DESCRIPTOR_CATEGORIES
-            for level in FORMATION_LEVEL_CODES
+            for level in required_levels
             if not normalized.get(cat, {}).get(level, "").strip()
         ]
         if missing:
+            level_label = "/".join(required_levels)
             errors.append(
-                "Заполните дескрипторы уровней сформированности (A/B/C × базовый/продвинутый/экспертный)"
+                f"Заполните дескрипторы уровней сформированности (A/B/C × {level_label})"
             )
         # assessment_tools: ФОС не обязательны для отправки на экспертизу (параметр оставлен для API).
 

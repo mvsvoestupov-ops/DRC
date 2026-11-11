@@ -743,7 +743,7 @@ export const extraEn: ExtraMessages = {
     needA: "Add at least one knowledge item (A)",
     needB: "Add at least one skill (B)",
     needDescriptors:
-      "Complete all descriptors (A/B/C × basic/advanced/expert) before submitting for expert review",
+      "Complete all descriptors for the allowed attainment levels (A/B/C) before submitting for expert review",
     expertLevelBlocked:
       "The expert attainment level is not used for secondary vocational education (SVE) or bachelor’s programmes.",
     notSpecified: "Not specified",

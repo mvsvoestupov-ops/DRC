@@ -1105,6 +1105,14 @@ export function NewCompetencyPage() {
           return t("wizard.needB");
         }
         return null;
+      case 4: {
+        const levels = formationLevelsForEducation(formData.educationLevel);
+        const missingDescriptor = DESCRIPTOR_CATEGORIES.some((cat) =>
+          levels.some((level) => !formData.descriptors[cat][level]?.trim()),
+        );
+        if (missingDescriptor) return t("wizard.needDescriptors");
+        return null;
+      }
       case 7:
         // ФОС (шаг 6) больше не блокирует переход/отправку на экспертизу.
         return null;
@@ -1154,7 +1162,8 @@ export function NewCompetencyPage() {
     if (status === "на экспертизе") {
       const endErr = validateStep(DEVELOPMENT_END_STEP);
       if (endErr) return endErr;
-      const missingDescriptor = (["A", "B", "C"] as const).some((cat) =>
+      // Same levels as DescriptorEditor / formationLevelsForEducation (SPO & бакалавриат skip экспертный).
+      const missingDescriptor = DESCRIPTOR_CATEGORIES.some((cat) =>
         formationLevelsForEducation(formData.educationLevel).some(
           (level) => !formData.descriptors[cat][level]?.trim(),
         ),

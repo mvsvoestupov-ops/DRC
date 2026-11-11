@@ -734,7 +734,7 @@ export const extraVi: ExtraMessages = {
     needA: "Thêm ít nhất một kiến thức (A)",
     needB: "Thêm ít nhất một kỹ năng (B)",
     needDescriptors:
-      "Điền đủ mọi mô tả (A/B/C × cơ bản/nâng cao/chuyên gia) trước khi gửi thẩm định",
+      "Điền đủ mọi mô tả theo các mức hình thành được phép (A/B/C) trước khi gửi thẩm định",
     expertLevelBlocked:
       "Mức chuyên gia không điền đối với giáo dục nghề trung cấp (СПО) và cử nhân.",
     notSpecified: "Không nêu",

@@ -731,7 +731,7 @@ export const extraZh: ExtraMessages = {
     needA: "请至少添加一项知识（A）",
     needB: "请至少添加一项技能（B）",
     needDescriptors:
-      "提交评审前请填写全部描述符（A/B/C × 基础/进阶/专家）",
+      "提交评审前请填写全部允许达成水平的描述符（A/B/C）",
     expertLevelBlocked:
       "中等职业教育（СПО）和本科不填写专家达成水平。",
     notSpecified: "未注明",

@@ -4477,6 +4477,7 @@ async def create_competence(data: CompetenceCreate, current_user: User = Depends
             labor_functions=data.labor_functions,
             descriptors=data.descriptors,
             assessment_tools=data.assessment_tools,
+            education_level=data.education_level or "",
             strict=strict,
         )
         if validation_errors:
@@ -5577,6 +5578,7 @@ async def update_competence(comp_id: int, data: CompetenceUpdate, current_user: 
                 labor_functions=comp.labor_functions,
                 descriptors=comp.descriptors,
                 assessment_tools=comp.assessment_tools,
+                education_level=(comp.raw_data or {}).get("education_level") or "",
                 strict=strict,
             )
             if validation_errors:
