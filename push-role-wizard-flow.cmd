@@ -4,23 +4,17 @@ chcp 65001 >nul
 cd /d "%~dp0"
 
 REM ============================================================
-REM  Push + deploy: ролевой поток конструктора + шаги 9–9.2
+REM  Push + deploy (текущий пакет ролевого потока + временно снятые
+REM  контроли — список на возврат: docs\temp-relaxed-validation.md)
 REM
-REM  В коммит:
-REM  - шаг 7: «Направить на экспертизу» только у руководителя
-REM  - участники не проходят дальше МТО
-REM  - валидация ОС по конструктору V2 (не legacy)
-REM  - после статуса «действующая» открываются шаги 9 / 9.1 / 9.2
-REM  - кнопки продолжения на карточке и в «Моих проектах»
-REM
-REM  Запуск из cmd.exe (не из PowerShell Cursor):
+REM  Запуск из cmd.exe:
 REM    C:\IT\DRC\push-role-wizard-flow.cmd
 REM    C:\IT\DRC\push-role-wizard-flow.cmd /y
 REM    C:\IT\DRC\push-role-wizard-flow.cmd /push
 REM    C:\IT\DRC\push-role-wizard-flow.cmd /deploy
 REM ============================================================
 
-set "MSG=fix: role wizard flow, V2 FOS gate, unlock 9-9.2 when active, optional prof standard on review"
+set "MSG=TEMP: restore later — relax TD-ZU/FOS/PS gates for review testing; see docs/temp-relaxed-validation.md"
 
 if /I "%~1"=="/deploy" (
   call "%~dp0push-and-deploy.cmd" /deploy

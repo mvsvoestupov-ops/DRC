@@ -17,11 +17,11 @@ import {
   buildStructureFromTdZu,
   confirmTdZuState,
   emptyTdZuState,
-  incompleteTdZuCards,
   parseTdZuState,
   syncTdZuCardsFromStructure,
   type TdZuState,
 } from "@/lib/tdZuDistribution";
+// TEMP: re-import incompleteTdZuCards when restoring TD-ZU fill gate (docs/temp-relaxed-validation.md).
 import { WorkFunctionsSelectTree } from "@/app/components/WorkFunctionsSelectTree";
 import { ResourcesMtoEditor } from "@/app/components/ResourcesMtoEditor";
 import {
@@ -1087,8 +1087,9 @@ export function NewCompetencyPage() {
         if (formData.competenceKind === "professional" && selectedStandards.length > 0) {
           if (selectedLaborFunctions.length === 0) return t("wizard.needTf");
           if (!formData.tdZu.confirmed) return t("wizard.needConfirmTf");
-          const incomplete = incompleteTdZuCards(formData.tdZu.cards);
-          if (incomplete.length > 0) return t("wizard.needTdZu", { n: incomplete.length });
+          // TEMP: TD-ZU fill check disabled — restore later (docs/temp-relaxed-validation.md).
+          // const incomplete = incompleteTdZuCards(formData.tdZu.cards);
+          // if (incomplete.length > 0) return t("wizard.needTdZu", { n: incomplete.length });
         }
         if (formData.qualificationLevel && tfLevelRange) {
           const n = Number(formData.qualificationLevel);
