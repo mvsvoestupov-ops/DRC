@@ -49,3 +49,66 @@ class SwotAnalysis(Base):
 
     table = relationship("SwotTable", back_populates="analyses")
     user = relationship("User")
+
+
+class SwotSummary(Base):
+    """Единый сводный SWOT по итогам всех столов (генерирует ИИ-агент)."""
+
+    __tablename__ = "swot_summaries"
+
+    id = Column(Integer, primary_key=True)
+    strengths = Column(Text, default="")
+    weaknesses = Column(Text, default="")
+    opportunities = Column(Text, default="")
+    threats = Column(Text, default="")
+    resume = Column(Text, default="")
+    source_count = Column(Integer, default=0)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+
+class SwotArchive(Base):
+    """Снимок заполненных столов перед очисткой (админ)."""
+
+    __tablename__ = "swot_archives"
+
+    id = Column(Integer, primary_key=True)
+    title = Column(String(200), nullable=False, default="")
+    source_count = Column(Integer, default=0)
+    summary_strengths = Column(Text, default="")
+    summary_weaknesses = Column(Text, default="")
+    summary_opportunities = Column(Text, default="")
+    summary_threats = Column(Text, default="")
+    summary_resume = Column(Text, default="")
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    entries = relationship(
+        "SwotArchiveEntry",
+        back_populates="archive",
+        cascade="all, delete-orphan",
+    )
+
+
+class SwotArchiveEntry(Base):
+    """Одна сохранённая SWOT-форма из снимка столов."""
+
+    __tablename__ = "swot_archive_entries"
+
+    id = Column(Integer, primary_key=True)
+    archive_id = Column(Integer, ForeignKey("swot_archives.id"), nullable=False, index=True)
+    table_id = Column(Integer, nullable=True)
+    table_number = Column(Integer, nullable=False, index=True)
+    user_id = Column(Integer, nullable=True, index=True)
+    user_email = Column(String(255), nullable=False, default="")
+    user_label = Column(String(255), nullable=False, default="")
+    topic = Column(String(64), nullable=False, index=True)
+    strengths = Column(Text, default="")
+    weaknesses = Column(Text, default="")
+    opportunities = Column(Text, default="")
+    threats = Column(Text, default="")
+    source_updated_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    archive = relationship("SwotArchive", back_populates="entries")

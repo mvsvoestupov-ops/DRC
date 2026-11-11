@@ -57,7 +57,8 @@ echo Шаги:
 echo   1. git add + commit ^(без секретов и локальной БД^)
 echo   2. git push origin %BRANCH%
 if not defined PUSH_ONLY (
-  echo   3. ssh: pull, pip, seed, build frontend, restart backend, nginx
+  echo   3. ssh: pull, pip, seed example competences, build frontend,
+  echo      restart backend, nginx ^(без SWOT-демо, SEED_SWOT_DEMO=0^)
 )
 echo.
 echo Не попадёт в коммит:
@@ -184,7 +185,9 @@ if exist "%SSH_KEY%" (
 
 echo.
 echo == deploy %SSH_USER%@%SSH_HOST% → %REMOTE_DIR%
-type "%~dp0deploy-remote.sh" | ssh %SSH_OPTS% %SSH_USER%@%SSH_HOST% "export VITE_API_URL=%VITE_API_URL% BRANCH=%BRANCH% REMOTE_DIR=%REMOTE_DIR%; tr -d '\r' | bash -s"
+REM По умолчанию без SWOT-демо на сервере. Для демо: set SEED_SWOT_DEMO=1
+if not defined SEED_SWOT_DEMO set "SEED_SWOT_DEMO=0"
+type "%~dp0deploy-remote.sh" | ssh %SSH_OPTS% %SSH_USER%@%SSH_HOST% "export VITE_API_URL=%VITE_API_URL% BRANCH=%BRANCH% REMOTE_DIR=%REMOTE_DIR% SEED_SWOT_DEMO=%SEED_SWOT_DEMO%; tr -d '\r' | bash -s"
 if errorlevel 1 (
   echo.
   echo Деплой не прошёл.

@@ -36,7 +36,16 @@ from .db.competence_models import (
     CompetenceActivityLog,
 )
 from .db.feedback_models import Feedback
-from .db.swot_models import SwotTable, SwotAnalysis, SWOT_TOPICS, SWOT_TABLE_COUNT
+from .db.swot_models import (
+    SwotTable,
+    SwotAnalysis,
+    SwotSummary,
+    SwotArchive,
+    SwotArchiveEntry,
+    SWOT_TOPICS,
+    SWOT_TABLE_COUNT,
+)
+from .deepseek_client import chat_json, deepseek_configured, deepseek_status
 from .db.notification_models import Notification
 from .db.user_models import User
 from .db.registration_models import Registration
@@ -57,7 +66,6 @@ from .esco_registry import (
 )
 from .harmoni_brics import list_countries as harmoni_brics_countries, suggest_mapping as harmoni_brics_suggest
 from .garm_esco_ai import suggest_garm_esco
-from .deepseek_client import deepseek_status
 from .fgos_registry import FGOS_CATEGORIES, FGOS_CATEGORY_BY_ID, FGOS_CATEGORY_IDS
 from .db_operations import save_raw_standard
 from .tf_codes import compact_otf_code, compact_tf_code, tf_qualification_level
@@ -300,6 +308,34 @@ def ensure_swot_tables() -> None:
 
 
 ensure_swot_tables()
+
+
+def ensure_swot_demo_data(*, force: bool = False) -> None:
+    """Демо-тексты SWOT для admin. force=True перезаписывает; иначе только если пусто."""
+    if not force:
+        session = SessionLocal()
+        try:
+            if session.query(SwotAnalysis).count() > 0:
+                return
+        except Exception as exc:
+            print(f"swot demo check skipped: {exc}")
+            return
+        finally:
+            session.close()
+    try:
+        from .db.swot_seed import seed_swot_demo
+
+        result = seed_swot_demo(force=True)
+        print(f"swot demo seed: {result}")
+    except Exception as exc:
+        print(f"swot demo seed skipped: {exc}")
+
+
+# Демо-заполнение только по явному SEED_SWOT_DEMO=force|if_empty (по умолчанию выкл.,
+# чтобы очистка столов админом не затиралась при рестарте).
+_swot_seed_mode = os.getenv("SEED_SWOT_DEMO", "0").strip().lower()
+if _swot_seed_mode not in {"0", "false", "no", "off"}:
+    ensure_swot_demo_data(force=_swot_seed_mode in {"1", "true", "yes", "force", "always"})
 
 
 def ensure_admin_credentials() -> None:
@@ -5793,6 +5829,512 @@ async def read_all_notifications(current_user: User = Depends(get_current_user))
     except Exception:
         session.rollback()
         raise
+    finally:
+        session.close()
+
+
+# ---------- SWOT-анализ (6 столов × 4 темы) ----------
+
+def _serialize_swot_analysis(row: SwotAnalysis) -> dict:
+    return {
+        "id": row.id,
+        "table_id": row.table_id,
+        "user_id": row.user_id,
+        "topic": row.topic,
+        "strengths": row.strengths or "",
+        "weaknesses": row.weaknesses or "",
+        "opportunities": row.opportunities or "",
+        "threats": row.threats or "",
+        "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+        "created_at": row.created_at.isoformat() if row.created_at else None,
+    }
+
+
+def _swot_filled(row: Optional[SwotAnalysis]) -> bool:
+    if row is None:
+        return False
+    return any(
+        (getattr(row, field) or "").strip()
+        for field in ("strengths", "weaknesses", "opportunities", "threats")
+    )
+
+
+@app.get("/swot/tables")
+async def list_swot_tables(current_user: User = Depends(get_current_user)):
+    session = SessionLocal()
+    try:
+        ensure_swot_tables()
+        tables = session.query(SwotTable).order_by(SwotTable.number.asc()).all()
+        out = []
+        for table in tables:
+            mine = (
+                session.query(SwotAnalysis)
+                .filter(SwotAnalysis.table_id == table.id, SwotAnalysis.user_id == current_user.id)
+                .all()
+            )
+            mine_by_topic = {row.topic: row for row in mine}
+            filled_topics = sum(1 for topic in SWOT_TOPICS if _swot_filled(mine_by_topic.get(topic)))
+            participant_ids = {
+                uid
+                for (uid,) in session.query(SwotAnalysis.user_id)
+                .filter(SwotAnalysis.table_id == table.id)
+                .distinct()
+                .all()
+            }
+            out.append(
+                {
+                    "id": table.id,
+                    "number": table.number,
+                    "title": table.title or f"Стол {table.number}",
+                    "participants": len(participant_ids),
+                    "my_filled_topics": filled_topics,
+                    "my_total_topics": len(SWOT_TOPICS),
+                    "topics": list(SWOT_TOPICS),
+                }
+            )
+        return {"tables": out, "topics": list(SWOT_TOPICS)}
+    finally:
+        session.close()
+
+
+@app.get("/swot/tables/{table_id}")
+async def get_swot_table(table_id: int, current_user: User = Depends(get_current_user)):
+    session = SessionLocal()
+    try:
+        table = session.query(SwotTable).filter(SwotTable.id == table_id).first()
+        if not table:
+            raise HTTPException(404, detail="Стол не найден")
+        mine = (
+            session.query(SwotAnalysis)
+            .filter(SwotAnalysis.table_id == table.id, SwotAnalysis.user_id == current_user.id)
+            .all()
+        )
+        by_topic = {row.topic: _serialize_swot_analysis(row) for row in mine}
+        analyses = []
+        for topic in SWOT_TOPICS:
+            analyses.append(
+                by_topic.get(topic)
+                or {
+                    "id": None,
+                    "table_id": table.id,
+                    "user_id": current_user.id,
+                    "topic": topic,
+                    "strengths": "",
+                    "weaknesses": "",
+                    "opportunities": "",
+                    "threats": "",
+                    "updated_at": None,
+                    "created_at": None,
+                }
+            )
+        return {
+            "id": table.id,
+            "number": table.number,
+            "title": table.title or f"Стол {table.number}",
+            "topics": list(SWOT_TOPICS),
+            "analyses": analyses,
+        }
+    finally:
+        session.close()
+
+
+@app.post("/swot/seed-demo")
+async def seed_swot_demo_endpoint(current_user: User = Depends(get_current_admin)):
+    """Админ: заполнить все 6 столов правдоподобными демо-данными SWOT."""
+    ensure_swot_tables()
+    from .db.swot_seed import seed_swot_demo
+
+    result = seed_swot_demo(force=True)
+    if not result.get("ok"):
+        raise HTTPException(400, detail=result.get("error") or "seed failed")
+    return result
+
+
+@app.put("/swot/tables/{table_id}/analyses/{topic}")
+async def upsert_swot_analysis(
+    table_id: int,
+    topic: str,
+    data: SwotAnalysisUpsert,
+    current_user: User = Depends(get_current_user),
+):
+    topic_key = (topic or "").strip()
+    if topic_key not in SWOT_TOPICS:
+        raise HTTPException(400, detail="Неизвестная тема SWOT")
+    session = SessionLocal()
+    try:
+        table = session.query(SwotTable).filter(SwotTable.id == table_id).first()
+        if not table:
+            raise HTTPException(404, detail="Стол не найден")
+        row = (
+            session.query(SwotAnalysis)
+            .filter(
+                SwotAnalysis.table_id == table.id,
+                SwotAnalysis.user_id == current_user.id,
+                SwotAnalysis.topic == topic_key,
+            )
+            .first()
+        )
+        if row is None:
+            row = SwotAnalysis(
+                table_id=table.id,
+                user_id=current_user.id,
+                topic=topic_key,
+            )
+            session.add(row)
+        row.strengths = (data.strengths or "").strip()
+        row.weaknesses = (data.weaknesses or "").strip()
+        row.opportunities = (data.opportunities or "").strip()
+        row.threats = (data.threats or "").strip()
+        row.updated_at = datetime.datetime.utcnow()
+        session.commit()
+        session.refresh(row)
+        return _serialize_swot_analysis(row)
+    except HTTPException:
+        session.rollback()
+        raise
+    except Exception as exc:
+        session.rollback()
+        raise HTTPException(400, detail=str(exc)) from exc
+    finally:
+        session.close()
+
+
+_TOPIC_TITLES_RU = {
+    "network_programs": "Сетевые образовательные программы",
+    "graduate_selection": "Подбор выпускников",
+    "education_export": "Экспорт образования",
+    "migration_regulation": "Регулирование миграции",
+}
+
+
+def _serialize_swot_summary(row: SwotSummary) -> dict:
+    return {
+        "id": row.id,
+        "strengths": row.strengths or "",
+        "weaknesses": row.weaknesses or "",
+        "opportunities": row.opportunities or "",
+        "threats": row.threats or "",
+        "resume": row.resume or "",
+        "source_count": row.source_count or 0,
+        "created_by": row.created_by,
+        "created_at": row.created_at.isoformat() if row.created_at else None,
+        "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+        "ai_agent": deepseek_status(),
+    }
+
+
+def _collect_swot_corpus(session) -> tuple[str, int]:
+    """Собрать текст всех заполненных SWOT со всех столов для ИИ."""
+    tables = session.query(SwotTable).order_by(SwotTable.number.asc()).all()
+    table_by_id = {t.id: t for t in tables}
+    rows = (
+        session.query(SwotAnalysis)
+        .order_by(SwotAnalysis.table_id.asc(), SwotAnalysis.topic.asc(), SwotAnalysis.user_id.asc())
+        .all()
+    )
+    blocks: list[str] = []
+    used = 0
+    for row in rows:
+        if not _swot_filled(row):
+            continue
+        used += 1
+        table = table_by_id.get(row.table_id)
+        table_label = f"Стол {table.number}" if table else f"table#{row.table_id}"
+        topic_label = _TOPIC_TITLES_RU.get(row.topic, row.topic)
+        blocks.append(
+            "\n".join(
+                [
+                    f"### {table_label} / {topic_label} (user_id={row.user_id})",
+                    f"S: {(row.strengths or '').strip()}",
+                    f"W: {(row.weaknesses or '').strip()}",
+                    f"O: {(row.opportunities or '').strip()}",
+                    f"T: {(row.threats or '').strip()}",
+                ]
+            )
+        )
+    return "\n\n".join(blocks), used
+
+
+@app.get("/swot/summary")
+async def get_swot_summary(current_user: User = Depends(get_current_admin)):
+    session = SessionLocal()
+    try:
+        row = session.query(SwotSummary).order_by(SwotSummary.id.desc()).first()
+        if not row:
+            return {
+                "id": None,
+                "strengths": "",
+                "weaknesses": "",
+                "opportunities": "",
+                "threats": "",
+                "resume": "",
+                "source_count": 0,
+                "created_by": None,
+                "created_at": None,
+                "updated_at": None,
+                "ai_agent": deepseek_status(),
+            }
+        return _serialize_swot_summary(row)
+    finally:
+        session.close()
+
+
+def _swot_field_to_bullets(value) -> str:
+    """Нормализует ответ модели (строка или список) в маркированный список без пустых строк."""
+    items: list[str] = []
+    if isinstance(value, list):
+        raw_items = value
+    elif isinstance(value, str):
+        raw_items = re.split(r"\n+|•\s*|;\s*(?=[A-ZА-ЯЁ])", value)
+    else:
+        raw_items = [str(value or "")]
+    seen_norm: set[str] = set()
+    for item in raw_items:
+        text = re.sub(r"^[\s\-–—*•\d.)]+", "", str(item or "")).strip()
+        if not text:
+            continue
+        norm = re.sub(r"\s+", " ", text.casefold())
+        if norm in seen_norm:
+            continue
+        seen_norm.add(norm)
+        items.append(f"• {text}")
+    return "\n".join(items)
+
+
+@app.post("/swot/summary/synthesize")
+async def synthesize_swot_summary(current_user: User = Depends(get_current_admin)):
+    if not deepseek_configured():
+        raise HTTPException(
+            503,
+            detail="Сервис сведения SWOT не настроен на сервере",
+        )
+    session = SessionLocal()
+    try:
+        corpus, source_count = _collect_swot_corpus(session)
+        if source_count == 0:
+            raise HTTPException(400, detail="Нет заполненных SWOT по столам — нечего сводить")
+
+        system = (
+            "Ты редактор-сводчик SWOT-сессии. Твоя единственная задача — свести входные записи "
+            "в четыре таблицы (S/W/O/T) и написать резюме ТОЛЬКО по этим сводным пунктам.\n\n"
+            "Жёсткие правила:\n"
+            "1) Используй ТОЛЬКО смысл из входных текстов. Запрещено добавлять новые идеи, "
+            "рекомендации, примеры, цифры, риски, меры или выводы, которых нет во входе.\n"
+            "2) По каждому квадранту собери уникальные пункты: объедини близкие по смыслу "
+            "формулировки в один пункт (без потери сути), точные и почти-дубли удали.\n"
+            "3) Сохраняй исходную терминологию участников; можно слегка сократить/объединить "
+            "редакционно, но не переосмысляй и не «улучшай» содержание.\n"
+            "4) Каждый пункт — одна законченная мысль (1–2 предложения).\n"
+            "5) resume — краткий анализ именно сводных таблиц: что повторяется чаще, "
+            "какие сильные стороны/слабости/возможности/угрозы доминируют во входе, "
+            "какие явные противоречия есть между пунктами. Без новых предложений «что делать», "
+            "если их не было во входных данных.\n"
+            "6) Язык ответа — русский.\n"
+            "7) Иностранные слова и аббревиатуры (латиница и иноязычные сокращения) при первом "
+            "упоминании в каждом пункте давай с переводом или расшифровкой на русском в скобках, "
+            "например: LMS (система управления обучением), ESCO (европейская классификация "
+            "навыков, компетенций, квалификаций и занятий), EQF (европейская рамка квалификаций), "
+            "EdTech (образовательные технологии), HR (кадровая служба). "
+            "Не добавляй аббревиатуры, которых нет во входе.\n\n"
+            "Ответ строго JSON-объект с ключами:\n"
+            "strengths, weaknesses, opportunities, threats — каждый либо массив строк "
+            "(предпочтительно), либо одна строка с пунктами через перевод строки;\n"
+            "resume — одна строка."
+        )
+        user_prompt = (
+            f"Число исходных заполненных SWOT-форм: {source_count}.\n"
+            "Ниже — единственный источник истины. Сведи в таблицы S/W/O/T без выдумок, "
+            "затем напиши resume только по получившимся пунктам.\n\n"
+            f"Материалы столов:\n{corpus[:120000]}"
+        )
+        result = chat_json(system=system, user=user_prompt, temperature=0.0, timeout=180)
+        strengths = _swot_field_to_bullets(result.get("strengths"))
+        weaknesses = _swot_field_to_bullets(result.get("weaknesses"))
+        opportunities = _swot_field_to_bullets(result.get("opportunities"))
+        threats = _swot_field_to_bullets(result.get("threats"))
+        resume = str(result.get("resume") or "").strip()
+        if not any([strengths, weaknesses, opportunities, threats, resume]):
+            raise HTTPException(502, detail="Получен пустой сводный SWOT")
+
+        row = session.query(SwotSummary).order_by(SwotSummary.id.desc()).first()
+        if row is None:
+            row = SwotSummary()
+            session.add(row)
+        row.strengths = strengths
+        row.weaknesses = weaknesses
+        row.opportunities = opportunities
+        row.threats = threats
+        row.resume = resume
+        row.source_count = source_count
+        row.created_by = current_user.id
+        row.updated_at = datetime.datetime.utcnow()
+        session.commit()
+        session.refresh(row)
+        return _serialize_swot_summary(row)
+    except HTTPException:
+        session.rollback()
+        raise
+    except Exception as exc:
+        session.rollback()
+        raise HTTPException(502, detail=f"Не удалось подвести итоги SWOT: {exc}") from exc
+    finally:
+        session.close()
+
+
+def _swot_user_label(user: Optional[User]) -> str:
+    if not user:
+        return ""
+    parts = [p for p in [(user.last_name or "").strip(), (user.first_name or "").strip()] if p]
+    return " ".join(parts) or (user.email or "")
+
+
+def _serialize_swot_archive_entry(row: SwotArchiveEntry) -> dict:
+    return {
+        "id": row.id,
+        "table_id": row.table_id,
+        "table_number": row.table_number,
+        "user_id": row.user_id,
+        "user_email": row.user_email or "",
+        "user_label": row.user_label or "",
+        "topic": row.topic,
+        "topic_title": _TOPIC_TITLES_RU.get(row.topic, row.topic),
+        "strengths": row.strengths or "",
+        "weaknesses": row.weaknesses or "",
+        "opportunities": row.opportunities or "",
+        "threats": row.threats or "",
+        "source_updated_at": row.source_updated_at.isoformat() if row.source_updated_at else None,
+    }
+
+
+def _serialize_swot_archive(row: SwotArchive, *, with_entries: bool = False) -> dict:
+    data = {
+        "id": row.id,
+        "title": row.title or "",
+        "source_count": row.source_count or 0,
+        "created_by": row.created_by,
+        "created_at": row.created_at.isoformat() if row.created_at else None,
+        "summary": {
+            "strengths": row.summary_strengths or "",
+            "weaknesses": row.summary_weaknesses or "",
+            "opportunities": row.summary_opportunities or "",
+            "threats": row.summary_threats or "",
+            "resume": row.summary_resume or "",
+        },
+    }
+    entries = list(row.entries or [])
+    if with_entries:
+        entries.sort(key=lambda e: (e.table_number or 0, e.topic or "", e.user_id or 0))
+        data["entries"] = [_serialize_swot_archive_entry(e) for e in entries]
+    else:
+        data["entries_count"] = len(entries)
+    return data
+
+
+@app.get("/swot/archives")
+async def list_swot_archives(current_user: User = Depends(get_current_admin)):
+    session = SessionLocal()
+    try:
+        rows = session.query(SwotArchive).order_by(SwotArchive.id.desc()).all()
+        return {"archives": [_serialize_swot_archive(r) for r in rows]}
+    finally:
+        session.close()
+
+
+@app.get("/swot/archives/{archive_id}")
+async def get_swot_archive(archive_id: int, current_user: User = Depends(get_current_admin)):
+    session = SessionLocal()
+    try:
+        row = session.query(SwotArchive).filter(SwotArchive.id == archive_id).first()
+        if not row:
+            raise HTTPException(404, detail="Снимок SWOT не найден")
+        return _serialize_swot_archive(row, with_entries=True)
+    finally:
+        session.close()
+
+
+@app.post("/swot/archives/clear-tables")
+async def archive_and_clear_swot_tables(current_user: User = Depends(get_current_admin)):
+    """Сохранить все записи со столов в архив админа и очистить столы для нового заполнения."""
+    session = SessionLocal()
+    try:
+        tables = session.query(SwotTable).order_by(SwotTable.number.asc()).all()
+        table_by_id = {t.id: t for t in tables}
+        analyses = (
+            session.query(SwotAnalysis)
+            .order_by(SwotAnalysis.table_id.asc(), SwotAnalysis.topic.asc(), SwotAnalysis.user_id.asc())
+            .all()
+        )
+        filled = [row for row in analyses if _swot_filled(row)]
+        if not filled:
+            raise HTTPException(400, detail="На столах нет заполненных SWOT — нечего сохранять")
+
+        user_ids = {row.user_id for row in filled}
+        users = {
+            u.id: u
+            for u in session.query(User).filter(User.id.in_(user_ids)).all()
+        }
+        summary = session.query(SwotSummary).order_by(SwotSummary.id.desc()).first()
+        now = datetime.datetime.utcnow()
+        title = f"Снимок столов от {now.strftime('%d.%m.%Y %H:%M')}"
+
+        archive = SwotArchive(
+            title=title,
+            source_count=len(filled),
+            summary_strengths=(summary.strengths if summary else "") or "",
+            summary_weaknesses=(summary.weaknesses if summary else "") or "",
+            summary_opportunities=(summary.opportunities if summary else "") or "",
+            summary_threats=(summary.threats if summary else "") or "",
+            summary_resume=(summary.resume if summary else "") or "",
+            created_by=current_user.id,
+            created_at=now,
+        )
+        session.add(archive)
+        session.flush()
+
+        for row in filled:
+            table = table_by_id.get(row.table_id)
+            user = users.get(row.user_id)
+            session.add(
+                SwotArchiveEntry(
+                    archive_id=archive.id,
+                    table_id=row.table_id,
+                    table_number=table.number if table else 0,
+                    user_id=row.user_id,
+                    user_email=(user.email if user else "") or "",
+                    user_label=_swot_user_label(user),
+                    topic=row.topic,
+                    strengths=row.strengths or "",
+                    weaknesses=row.weaknesses or "",
+                    opportunities=row.opportunities or "",
+                    threats=row.threats or "",
+                    source_updated_at=row.updated_at,
+                )
+            )
+
+        session.query(SwotAnalysis).delete(synchronize_session=False)
+        if summary:
+            summary.strengths = ""
+            summary.weaknesses = ""
+            summary.opportunities = ""
+            summary.threats = ""
+            summary.resume = ""
+            summary.source_count = 0
+            summary.updated_at = now
+
+        session.commit()
+        session.refresh(archive)
+        return {
+            "ok": True,
+            "cleared": len(analyses),
+            "archived": len(filled),
+            "archive": _serialize_swot_archive(archive, with_entries=True),
+        }
+    except HTTPException:
+        session.rollback()
+        raise
+    except Exception as exc:
+        session.rollback()
+        raise HTTPException(400, detail=f"Не удалось очистить столы SWOT: {exc}") from exc
     finally:
         session.close()
 

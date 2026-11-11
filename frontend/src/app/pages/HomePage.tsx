@@ -126,7 +126,7 @@ export function HomePage() {
             <p className="text-xl leading-relaxed opacity-95 mb-10">
               {t("home.lead")}
             </p>
-            <div className="flex gap-4">
+            <div className="flex flex-wrap gap-4">
               <Link
                 to="/search"
                 className="inline-flex items-center gap-3 px-8 py-4 bg-white text-primary rounded-lg text-base font-semibold shadow-md hover:shadow-lg transition-all"
@@ -148,6 +148,24 @@ export function HomePage() {
                   className="inline-flex items-center gap-3 px-8 py-4 bg-white/10 text-white rounded-lg text-base font-semibold border-2 border-white/30 hover:bg-white/20 transition-all"
                 >
                   {t("nav.moderation")}
+                </Link>
+              )}
+              {isAuthenticated ? (
+                <Link
+                  to="/swot"
+                  className="inline-flex items-center gap-3 px-8 py-4 bg-white/10 text-white rounded-lg text-base font-semibold border-2 border-white/30 hover:bg-white/20 transition-all"
+                >
+                  <FileText className="w-5 h-5" />
+                  {t("swot.homeButton")}
+                </Link>
+              ) : (
+                <Link
+                  to="/login"
+                  state={{ from: "/swot" }}
+                  className="inline-flex items-center gap-3 px-8 py-4 bg-white/10 text-white rounded-lg text-base font-semibold border-2 border-white/30 hover:bg-white/20 transition-all"
+                >
+                  <FileText className="w-5 h-5" />
+                  {t("swot.homeButton")}
                 </Link>
               )}
             </div>

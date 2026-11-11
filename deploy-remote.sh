@@ -153,6 +153,18 @@ fi
 echo "==> seed example competences RUS-PK-0019 / RUS-PK-0020"
 venv/bin/python scripts/seed_example_competences.py
 
+# Тестовые SWOT-данные на прод не льём. Явно: SEED_SWOT_DEMO=1|force
+case "${SEED_SWOT_DEMO:-0}" in
+  1|true|yes|force|always)
+    echo "==> SEED_SWOT_DEMO=${SEED_SWOT_DEMO}: заполнение демо SWOT"
+    SEED_SWOT_DEMO=force venv/bin/python -u scripts/seed_swot_demo.py \
+      || echo "WARNING: SWOT demo seed failed — continuing"
+    ;;
+  *)
+    echo "==> SWOT demo seed skipped (SEED_SWOT_DEMO=0)"
+    ;;
+esac
+
 if [ -f "$ROOT/backend/.env" ] && grep -qE '^DEEPSEEK_API_KEY=.+' "$ROOT/backend/.env"; then
   echo "==> ИИ-агент: DEEPSEEK_API_KEY задан в backend/.env"
 else

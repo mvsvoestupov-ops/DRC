@@ -786,6 +786,151 @@ class ApiClient {
     }>('/assessment-media', formData);
   };
 
+  listSwotTables = () =>
+    this.get<{
+      tables: Array<{
+        id: number;
+        number: number;
+        title: string;
+        participants: number;
+        my_filled_topics: number;
+        my_total_topics: number;
+        topics: string[];
+      }>;
+      topics: string[];
+    }>('/swot/tables');
+
+  getSwotTable = (tableId: number) =>
+    this.get<{
+      id: number;
+      number: number;
+      title: string;
+      topics: string[];
+      analyses: Array<{
+        id: number | null;
+        table_id: number;
+        user_id: number;
+        topic: string;
+        strengths: string;
+        weaknesses: string;
+        opportunities: string;
+        threats: string;
+        updated_at: string | null;
+        created_at: string | null;
+      }>;
+    }>(`/swot/tables/${tableId}`);
+
+  saveSwotAnalysis = (
+    tableId: number,
+    topic: string,
+    data: {
+      strengths: string;
+      weaknesses: string;
+      opportunities: string;
+      threats: string;
+    },
+  ) =>
+    this.put<{
+      id: number;
+      table_id: number;
+      user_id: number;
+      topic: string;
+      strengths: string;
+      weaknesses: string;
+      opportunities: string;
+      threats: string;
+      updated_at: string | null;
+      created_at: string | null;
+    }>(`/swot/tables/${tableId}/analyses/${topic}`, data);
+
+  getSwotSummary = () =>
+    this.get<{
+      id: number | null;
+      strengths: string;
+      weaknesses: string;
+      opportunities: string;
+      threats: string;
+      resume: string;
+      source_count: number;
+      created_by: number | null;
+      created_at: string | null;
+      updated_at: string | null;
+      ai_agent?: { configured?: boolean; model?: string };
+    }>('/swot/summary');
+
+  synthesizeSwotSummary = () =>
+    this.post<{
+      id: number | null;
+      strengths: string;
+      weaknesses: string;
+      opportunities: string;
+      threats: string;
+      resume: string;
+      source_count: number;
+      created_by: number | null;
+      created_at: string | null;
+      updated_at: string | null;
+      ai_agent?: { configured?: boolean; model?: string };
+    }>('/swot/summary/synthesize');
+
+  listSwotArchives = () =>
+    this.get<{
+      archives: {
+        id: number;
+        title: string;
+        source_count: number;
+        entries_count: number;
+        created_at: string | null;
+        summary: {
+          strengths: string;
+          weaknesses: string;
+          opportunities: string;
+          threats: string;
+          resume: string;
+        };
+      }[];
+    }>('/swot/archives');
+
+  getSwotArchive = (archiveId: number) =>
+    this.get<{
+      id: number;
+      title: string;
+      source_count: number;
+      created_at: string | null;
+      summary: {
+        strengths: string;
+        weaknesses: string;
+        opportunities: string;
+        threats: string;
+        resume: string;
+      };
+      entries: {
+        id: number;
+        table_number: number;
+        user_email: string;
+        user_label: string;
+        topic: string;
+        topic_title: string;
+        strengths: string;
+        weaknesses: string;
+        opportunities: string;
+        threats: string;
+      }[];
+    }>(`/swot/archives/${archiveId}`);
+
+  clearSwotTables = () =>
+    this.post<{
+      ok: boolean;
+      cleared: number;
+      archived: number;
+      archive: {
+        id: number;
+        title: string;
+        source_count: number;
+        created_at: string | null;
+      };
+    }>('/swot/archives/clear-tables');
+
   fetchBulkRegistry = () =>
     this.post<{ status: string; loaded: unknown[] }>('/fetch-registry-bulk');
 

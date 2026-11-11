@@ -14,4 +14,12 @@ from .notification_models import Notification  # noqa: F401
 from .registration_models import Registration
 from .fts_models import FtsStandard  # noqa: F401 — таблица fts_standards для поиска
 from .prof_training_models import ProfTrainingProfession  # noqa: F401
-from .swot_models import SwotTable, SwotAnalysis, SWOT_TOPICS, SWOT_TABLE_COUNT  # noqa: F401
+from .swot_models import (  # noqa: F401
+    SwotTable,
+    SwotAnalysis,
+    SwotSummary,
+    SwotArchive,
+    SwotArchiveEntry,
+    SWOT_TOPICS,
+    SWOT_TABLE_COUNT,
+)

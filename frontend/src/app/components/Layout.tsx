@@ -1,5 +1,5 @@
 import { Outlet, Link, useNavigate, useLocation } from "react-router";
-import { Search, User, LogOut, FolderOpen, BookOpen, GraduationCap, Play, ScrollText, ClipboardList, Users, Globe2, MessageSquare } from "lucide-react";
+import { Search, User, LogOut, FolderOpen, BookOpen, GraduationCap, Play, ScrollText, ClipboardList, Users, Globe2, MessageSquare, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
@@ -212,6 +212,10 @@ export function Layout() {
                   <NavLink to="/admin/feedback">
                     <MessageSquare className="w-3.5 h-3.5" />
                     {t("nav.feedback")}
+                  </NavLink>
+                  <NavLink to="/admin/swot">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    {t("nav.swotSummary")}
                   </NavLink>
                 </>
               )}

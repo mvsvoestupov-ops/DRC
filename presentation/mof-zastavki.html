@@ -96,7 +96,34 @@
       position: relative;
       z-index: 1;
       height: 100%;
-      padding: clamp(24px, 4vh, 48px) clamp(28px, 6vw, 88px) 96px;
+      padding: clamp(20px, 3.4vh, 42px) clamp(28px, 6vw, 96px) clamp(84px, 10.5vh, 102px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: clamp(12px, 2vh, 22px);
+    }
+
+    .stage {
+      flex: 1;
+      width: 100%;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(14px, 2.2vh, 22px);
+    }
+
+    .hero-box {
+      width: 100%;
+      max-width: 1040px;
+      background: rgba(8, 28, 72, 0.38);
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      border-radius: 22px;
+      padding: clamp(18px, 2.8vh, 32px) clamp(24px, 3.5vw, 48px);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -104,27 +131,17 @@
     }
 
     .slide.active .event,
-    .slide.active .group,
-    .slide.active h1,
-    .slide.active .person,
-    .slide.active .org,
-    .slide.active .role,
+    .slide.active .hero-box,
     .slide.active .card,
-    .slide.active .two,
-    .slide.active .note {
+    .slide.active .two {
       animation: riseIn 0.7s ease both;
     }
-    .slide.active .group { animation-delay: 0.08s; }
-    .slide.active h1 { animation-delay: 0.14s; }
-    .slide.active .person { animation-delay: 0.22s; }
-    .slide.active .org { animation-delay: 0.28s; }
-    .slide.active .role { animation-delay: 0.34s; }
+    .slide.active .hero-box { animation-delay: 0.1s; }
     .slide.active .card,
-    .slide.active .two,
-    .slide.active .note { animation-delay: 0.42s; }
+    .slide.active .two { animation-delay: 0.22s; }
 
     .event {
-      font-size: clamp(18px, 2.2vw, 28px);
+      font-size: clamp(18px, 2.1vw, 28px);
       letter-spacing: 0.08em;
       text-transform: uppercase;
       color: rgba(255,255,255,0.95);
@@ -132,8 +149,7 @@
       text-shadow: 0 2px 18px rgba(0, 20, 60, 0.45);
     }
     .group {
-      margin-top: clamp(16px, 3vh, 28px);
-      font-size: clamp(14px, 1.4vw, 18px);
+      font-size: clamp(14px, 1.35vw, 18px);
       letter-spacing: 0.22em;
       text-transform: uppercase;
       color: #b9dcff;
@@ -141,40 +157,50 @@
     }
     h1 {
       margin-top: 8px;
-      font-size: clamp(42px, 7vw, 78px);
-      line-height: 1;
+      font-size: clamp(36px, min(5.8vw, 8vh), 72px);
+      line-height: 1.02;
       font-weight: 720;
       letter-spacing: -0.03em;
       text-shadow: 0 8px 30px rgba(0, 30, 80, 0.45);
     }
+    .session-title {
+      margin-top: 16px;
+      max-width: 980px;
+      font-size: clamp(24px, min(3.3vw, 4.8vh), 44px);
+      line-height: 1.18;
+      font-weight: 720;
+      letter-spacing: 0.01em;
+      text-transform: uppercase;
+      text-shadow: 0 8px 30px rgba(0, 30, 80, 0.45);
+    }
     .person {
-      margin-top: clamp(14px, 2.4vh, 24px);
-      font-size: clamp(22px, 3vw, 34px);
+      margin-top: clamp(12px, 2vh, 22px);
+      font-size: clamp(20px, min(2.7vw, 3.8vh), 34px);
       font-weight: 700;
       letter-spacing: -0.02em;
     }
     .org {
       margin-top: 8px;
-      max-width: 980px;
-      font-size: clamp(15px, 1.6vw, 21px);
+      max-width: 920px;
+      font-size: clamp(15px, min(1.55vw, 2.4vh), 21px);
       line-height: 1.35;
       color: rgba(255,255,255,0.92);
     }
     .role {
-      margin-top: 4px;
-      font-size: clamp(14px, 1.5vw, 19px);
+      margin-top: 6px;
+      font-size: clamp(14px, min(1.45vw, 2.2vh), 19px);
       color: #d5e8ff;
     }
     .card {
-      margin-top: auto;
       width: 100%;
       max-width: 1040px;
-      text-align: left;
-      background: rgba(8, 28, 72, 0.42);
-      border: 1px solid rgba(255,255,255,0.28);
+      text-align: center;
+      background: rgba(8, 28, 72, 0.38);
+      border: 1px solid rgba(255,255,255,0.24);
       border-radius: 22px;
-      padding: clamp(14px, 2vh, 20px) clamp(16px, 2vw, 26px);
+      padding: clamp(14px, 2vh, 20px) clamp(18px, 2.4vw, 30px);
       backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
     .card .label,
     .two .label {
@@ -186,33 +212,37 @@
     }
     .card p {
       margin-top: 8px;
-      font-size: clamp(15px, 1.55vw, 20px);
+      font-size: clamp(15px, min(1.5vw, 2.2vh), 20px);
       line-height: 1.35;
     }
-    .card p + p { margin-top: 10px; }
+    .card p + p { margin-top: 8px; }
     .two {
-      margin-top: clamp(16px, 3vh, 28px);
       width: 100%;
-      max-width: 1100px;
+      max-width: 1040px;
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 22px;
-      text-align: left;
+      text-align: center;
     }
     .two article {
       background: rgba(8, 28, 72, 0.38);
       border: 1px solid rgba(255,255,255,0.24);
       border-radius: 22px;
-      padding: 22px 24px;
+      padding: clamp(16px, 2.2vh, 24px) 24px;
       backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
-    .two h2 { font-size: clamp(20px, 2.4vw, 28px); line-height: 1.15; font-weight: 720; }
-    .two .org { margin-top: 12px; font-size: clamp(14px, 1.4vw, 17px); }
-    .two .role { font-size: clamp(13px, 1.3vw, 16px); }
-    .two .label { margin-top: 16px; display: block; }
+    .two h2 { font-size: clamp(20px, min(2.2vw, 3.2vh), 28px); line-height: 1.15; font-weight: 720; }
+    .two .org { margin-top: 10px; font-size: clamp(14px, min(1.35vw, 2vh), 17px); }
+    .two .role { font-size: clamp(13px, min(1.25vw, 1.9vh), 16px); }
+    .two .label { margin-top: 14px; display: block; }
     .note {
-      margin-top: 16px;
-      font-size: clamp(14px, 1.4vw, 16px);
+      margin-top: 10px;
+      font-size: clamp(14px, 1.4vw, 17px);
       letter-spacing: 0.04em;
       color: #d5e8ff;
     }
@@ -316,11 +346,27 @@
     <section class="slide active" data-slide="0">
       <div class="pad">
         <div class="event">III Международный образовательный форум · 11–14 ноября 2026</div>
-        <div class="group">Группа 1</div>
-        <h1>Медицина</h1>
-        <div class="person">Ильенко Лидия Ивановна</div>
-        <div class="org">ФГБОУ ВО РНИМУ им. Н.И. Пирогова<br />Институт материнства и детства</div>
-        <div class="role">Директор института материнства и детства</div>
+        <div class="stage">
+          <div class="hero-box">
+            <div class="group">12 ноября</div>
+            <h1 class="session-title">КАЧЕСТВО ОБРАЗОВАНИЯ В МНОГОПОЛЯРНОМ МИРЕ — МЕЖДУНАРОДНАЯ ИНТЕГРАЦИЯ ЦИФРОВЫХ РЕСУРСОВ СИСТЕМЫ КАЧЕСТВА ОБРАЗОВАНИЯ</h1>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-slide="1">
+      <div class="pad">
+        <div class="event">III Международный образовательный форум · 11–14 ноября 2026</div>
+        <div class="stage">
+          <div class="hero-box">
+            <div class="group">Группа 1</div>
+            <h1>Медицина</h1>
+            <div class="person">Ильенко Лидия Ивановна</div>
+            <div class="org">ФГБОУ ВО РНИМУ им. Н.И. Пирогова<br />Институт материнства и детства</div>
+            <div class="role">Директор института материнства и детства</div>
+          </div>
+        </div>
         <div class="card">
           <div class="label">Компетенции</div>
           <p>Способен составить прогностический сценарий развития новорожденных в зависимости от перинатальных факторов.</p>
@@ -329,32 +375,21 @@
       </div>
     </section>
 
-    <section class="slide" data-slide="1">
-      <div class="pad">
-        <div class="event">III Международный образовательный форум · 11–14 ноября 2026</div>
-        <div class="group">Группа 2</div>
-        <h1>Транспорт</h1>
-        <div class="person">Мерзликина Александра Сергеевна</div>
-        <div class="org">ФГБОУ ВО СПбГУ ГА им. А.А. Новикова</div>
-        <div class="role">Начальник УМУ</div>
-        <div class="card">
-          <div class="label">Компетенция</div>
-          <p>Способен разрабатывать программы, организовывать и проводить испытания технологических систем и оборудования атомных станций, обрабатывать и анализировать результаты, обеспечивать соблюдение требований безопасности и нормативной документации.</p>
-        </div>
-      </div>
-    </section>
-
     <section class="slide" data-slide="2">
       <div class="pad">
         <div class="event">III Международный образовательный форум · 11–14 ноября 2026</div>
-        <div class="group">Группа 3</div>
-        <h1>Сельское хозяйство</h1>
-        <div class="person">Сергазиева Ольга Дмитриевна</div>
-        <div class="org">ФГБОУ ВО Московский государственный университет технологий и управления имени К.Г. Разумовского (Первый казачий университет)</div>
-        <div class="role">Доцент кафедры ихтиологии и рыболовства</div>
+        <div class="stage">
+          <div class="hero-box">
+            <div class="group">Группа 2</div>
+            <h1>Транспорт</h1>
+            <div class="person">Мерзликина Александра Сергеевна</div>
+            <div class="org">ФГБОУ ВО СПбГУ ГА им. А.А. Новикова</div>
+            <div class="role">Начальник УМУ</div>
+          </div>
+        </div>
         <div class="card">
           <div class="label">Компетенция</div>
-          <p>Способен организовать технологический процесс по разведению и выращиванию водных биологических ресурсов на предприятиях аквакультуры.</p>
+          <p>Способен разрабатывать программы, организовывать и проводить испытания технологических систем и оборудования атомных станций, обрабатывать и анализировать результаты, обеспечивать соблюдение требований безопасности и нормативной документации.</p>
         </div>
       </div>
     </section>
@@ -362,14 +397,18 @@
     <section class="slide" data-slide="3">
       <div class="pad">
         <div class="event">III Международный образовательный форум · 11–14 ноября 2026</div>
-        <div class="group">Группа 4</div>
-        <h1>Промышленность</h1>
-        <div class="person">Крючкова Ирина Николаевна</div>
-        <div class="org">ФГБОУ ВО Воронежский государственный технический университет</div>
-        <div class="role">Начальник Управления качества образования</div>
+        <div class="stage">
+          <div class="hero-box">
+            <div class="group">Группа 3</div>
+            <h1>Сельское хозяйство</h1>
+            <div class="person">Сергазиева Ольга Дмитриевна</div>
+            <div class="org">ФГБОУ ВО Московский государственный университет технологий и управления имени К.Г. Разумовского (Первый казачий университет)</div>
+            <div class="role">Доцент кафедры ихтиологии и рыболовства</div>
+          </div>
+        </div>
         <div class="card">
           <div class="label">Компетенция</div>
-          <p>Способен разрабатывать программы, организовывать и проводить испытания технологических систем и оборудования атомных станций, обрабатывать и анализировать результаты, обеспечивать соблюдение требований безопасности и нормативной документации.</p>
+          <p>Способен организовать технологический процесс по разведению и выращиванию водных биологических ресурсов на предприятиях аквакультуры.</p>
         </div>
       </div>
     </section>
@@ -377,33 +416,62 @@
     <section class="slide" data-slide="4">
       <div class="pad">
         <div class="event">III Международный образовательный форум · 11–14 ноября 2026</div>
-        <div class="group">Группа 5</div>
-        <h1>Эксперты</h1>
-        <div class="person">Соболева Эрика Юрьевна</div>
-        <div class="org">Международная сеть агентств гарантии качества высшего образования</div>
-        <div class="role">Кандидат экономических наук, доцент,<br />член совета директоров INQAAHE</div>
+        <div class="stage">
+          <div class="hero-box">
+            <div class="group">Группа 4</div>
+            <h1>Промышленность</h1>
+            <div class="person">Крючкова Ирина Николаевна</div>
+            <div class="org">ФГБОУ ВО Воронежский государственный технический университет</div>
+            <div class="role">Начальник Управления качества образования</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="label">Компетенция</div>
+          <p>Способен разрабатывать программы, организовывать и проводить испытания технологических систем и оборудования атомных станций, обрабатывать и анализировать результаты, обеспечивать соблюдение требований безопасности и нормативной документации.</p>
+        </div>
       </div>
     </section>
 
     <section class="slide" data-slide="5">
       <div class="pad">
         <div class="event">III Международный образовательный форум · 11–14 ноября 2026</div>
-        <div class="group">Группа 6</div>
-        <h1>Юриспруденция</h1>
-        <div class="note">Работа с корпоративным стандартом в отдельной группе</div>
-        <div class="two">
-          <article>
-            <h2>Кравцова Анастасия Николаевна</h2>
-            <div class="org">АНО «Экспертный центр Ассоциации юристов России по оценке качества и квалификаций в области юриспруденции»</div>
-            <div class="role">Руководитель Аппарата Экспертного центра</div>
-            <div class="label">Компетенция</div>
-            <p class="org">Предупреждение коррупционных рисков и правовое обеспечение антикоррупционной деятельности организации.</p>
-          </article>
-          <article>
-            <h2>Музалевская Ксения Владимировна</h2>
-            <div class="org">СГЮА</div>
-            <div class="role">Помощник ректора</div>
-          </article>
+        <div class="stage">
+          <div class="hero-box">
+            <div class="group">Группа 5</div>
+            <h1>Юриспруденция</h1>
+            <div class="note">Работа с корпоративным стандартом в отдельной группе</div>
+          </div>
+          <div class="two">
+            <article>
+              <h2>Кравцова Анастасия Николаевна</h2>
+              <div class="org">АНО «Экспертный центр Ассоциации юристов России по оценке качества и квалификаций в области юриспруденции»</div>
+              <div class="role">Руководитель Аппарата Экспертного центра</div>
+            </article>
+            <article>
+              <h2>Музалевская Ксения Владимировна</h2>
+              <div class="org">СГЮА</div>
+              <div class="role">Помощник ректора</div>
+            </article>
+          </div>
+        </div>
+        <div class="card">
+          <div class="label">Компетенция</div>
+          <p>Предупреждение коррупционных рисков и правовое обеспечение антикоррупционной деятельности организации.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-slide="6">
+      <div class="pad">
+        <div class="event">III Международный образовательный форум · 11–14 ноября 2026</div>
+        <div class="stage">
+          <div class="hero-box">
+            <div class="group">Группа 6</div>
+            <h1>Эксперты</h1>
+            <div class="person">Соболева Эрика Юрьевна</div>
+            <div class="org">Международная сеть агентств гарантии качества высшего образования</div>
+            <div class="role">Кандидат экономических наук, доцент,<br />член совета директоров INQAAHE</div>
+          </div>
         </div>
       </div>
     </section>
@@ -416,7 +484,7 @@
       <div class="dots" id="dots"></div>
       <button class="nav-btn" type="button" id="next" aria-label="Следующий слайд">›</button>
     </div>
-    <div class="counter" id="counter">1 / 6</div>
+    <div class="counter" id="counter">1 / 7</div>
   </main>
 
   <script>

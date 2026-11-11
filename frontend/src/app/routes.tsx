@@ -22,6 +22,9 @@ import { ProfilePage } from "./pages/ProfilePage";
 import { MyProjectsPage } from "./pages/MyProjectsPage";
 import { InDevelopmentPage } from "./pages/InDevelopmentPage";
 import { AdminFeedbackPage } from "./pages/AdminFeedbackPage";
+import { SwotTablesPage } from "./pages/SwotTablesPage";
+import { SwotTableWorkspacePage } from "./pages/SwotTableWorkspacePage";
+import { SwotSummaryPage } from "./pages/SwotSummaryPage";
 import {
   StandardsPage,
   QualificationsListPage,
@@ -47,6 +50,30 @@ export const router = createBrowserRouter([
       { path: "competency/:id/edit", Component: NewCompetencyPage },
       { path: "competency/:id", Component: CompetencyDetailPage },
       { path: "new", Component: NewCompetencyPage },
+      {
+        path: "swot",
+        element: (
+          <RequireAuth>
+            <SwotTablesPage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: "swot/:tableId",
+        element: (
+          <RequireAuth>
+            <SwotTableWorkspacePage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: "admin/swot",
+        element: (
+          <RequireAdmin>
+            <SwotSummaryPage />
+          </RequireAdmin>
+        ),
+      },
       {
         path: "my-projects",
         element: (
