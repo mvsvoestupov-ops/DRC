@@ -79,12 +79,21 @@ export function HarmonizationStep92({ competenceId }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [competenceId]);
 
-  const run = async (fn: () => Promise<void>) => {
+  const applyPassport = (passport: PassportHarmonization) => {
+    setData(passport);
+    if (passport.version_id) setVersionId(passport.version_id);
+  };
+
+  const run = async (fn: () => Promise<PassportHarmonization | void>) => {
     setBusy(true);
     setError(null);
     try {
-      await fn();
-      await load();
+      const result = await fn();
+      if (result && typeof result === "object" && "step3" in result) {
+        applyPassport(result as PassportHarmonization);
+      } else {
+        await load();
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : t("intl.error"));
     } finally {
@@ -122,7 +131,13 @@ export function HarmonizationStep92({ competenceId }: Props) {
   const bridge = data?.bridge_context;
   const esco = data?.esco;
   const bridgeSystems = Array.isArray(bridge?.systems) ? bridge!.systems! : [];
-  const selectedSystems = Array.isArray(step6.target_systems) ? step6.target_systems : [];
+  const step3Systems = Array.isArray((data?.step3?.payload as { target_systems?: string[] } | undefined)?.target_systems)
+    ? ((data!.step3.payload as { target_systems?: string[] }).target_systems as string[])
+    : [];
+  const selectedSystems =
+    Array.isArray(step6.target_systems) && step6.target_systems.length > 0
+      ? step6.target_systems
+      : step3Systems;
   const selectedSet = new Set(selectedSystems);
   const eqf = bridge?.level_bridge?.eqf;
   const isced =
@@ -454,7 +469,20 @@ export function HarmonizationStep92({ competenceId }: Props) {
               disabled={busy || selectedPurposes.length === 0}
               onClick={() =>
                 void run(async () => {
-                  await apiClient.aiDraftPassportHarmonizationStep(competenceId, 6, {
+                  if (data) {
+                    await apiClient.putPassportHarmonization(competenceId, {
+                      version_id: versionId || data.version_id,
+                      step3_payload: data.step3.payload,
+                      step6_payload: {
+                        ...data.step6.payload,
+                        target_systems: selectedSystems,
+                        purposes: selectedPurposes,
+                        purpose: selectedPurposes[0] || "",
+                        depth: step6.depth || "",
+                      },
+                    });
+                  }
+                  return apiClient.aiDraftPassportHarmonizationStep(competenceId, 6, {
                     version_id: versionId || undefined,
                     purposes: selectedPurposes,
                     purpose: selectedPurposes[0],
@@ -598,7 +626,21 @@ export function HarmonizationStep92({ competenceId }: Props) {
               disabled={busy || selectedSystems.length === 0}
               onClick={() =>
                 void run(async () => {
-                  await apiClient.aiDraftPassportHarmonizationStep(competenceId, 3, {
+                  // Сначала сохраняем step6 (системы/цели), иначе после reload выбор пропадает.
+                  if (data) {
+                    await apiClient.putPassportHarmonization(competenceId, {
+                      version_id: versionId || data.version_id,
+                      step3_payload: data.step3.payload,
+                      step6_payload: {
+                        ...data.step6.payload,
+                        target_systems: selectedSystems,
+                        purposes: selectedPurposes,
+                        purpose: selectedPurposes[0] || "",
+                        depth: step6.depth || "",
+                      },
+                    });
+                  }
+                  return apiClient.aiDraftPassportHarmonizationStep(competenceId, 3, {
                     version_id: versionId || undefined,
                     purposes: selectedPurposes,
                     purpose: selectedPurposes[0],
@@ -617,7 +659,7 @@ export function HarmonizationStep92({ competenceId }: Props) {
               disabled={busy || selectedSystems.length === 0}
               onClick={() =>
                 void run(async () => {
-                  await apiClient.verifyPassportHarmonizationStep(competenceId, 3, {
+                  return apiClient.verifyPassportHarmonizationStep(competenceId, 3, {
                     version_id: versionId || undefined,
                   });
                 })
@@ -635,9 +677,20 @@ export function HarmonizationStep92({ competenceId }: Props) {
               {t("intl.needSystemsForStep3")}
             </p>
           ) : rows.length === 0 ? (
-            <p className="text-sm text-gray-500 rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center">
-              {t("intl.noRows")}
-            </p>
+            <div className="space-y-2">
+              <p className="text-sm text-gray-500 rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center">
+                {t("intl.noRows")}
+              </p>
+              {data?.step3?.ai_meta && typeof data.step3.ai_meta === "object" ? (
+                <p className="text-xs text-amber-800 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+                  {String(
+                    (data.step3.ai_meta as { warning?: string; error?: string; mode?: string }).warning ||
+                      (data.step3.ai_meta as { error?: string }).error ||
+                      `${t("intl.aiDraft")}: ${String((data.step3.ai_meta as { mode?: string }).mode || "")}`,
+                  )}
+                </p>
+              ) : null}
+            </div>
           ) : (
             <div className="space-y-5">
               {rows.map((row, index) => {

@@ -14,7 +14,7 @@ REM    C:\IT\DRC\push-role-wizard-flow.cmd /push
 REM    C:\IT\DRC\push-role-wizard-flow.cmd /deploy
 REM ============================================================
 
-set "MSG=TEMP: restore later — relax TD-ZU/FOS/PS gates for review testing; see docs/temp-relaxed-validation.md"
+set "MSG=fix: 9.2 step 3 AI draft fills form; keep bridge systems after reload"
 
 if /I "%~1"=="/deploy" (
   call "%~dp0push-and-deploy.cmd" /deploy

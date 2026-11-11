@@ -3270,6 +3270,19 @@ async def ai_draft_passport_harmonization_step(
             row.step3_status = "ai_draft"
             row.step3_verified_by_id = None
             row.step3_verified_at = None
+            # Сохраняем выбранные системы в step6, иначе после reload UI скрывает строки шага 3.
+            step6_keep = dict(step6_payload) if isinstance(step6_payload, dict) else {}
+            codes = payload.get("target_systems") if isinstance(payload, dict) else None
+            if isinstance(codes, list) and codes:
+                step6_keep["target_systems"] = codes
+            elif ctx.get("target_systems"):
+                step6_keep["target_systems"] = ctx["target_systems"]
+            if ctx.get("purposes") is not None:
+                step6_keep["purposes"] = ctx.get("purposes") or []
+                step6_keep["purpose"] = (ctx.get("purposes") or [""])[0] if ctx.get("purposes") else ""
+            if ctx.get("depth"):
+                step6_keep["depth"] = ctx["depth"]
+            row.step6_payload = step6_keep
         else:
             payload, ai_meta = generate_ai_draft(step, context=ctx)
             # Сохраняем снимок моста и выбор систем/целей

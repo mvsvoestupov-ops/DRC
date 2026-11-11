@@ -1680,14 +1680,18 @@ def heuristic_ai_draft(step: int, *, context: dict[str, Any] | None = None) -> d
         )
     structure = context.get("structure") or {}
     for component, key in (("A", "knowledge"), ("B", "skill"), ("C", "skill")):
-        for item in structure.get(component) or []:
+        for idx, item in enumerate(structure.get(component) or []):
             text = str(item).strip() if not isinstance(item, dict) else str(item.get("text") or "").strip()
             if not text:
                 continue
+            item_id = ""
+            if isinstance(item, dict):
+                item_id = str(item.get("id") or "").strip()
             rows.append(
                 {
                     "source_type": key if component != "A" else "knowledge",
-                    "source_id": component,
+                    # Уникальный id: иначе все A/B/C схлопывались в один ключ при LLM/кандидатах.
+                    "source_id": item_id or f"{component}:{idx + 1}",
                     "source_text": text[:500],
                     "esco_uri": "",
                     "esco_title": "",

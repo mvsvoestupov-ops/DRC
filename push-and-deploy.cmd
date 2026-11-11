@@ -12,7 +12,7 @@ set "REMOTE_DIR=/opt/drc"
 set "BRANCH=main"
 set "VITE_API_URL=https://drc.ao-nk.online/api"
 set "SITE_URL=https://drc.ao-nk.online"
-set "COMMIT_MSG=TEMP: restore later — relax TD-ZU/FOS/PS gates for review testing; see docs/temp-relaxed-validation.md"
+set "COMMIT_MSG=fix: 9.2 step 3 AI draft fills form; keep bridge systems after reload"
 REM =====================================================
 
 REM Запускайте из cmd.exe (не PowerShell Cursor):
