@@ -1791,6 +1791,133 @@ def heuristic_ai_draft(step: int, *, context: dict[str, Any] | None = None) -> d
     return {"rows": rows, "target_systems": codes}
 
 
+# Короткие английские запросы для ESCO, если в паспорте нет латиницы.
+_RU_EN_TERMS: tuple[tuple[tuple[str, ...], tuple[str, ...]], ...] = (
+    (("бухгалтер", "бухуч", "учёт", "учет", "отчётност", "отчетност", "финанс"), ("accounting", "financial reporting", "bookkeeping")),
+    (("аудит",), ("auditing",)),
+    (("налог",), ("tax accounting",)),
+    (("кадр", "персонал"), ("human resources",)),
+    (("медицин", "сестрин"), ("nursing", "healthcare")),
+    (("пожар", "огнетуш"), ("firefighting", "fire safety")),
+    (("строител",), ("construction",)),
+    (("программ", "информацион"), ("software development", "ict")),
+)
+
+
+def esco_search_terms(text: str) -> list[str]:
+    """Английские строки для поиска навыков ESCO."""
+    low = (text or "").lower().replace("ё", "е")
+    terms: list[str] = []
+    for keys, ens in _RU_EN_TERMS:
+        if any(k.replace("ё", "е") in low for k in keys):
+            terms.extend(ens)
+    latin = _latin_query(text)
+    if latin and any(ch.isascii() and ch.isalpha() for ch in latin):
+        terms.insert(0, latin)
+    if not terms and deepseek_configured() and (text or "").strip():
+        try:
+            data = chat_json(
+                system=(
+                    "Translate a competency line into 3 short English ESCO skill search terms. "
+                    "JSON only: {\"terms\":[\"...\",\"...\",\"...\"]}. No sentences."
+                ),
+                user=text[:400],
+                temperature=0,
+                timeout=25,
+            )
+            for item in data.get("terms") or []:
+                term = str(item or "").strip()
+                if term:
+                    terms.append(term)
+        except Exception:
+            pass
+    out: list[str] = []
+    seen: set[str] = set()
+    for term in terms:
+        key = term.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(term)
+    return out[:6]
+
+
+# Официальные дескрипторы EQF (European Commission), кратко.
+_EQF_LEVEL: dict[str, dict[str, str]] = {
+    "5": {
+        "knowledge": "Comprehensive, specialised, factual and theoretical knowledge within a field of work or study and an awareness of the boundaries of that knowledge",
+        "skill": "A comprehensive range of cognitive and practical skills required to develop creative solutions to abstract problems",
+        "autonomy": "Exercise management and supervision in contexts of work or study activities where there is unpredictable change",
+    },
+    "6": {
+        "knowledge": "Advanced knowledge of a field of work or study, involving a critical understanding of theories and principles",
+        "skill": "Advanced skills, demonstrating mastery and innovation, required to solve complex and unpredictable problems in a specialised field",
+        "autonomy": "Manage complex technical or professional activities or projects, taking responsibility for decision-making in unpredictable contexts",
+    },
+    "7": {
+        "knowledge": "Highly specialised knowledge, some of which is at the forefront of knowledge in a field of work or study",
+        "skill": "Specialised problem-solving skills required in research and/or innovation in order to develop new knowledge and procedures",
+        "autonomy": "Manage and transform work or study contexts that are complex, unpredictable and require new strategic approaches",
+    },
+}
+
+
+def _framework_facet(source_type: str) -> str:
+    kind = (source_type or "").lower()
+    if kind in ("knowledge", "a"):
+        return "knowledge"
+    if kind in ("tf", "td", "competence", "skill", "b"):
+        return "skill"
+    return "autonomy"
+
+
+def apply_framework_analogues(rows: list[dict[str, Any]], codes: list[str]) -> list[dict[str, Any]]:
+    """Если корпус пуст, подставить дескриптор уровня EQF/NSQF/NST из моста — не выдумывая нормативный акт."""
+    for row in rows:
+        systems = row.get("systems") if isinstance(row.get("systems"), dict) else {}
+        facet = _framework_facet(str(row.get("source_type") or ""))
+        for code in codes:
+            if str(code).upper() == "ESCO":
+                continue
+            slot = None
+            for key, val in systems.items():
+                if str(key).upper() == str(code).upper() and isinstance(val, dict):
+                    slot = val
+                    break
+            if not isinstance(slot, dict) or str(slot.get("title") or "").strip():
+                continue
+            level = str(slot.get("level_target") or "").strip()
+            upper = str(code).upper()
+            title = ""
+            source = ""
+            if upper == "EQF" and level in _EQF_LEVEL:
+                title = _EQF_LEVEL[level][facet]
+                source = f"European Qualifications Framework, level {level} descriptors"
+            elif upper in ("NSQF", "NQR", "NQF") and level:
+                title = f"NSQF/NQF level {level}: {facet} descriptor aligned to the bridge level"
+                source = f"National qualifications framework level descriptors, level {level}"
+            elif upper in ("NST", "NTS") and level:
+                hint = str(slot.get("rule_hint") or "").split("|")[0].strip()
+                title = hint[:240] or f"National skills taxonomy, level {level}"
+                source = f"Bridge component rules, level {level}"
+            elif level and str(slot.get("rule_hint") or "").strip():
+                title = str(slot.get("rule_hint") or "").split("|")[0].strip()[:240]
+                source = f"Bridge rules, level {level}"
+            if not title:
+                continue
+            slot["title"] = title
+            slot["source"] = source
+            slot["match"] = "partial"
+            slot["confidence"] = "medium"
+            slot["notes"] = (
+                "Аналог взят из дескриптора уровня международной рамки по мосту, "
+                "не из отраслевого корпуса документов."
+            )
+            systems[code] = slot
+        row["systems"] = systems
+    return rows
+
+
 def _latin_query(text: str, limit: int = 6) -> str:
     """Короткая латинская подстрока для поиска в ESCO (английские title)."""
     import re
@@ -1994,8 +2121,10 @@ def _step3_skill_candidates(session, rows: list[dict[str, Any]], occupation_uri:
                 continue
             seen.add(uri)
             cands.append(it)
-        q = _latin_query(text)
-        if q:
+        queries = esco_search_terms(text) or ([q] if (q := _latin_query(text)) else [])
+        for q in queries:
+            if not q:
+                continue
             try:
                 res = search_skills(session, q=q, occupation_uri="", limit=8)
                 for it in res.get("items") or []:
@@ -2097,10 +2226,10 @@ def generate_step3_ai_draft(session, *, context: dict[str, Any] | None = None) -
             if okz:
                 batches.append(search_occupations(session, q="", isco=okz, limit=10))
             title = str(context.get("title") or "").strip()
-            if title:
-                batches.append(
-                    search_occupations(session, q=_latin_query(title) or title, isco="", limit=8)
-                )
+            occ_terms = esco_search_terms(title) or ([_latin_query(title)] if title else [])
+            for term in occ_terms[:4]:
+                if term:
+                    batches.append(search_occupations(session, q=term, isco="", limit=8))
             for res in batches:
                 for it in res.get("items") or []:
                     uri = str(it.get("uri") or "").strip()
@@ -2137,11 +2266,11 @@ def generate_step3_ai_draft(session, *, context: dict[str, Any] | None = None) -
                 _sync_legacy_esco_fields(row)
             meta["mode"] = "heuristic_multisystem"
             meta["bridge_version_id"] = bridge.get("version_id")
-            return {"rows": rows, "target_systems": selected_codes}, meta
+            return {"rows": apply_framework_analogues(rows, selected_codes), "target_systems": selected_codes}, meta
     elif not deepseek_configured():
         meta["mode"] = "heuristic_multisystem"
         meta["bridge_version_id"] = bridge.get("version_id")
-        return {"rows": rows, "target_systems": selected_codes}, meta
+        return {"rows": apply_framework_analogues(rows, selected_codes), "target_systems": selected_codes}, meta
 
     other_codes = [c for c in selected_codes if c.upper() != "ESCO"]
     system = (
@@ -2308,11 +2437,14 @@ def generate_step3_ai_draft(session, *, context: dict[str, Any] | None = None) -
         meta["bridge_version_id"] = bridge.get("version_id")
         meta["occupation_candidates"] = len(occupation_candidates)
         meta["systems_count"] = len(selected_codes)
-        return {"rows": merged or rows, "target_systems": selected_codes}, meta
+        return {
+            "rows": apply_framework_analogues(merged or rows, selected_codes),
+            "target_systems": selected_codes,
+        }, meta
     except Exception as exc:
         meta["mode"] = "heuristic_fallback"
         meta["error"] = str(exc)[:300]
-        return {"rows": rows, "target_systems": selected_codes}, meta
+        return {"rows": apply_framework_analogues(rows, selected_codes), "target_systems": selected_codes}, meta
 
 
 def generate_ai_draft(step: int, *, context: dict[str, Any] | None = None) -> tuple[dict[str, Any], dict[str, Any]]:

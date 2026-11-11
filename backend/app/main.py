@@ -36,6 +36,7 @@ from .db.competence_models import (
     CompetenceActivityLog,
 )
 from .db.feedback_models import Feedback
+from .db.swot_models import SwotTable, SwotAnalysis, SWOT_TOPICS, SWOT_TABLE_COUNT
 from .db.notification_models import Notification
 from .db.user_models import User
 from .db.registration_models import Registration
@@ -281,6 +282,26 @@ def ensure_prof_training_professions() -> None:
 ensure_prof_training_professions()
 
 
+def ensure_swot_tables() -> None:
+    """Создаёт 6 столов SWOT, если их ещё нет."""
+    session = SessionLocal()
+    try:
+        existing = {row.number for row in session.query(SwotTable).all()}
+        for number in range(1, SWOT_TABLE_COUNT + 1):
+            if number in existing:
+                continue
+            session.add(SwotTable(number=number, title=f"Стол {number}"))
+        session.commit()
+    except Exception as exc:
+        session.rollback()
+        print(f"swot tables seed skipped: {exc}")
+    finally:
+        session.close()
+
+
+ensure_swot_tables()
+
+
 def ensure_admin_credentials() -> None:
     """Гарантирует актуальный логин/пароль администратора."""
     admin_email = "admin@aonk.ru"
@@ -503,6 +524,13 @@ class FeedbackCreate(BaseModel):
     section: str = "project"
     text: str
     attachments: Optional[List[FeedbackAttachmentIn]] = None
+
+
+class SwotAnalysisUpsert(BaseModel):
+    strengths: str = ""
+    weaknesses: str = ""
+    opportunities: str = ""
+    threats: str = ""
 
 
 class UserCreate(BaseModel):

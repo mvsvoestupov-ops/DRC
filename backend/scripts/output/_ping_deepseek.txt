@@ -1,0 +1,15 @@
+=== LOCAL === 
+Traceback (most recent call last):
+  File "C:\IT\DRC\backend\scripts\output\_ping_deepseek.py", line 17, in <module>
+    from app.deepseek_client import deepseek_status, chat_json  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'app'
+LOCAL_RC=1 
+ 
+=== SERVER === 
+configured=True
+model=deepseek-chat
+base_url=https://api.deepseek.com
+key_len=35
+result=LIVE keys=['ok']
+SERVER_RC=0 
