@@ -8,6 +8,7 @@ import {
   listKnowledgeComponents,
   listPracticalComponents,
   practicalCoverage,
+  isTheoryV2TestComplete,
   practiceDashboardStats,
   syncAssessmentByLevelV2,
   theoryDashboardStats,
@@ -17,7 +18,6 @@ import {
   type AssessmentV2TestItem,
   type PracticalComponent,
 } from "@/lib/assessmentV2";
-import { isAssessmentTaskComplete } from "@/lib/assessmentConstructor";
 import { AssessmentTaskAttachments } from "@/app/components/AssessmentTaskAttachments";
 import { AssessmentTestingFields } from "@/app/components/AssessmentTestingFields";
 import { useI18n } from "@/context/I18nContext";
@@ -309,7 +309,7 @@ export function AssessmentConstructorV2({
             <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-4">
               <ul className="rounded-xl border border-gray-200 bg-white divide-y divide-gray-100 max-h-[28rem] overflow-y-auto">
                 {block.tests.map((task, index) => {
-                  const complete = isAssessmentTaskComplete(task);
+                  const complete = isTheoryV2TestComplete(task);
                   const comp = knowledge.find((item) => item.id === task.componentIds[0]);
                   const active = task.id === activeTest?.id;
                   return (

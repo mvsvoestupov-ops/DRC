@@ -1210,7 +1210,7 @@ export const extraVi: ExtraMessages = {
     tasksFilled: "Bài đã điền",
     knowledgeTitle: "A — kiến thức: câu trắc nghiệm",
     knowledgeLead:
-      "Như bước 6: mỗi kiến thức (A) — một bài kiểm tra (loại, câu hỏi, phương án, tiêu chí). Bài bước 6 được nhập tự động.",
+      "Như bước 6: mỗi kiến thức (A) — một bài kiểm tra (loại, câu hỏi, phương án). Tiêu chí là tùy chọn. Bài bước 6 được nhập tự động.",
     noKnowledge: "Chưa có thành phần kiến thức (A) trong cấu trúc.",
     noKnowledgeTests: "Thêm bài kiểm tra hoặc quay lại bước 6.",
     addTest: "Thêm bài kiểm tra",

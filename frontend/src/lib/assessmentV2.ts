@@ -514,6 +514,15 @@ function testCoversComponent(test: AssessmentV2TestItem, componentId: string) {
   return (test.componentIds || []).includes(componentId);
 }
 
+/**
+ * Теория (A → тест) считается заполненной при формулировке + ответе
+ * (открытый вопрос: достаточно prompt; закрытый: отмечен верный вариант с текстом).
+ * Критерий — опциональное обогащение, не блокирует гейт и прогресс.
+ */
+export function isTheoryV2TestComplete(test: AssessmentV2TestItem): boolean {
+  return testHasPrompt(test) && testHasAnswer(test);
+}
+
 /** Практическое задание 6.1 считается заполненным, если есть компоненты, формулировка и критерий. */
 export function isPracticalV2TaskComplete(task: AssessmentV2PracticalTask): boolean {
   if (!(task.componentIds || []).length) return false;
@@ -531,10 +540,10 @@ export function theoryDashboardStats(structure: StructureABC, tests: AssessmentV
     return authored || covering[0] || null;
   });
   const created = rows.filter((t) => t && testHasPrompt(t)).length;
-  const withAnswers = rows.filter((t) => t && testHasPrompt(t) && testHasAnswer(t)).length;
+  const withAnswers = rows.filter((t) => t && isTheoryV2TestComplete(t)).length;
   const withoutAnswers = rows.filter((t) => t && testHasPrompt(t) && !testHasAnswer(t)).length;
-  // Как бейдж «заполнено» и гейт отправки: нужен критерий + ответ (isAssessmentTaskComplete).
-  const complete = rows.filter((t) => t && isAssessmentTaskComplete(t)).length;
+  // Согласовано с «С ответами» и гейтом: complete === withAnswers (критерий не требуется).
+  const complete = withAnswers;
   const incomplete = quantity - complete;
   return {
     quantity,
@@ -680,8 +689,10 @@ export function createOption(isCorrect = false) {
 function theoryCompleteCount(structure: StructureABC, tests: AssessmentV2TestItem[]): number {
   const knowledge = listKnowledgeComponents(structure);
   return knowledge.reduce((count, item) => {
-    const test = (tests || []).find((row) => (row.componentIds || []).includes(item.id));
-    return count + (test && isAssessmentTaskComplete(test) ? 1 : 0);
+    const covering = (tests || []).filter((row) => (row.componentIds || []).includes(item.id));
+    const authored = covering.find((t) => testHasPrompt(t));
+    const test = authored || covering[0];
+    return count + (test && isTheoryV2TestComplete(test) ? 1 : 0);
   }, 0);
 }
 
@@ -709,7 +720,7 @@ function practiceStatusLabel(
 /**
  * Проверка готовности оценочных средств v2 (шаг 6) перед отправкой на экспертизу.
  * На каждом уровне из `levels` (обычно formationLevelsForEducation):
- * - теория: isAssessmentTaskComplete по каждому знанию A (как бейдж «заполнено»);
+ * - теория: isTheoryV2TestComplete по каждому знанию A (prompt + ответ = «С ответами»);
  * - практика: полное покрытие B/C и isPracticalV2TaskComplete по каждому заданию.
  */
 export function assessmentV2WizardErrorMessage(

@@ -300,7 +300,7 @@ describe("assessmentV2", () => {
     const draft = syncAssessmentByLevelV2(structure, emptyAssessmentByLevelV2());
     draft.базовый.tests[0].prompt = "Вопрос?";
     draft.базовый.tests[0].itemType = "open";
-    draft.базовый.tests[0].criteria = "Верный ответ";
+    draft.базовый.tests[0].criteria = ""; // criteria optional for theory gate
     draft.базовый.practicalTasks = [
       {
         ...createPracticalTask(1),
@@ -313,17 +313,27 @@ describe("assessmentV2", () => {
     expect(assessmentV2WizardErrorMessage(structure, draft, levels)).toBeNull();
   });
 
-  it("dashboard theory percent matches gate completeness (criteria required)", () => {
+  it("dashboard theory percent matches withAnswers gate (criteria not required)", () => {
     const synced = syncAssessmentByLevelV2(structure, emptyAssessmentByLevelV2());
     synced.базовый.tests[0].prompt = "Вопрос?";
-    synced.базовый.tests[0].itemType = "open";
-    // prompt only — UI used to show 100%, gate still failed
+    synced.базовый.tests[0].itemType = "single";
+    synced.базовый.tests[0].options = [
+      { id: "o1", text: "Да", isCorrect: false },
+      { id: "o2", text: "Нет", isCorrect: false },
+    ];
+    synced.базовый.tests[0].criteria = "";
+    // prompt without correct answer → incomplete
     expect(theoryDashboardStats(structure, synced.базовый.tests).percent).toBe(0);
     expect(theoryDashboardStats(structure, synced.базовый.tests).created).toBe(1);
+    expect(theoryDashboardStats(structure, synced.базовый.tests).withAnswers).toBe(0);
+    expect(theoryDashboardStats(structure, synced.базовый.tests).incomplete).toBe(1);
 
-    synced.базовый.tests[0].criteria = "Критерий";
-    expect(theoryDashboardStats(structure, synced.базовый.tests).percent).toBe(100);
-    expect(theoryDashboardStats(structure, synced.базовый.tests).complete).toBe(1);
+    synced.базовый.tests[0].options[0].isCorrect = true;
+    const stats = theoryDashboardStats(structure, synced.базовый.tests);
+    expect(stats.percent).toBe(100);
+    expect(stats.complete).toBe(1);
+    expect(stats.withAnswers).toBe(1);
+    expect(stats.incomplete).toBe(0);
   });
 
   it("dashboard practice percent stays below 100 until tasks are filled", () => {
@@ -349,7 +359,7 @@ describe("assessmentV2", () => {
     // Expert-like: only advanced level filled; gate still requires базовый too.
     draft.продвинутый.tests[0].prompt = "Вопрос?";
     draft.продвинутый.tests[0].itemType = "open";
-    draft.продвинутый.tests[0].criteria = "Критерий";
+    draft.продвинутый.tests[0].criteria = "";
     draft.продвинутый.practicalTasks = [
       {
         ...createPracticalTask(1),
@@ -366,13 +376,36 @@ describe("assessmentV2", () => {
     expect(assessmentV2WizardErrorMessage(structure, draft, ["продвинутый"])).toBeNull();
   });
 
-  it("wizard error reports theory without criteria even when prompts exist", () => {
+  it("wizard gate accepts theory with answers and empty criteria", () => {
     const levels: FormationLevel[] = ["базовый"];
     const draft = syncAssessmentByLevelV2(structure, emptyAssessmentByLevelV2());
     draft.базовый.tests[0].prompt = "Вопрос?";
     draft.базовый.tests[0].itemType = "single";
     draft.базовый.tests[0].options = [
       { id: "o1", text: "Да", isCorrect: true },
+      { id: "o2", text: "Нет", isCorrect: false },
+    ];
+    draft.базовый.tests[0].criteria = "";
+    draft.базовый.practicalTasks = [
+      {
+        ...createPracticalTask(1),
+        componentIds: ["b1", "b2", "c1"],
+        prompt: "Сделайте",
+        criteria: ["Критерий"],
+      },
+    ];
+    draft.базовый.compositionDone = true;
+
+    expect(assessmentV2WizardErrorMessage(structure, draft, levels)).toBeNull();
+  });
+
+  it("wizard gate rejects theory when prompt exists but correct answer is missing", () => {
+    const levels: FormationLevel[] = ["базовый"];
+    const draft = syncAssessmentByLevelV2(structure, emptyAssessmentByLevelV2());
+    draft.базовый.tests[0].prompt = "Вопрос?";
+    draft.базовый.tests[0].itemType = "single";
+    draft.базовый.tests[0].options = [
+      { id: "o1", text: "Да", isCorrect: false },
       { id: "o2", text: "Нет", isCorrect: false },
     ];
     draft.базовый.tests[0].criteria = "";
