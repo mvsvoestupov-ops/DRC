@@ -3014,6 +3014,8 @@ def _competence_context_for_ai(comp: Competence) -> dict:
         "qualification_level": comp.qualification_level,
         "labor_functions": comp.labor_functions or [],
         "structure": comp.structure or {},
+        "descriptors": comp.descriptors or {},
+        "td_zu_mapping": raw.get("td_zu_mapping") or {},
         "education_level": raw.get("education_level") or "",
         "education_kind": raw.get("education_kind") or "",
     }

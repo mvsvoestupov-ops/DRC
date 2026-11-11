@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 import datetime
+import json
 from typing import Any
 
 from .deepseek_client import chat_json, deepseek_configured, deepseek_status
@@ -1662,14 +1663,33 @@ def heuristic_ai_draft(step: int, *, context: dict[str, Any] | None = None) -> d
         }
     # step 3 — строки паспорта + слоты по выбранным системам моста
     rows: list[dict[str, Any]] = []
-    for lf in context.get("labor_functions") or []:
-        text = str(lf.get("name") or lf.get("code") or "").strip()
+
+    def _as_obj(val: Any) -> Any:
+        if isinstance(val, str) and val.strip().startswith(("{", "[")):
+            try:
+                return json.loads(val)
+            except Exception:
+                return val
+        return val
+
+    labor_functions = _as_obj(context.get("labor_functions")) or []
+    if not isinstance(labor_functions, list):
+        labor_functions = []
+    for lf in labor_functions:
+        if isinstance(lf, str):
+            text = lf.strip()
+            code = ""
+        elif isinstance(lf, dict):
+            text = str(lf.get("name") or lf.get("code") or "").strip()
+            code = str(lf.get("code") or "").strip()
+        else:
+            continue
         if not text:
             continue
         rows.append(
             {
                 "source_type": "tf",
-                "source_id": str(lf.get("code") or ""),
+                "source_id": code or text[:40],
                 "source_text": text,
                 "esco_uri": "",
                 "esco_title": "",
@@ -1678,7 +1698,16 @@ def heuristic_ai_draft(step: int, *, context: dict[str, Any] | None = None) -> d
                 "systems": {},
             }
         )
-    structure = context.get("structure") or {}
+    structure = _as_obj(context.get("structure")) or {}
+    if not isinstance(structure, dict):
+        structure = {}
+    # ключи A/B/C без учёта регистра
+    norm_structure: dict[str, list] = {"A": [], "B": [], "C": []}
+    for key, items in structure.items():
+        letter = str(key or "").strip().upper()[:1]
+        if letter in norm_structure and isinstance(items, list):
+            norm_structure[letter] = items
+    structure = norm_structure
     for component, key in (("A", "knowledge"), ("B", "skill"), ("C", "skill")):
         for idx, item in enumerate(structure.get(component) or []):
             text = str(item).strip() if not isinstance(item, dict) else str(item.get("text") or "").strip()
@@ -1697,6 +1726,50 @@ def heuristic_ai_draft(step: int, *, context: dict[str, Any] | None = None) -> d
                     "esco_title": "",
                     "match": "partial",
                     "notes": "",
+                    "systems": {},
+                }
+            )
+    # Если структуры нет — знания/умения из распределения ТД (шаг 2).
+    if not any(structure.get(k) for k in ("A", "B", "C")):
+        td = _as_obj(context.get("td_zu_mapping")) or {}
+        cards = td.get("cards") if isinstance(td, dict) else None
+        if isinstance(cards, list):
+            for card in cards:
+                if not isinstance(card, dict):
+                    continue
+                td_text = str(card.get("tdText") or card.get("td_text") or "").strip()
+                for kind, src in (("knowledge", "knowledges"), ("skill", "skills")):
+                    items = card.get(src) or []
+                    if not isinstance(items, list):
+                        continue
+                    for idx, item in enumerate(items):
+                        text = item.strip() if isinstance(item, str) else str((item or {}).get("text") or "").strip() if isinstance(item, dict) else ""
+                        if not text:
+                            continue
+                        rows.append(
+                            {
+                                "source_type": kind,
+                                "source_id": f"{kind}:{td_text[:20]}:{idx + 1}",
+                                "source_text": text[:500],
+                                "esco_uri": "",
+                                "esco_title": "",
+                                "match": "partial",
+                                "notes": td_text,
+                                "systems": {},
+                            }
+                        )
+    if not rows:
+        title = str(context.get("title") or "").strip()
+        if title:
+            rows.append(
+                {
+                    "source_type": "competence",
+                    "source_id": "title",
+                    "source_text": title[:500],
+                    "esco_uri": "",
+                    "esco_title": "",
+                    "match": "partial",
+                    "notes": "В паспорте нет ТФ и компонентов A/B/C — строка из названия компетенции",
                     "systems": {},
                 }
             )
@@ -1964,6 +2037,10 @@ def generate_step3_ai_draft(session, *, context: dict[str, Any] | None = None) -
     meta["target_systems"] = selected_codes
     meta["passport_domains"] = detect_passport_domains(context)
     if not rows:
+        meta["mode"] = "empty_passport"
+        meta["warning"] = (
+            "В паспорте нет названия, трудовых функций и компонентов A/B/C — нечего сопоставлять"
+        )
         return {"rows": [], "target_systems": selected_codes}, meta
     if not selected_codes:
         meta["mode"] = "no_systems_selected"

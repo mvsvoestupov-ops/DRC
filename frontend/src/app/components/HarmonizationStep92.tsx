@@ -684,9 +684,9 @@ export function HarmonizationStep92({ competenceId }: Props) {
               {data?.step3?.ai_meta && typeof data.step3.ai_meta === "object" ? (
                 <p className="text-xs text-amber-800 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
                   {String(
-                    (data.step3.ai_meta as { warning?: string; error?: string; mode?: string }).warning ||
+                    (data.step3.ai_meta as { warning?: string; error?: string }).warning ||
                       (data.step3.ai_meta as { error?: string }).error ||
-                      `${t("intl.aiDraft")}: ${String((data.step3.ai_meta as { mode?: string }).mode || "")}`,
+                      t("intl.aiDraftEmpty"),
                   )}
                 </p>
               ) : null}
