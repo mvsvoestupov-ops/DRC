@@ -1205,8 +1205,9 @@ export const extraVi: ExtraMessages = {
     rowTestsCreated: "Đã tạo bài KT",
     rowWithAnswers: "Có đáp án",
     rowWithoutAnswers: "Không đáp án",
-    rowIncomplete: "Chưa có nội dung",
+    rowIncomplete: "Chưa đủ",
     skillsCovered: "Kỹ năng đã bao phủ",
+    tasksFilled: "Bài đã điền",
     knowledgeTitle: "A — kiến thức: câu trắc nghiệm",
     knowledgeLead:
       "Như bước 6: mỗi kiến thức (A) — một bài kiểm tra (loại, câu hỏi, phương án, tiêu chí). Bài bước 6 được nhập tự động.",

@@ -28,19 +28,39 @@ type Props = {
   structure: StructureABC;
   value: AssessmentByLevelV2;
   onChange: (next: AssessmentByLevelV2) => void;
+  /** Уровни, которые требует гейт отправки (formationLevelsForEducation). */
+  levels?: readonly FormationLevel[];
 };
 
 type Screen = "dashboard" | "theory" | "practice-compose" | "practice-details";
 
-export function AssessmentConstructorV2({ structure, value, onChange }: Props) {
+export function AssessmentConstructorV2({
+  structure,
+  value,
+  onChange,
+  levels = FORMATION_LEVELS,
+}: Props) {
   const { t } = useI18n();
-  const [level, setLevel] = useState<FormationLevel>("базовый");
+  const levelsKey = (levels.length ? levels : FORMATION_LEVELS).join("|");
+  const levelTabs = useMemo(
+    () => (levelsKey.split("|") as FormationLevel[]),
+    [levelsKey],
+  );
+  const [level, setLevel] = useState<FormationLevel>(levelTabs[0] || "базовый");
   const [screen, setScreen] = useState<Screen>("dashboard");
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const [activeTestId, setActiveTestId] = useState<string | null>(null);
   const [theoryStage, setTheoryStage] = useState<"content" | "criteria">("content");
   const [showTheoryReq, setShowTheoryReq] = useState(false);
   const [showPracticeReq, setShowPracticeReq] = useState(false);
+
+  useEffect(() => {
+    if (!levelTabs.includes(level)) {
+      setLevel(levelTabs[0] || "базовый");
+      setScreen("dashboard");
+      setActiveTaskId(null);
+    }
+  }, [level, levelTabs]);
 
   const synced = useMemo(() => syncAssessmentByLevelV2(structure, value), [structure, value]);
   const block = synced[level];
@@ -156,7 +176,7 @@ export function AssessmentConstructorV2({ structure, value, onChange }: Props) {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {FORMATION_LEVELS.map((item) => (
+        {levelTabs.map((item) => (
           <button
             key={item}
             type="button"
@@ -223,8 +243,12 @@ export function AssessmentConstructorV2({ structure, value, onChange }: Props) {
 
           <DashboardCard
             title={t("assessmentV2.practiceTitleShort")}
-            progress={practice.coverage.percent}
-            progressLabel={t("assessmentV2.skillsCovered")}
+            progress={practice.percent}
+            progressLabel={
+              practice.coverage.complete
+                ? t("assessmentV2.tasksFilled")
+                : t("assessmentV2.skillsCovered")
+            }
             requirementsOpen={showPracticeReq}
             onToggleRequirements={() => setShowPracticeReq((v) => !v)}
             requirements={t("assessmentV2.practiceRequirements")}

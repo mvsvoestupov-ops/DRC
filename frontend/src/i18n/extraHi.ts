@@ -1203,8 +1203,9 @@ export const extraHi: ExtraMessages = {
     rowTestsCreated: "बनाए गए परीक्षण",
     rowWithAnswers: "उत्तर सहित",
     rowWithoutAnswers: "बिना उत्तर",
-    rowIncomplete: "बिना कथन",
+    rowIncomplete: "अपूर्ण",
     skillsCovered: "आच्छादित कौशल",
+    tasksFilled: "भरे गए कार्य",
     knowledgeTitle: "A — ज्ञान: परीक्षण प्रश्न",
     knowledgeLead:
       "चरण 6 की तरह: प्रत्येक ज्ञान (A) पर एक परीक्षण। चरण 6 के परीक्षण स्वतः आते हैं।",

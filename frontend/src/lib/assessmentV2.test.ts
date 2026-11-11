@@ -18,10 +18,12 @@ import {
   listKnowledgeComponents,
   listPracticalComponents,
   practicalCoverage,
+  practiceDashboardStats,
   seedAssessmentV2FromV1,
   seedAssessmentV2PracticalFromV1,
   seedAssessmentV2TestsFromV1,
   syncAssessmentByLevelV2,
+  theoryDashboardStats,
   toggleComponentInTask,
 } from "@/lib/assessmentV2";
 import type { FormationLevel } from "@/lib/competenceMappers";
@@ -293,7 +295,7 @@ describe("assessmentV2", () => {
   it("wizard gate uses v2 completeness, not legacy slots", () => {
     const levels: FormationLevel[] = ["базовый"];
     const empty = syncAssessmentByLevelV2(structure, emptyAssessmentByLevelV2());
-    expect(assessmentV2WizardErrorMessage(structure, empty, levels)).toMatch(/шаге 6/);
+    expect(assessmentV2WizardErrorMessage(structure, empty, levels)).toMatch(/Шаг 6 \(базовый\)/);
 
     const draft = syncAssessmentByLevelV2(structure, emptyAssessmentByLevelV2());
     draft.базовый.tests[0].prompt = "Вопрос?";
@@ -309,5 +311,83 @@ describe("assessmentV2", () => {
     ];
     draft.базовый.compositionDone = true;
     expect(assessmentV2WizardErrorMessage(structure, draft, levels)).toBeNull();
+  });
+
+  it("dashboard theory percent matches gate completeness (criteria required)", () => {
+    const synced = syncAssessmentByLevelV2(structure, emptyAssessmentByLevelV2());
+    synced.базовый.tests[0].prompt = "Вопрос?";
+    synced.базовый.tests[0].itemType = "open";
+    // prompt only — UI used to show 100%, gate still failed
+    expect(theoryDashboardStats(structure, synced.базовый.tests).percent).toBe(0);
+    expect(theoryDashboardStats(structure, synced.базовый.tests).created).toBe(1);
+
+    synced.базовый.tests[0].criteria = "Критерий";
+    expect(theoryDashboardStats(structure, synced.базовый.tests).percent).toBe(100);
+    expect(theoryDashboardStats(structure, synced.базовый.tests).complete).toBe(1);
+  });
+
+  it("dashboard practice percent stays below 100 until tasks are filled", () => {
+    const task = {
+      ...createPracticalTask(1),
+      componentIds: ["b1", "b2", "c1"],
+      prompt: "",
+      criteria: [""],
+    };
+    const covered = practiceDashboardStats(structure, [task]);
+    expect(covered.coverage.complete).toBe(true);
+    expect(covered.percent).toBe(0);
+
+    task.prompt = "Сделайте";
+    task.criteria = ["Критерий"];
+    expect(practiceDashboardStats(structure, [task]).percent).toBe(100);
+  });
+
+  it("wizard error names failing level and theory/practice counts across all levels", () => {
+    const levels: FormationLevel[] = ["базовый", "продвинутый"];
+    const draft = syncAssessmentByLevelV2(structure, emptyAssessmentByLevelV2());
+
+    // Expert-like: only advanced level filled; gate still requires базовый too.
+    draft.продвинутый.tests[0].prompt = "Вопрос?";
+    draft.продвинутый.tests[0].itemType = "open";
+    draft.продвинутый.tests[0].criteria = "Критерий";
+    draft.продвинутый.practicalTasks = [
+      {
+        ...createPracticalTask(1),
+        componentIds: ["b1", "b2", "c1"],
+        prompt: "Сделайте",
+        criteria: ["Критерий"],
+      },
+    ];
+    draft.продвинутый.compositionDone = true;
+
+    const msg = assessmentV2WizardErrorMessage(structure, draft, levels);
+    expect(msg).toMatch(/Шаг 6 \(базовый\), теория: 0\/1; практика:/);
+    expect(msg).not.toMatch(/продвинутый/);
+    expect(assessmentV2WizardErrorMessage(structure, draft, ["продвинутый"])).toBeNull();
+  });
+
+  it("wizard error reports theory without criteria even when prompts exist", () => {
+    const levels: FormationLevel[] = ["базовый"];
+    const draft = syncAssessmentByLevelV2(structure, emptyAssessmentByLevelV2());
+    draft.базовый.tests[0].prompt = "Вопрос?";
+    draft.базовый.tests[0].itemType = "single";
+    draft.базовый.tests[0].options = [
+      { id: "o1", text: "Да", isCorrect: true },
+      { id: "o2", text: "Нет", isCorrect: false },
+    ];
+    draft.базовый.tests[0].criteria = "";
+    draft.базовый.practicalTasks = [
+      {
+        ...createPracticalTask(1),
+        componentIds: ["b1", "b2", "c1"],
+        prompt: "Сделайте",
+        criteria: ["Критерий"],
+      },
+    ];
+    draft.базовый.compositionDone = true;
+
+    expect(assessmentV2WizardErrorMessage(structure, draft, levels)).toBe(
+      "Шаг 6 (базовый), теория: 0/1; практика: 1/1",
+    );
   });
 });

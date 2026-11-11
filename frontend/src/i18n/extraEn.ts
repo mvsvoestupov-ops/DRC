@@ -1203,9 +1203,9 @@ export const extraEn: ExtraMessages = {
     editor: "Editor",
     backToDashboard: "Back to summary",
     theoryRequirements:
-      "For each knowledge component (A) create a test item with options and mark the correct one. Progress is the share of components with a written prompt.",
+      "For each knowledge component (A) create a test item with options, mark the correct one, and fill in the criterion. Progress is the share of fully completed tests.",
     practiceRequirements:
-      "Create practical tasks and include every skill (B) and ability (C). Finish composition at 100% coverage, then fill in each task’s content.",
+      "Create practical tasks and include every skill (B) and ability (C). Finish composition at 100% coverage, then fill in each task’s prompt and criteria.",
     colKnowledge: "Knowledge",
     colTotal: "Total",
     colTask: "Task",
@@ -1215,8 +1215,9 @@ export const extraEn: ExtraMessages = {
     rowTestsCreated: "Tests created",
     rowWithAnswers: "With answers",
     rowWithoutAnswers: "Without answers",
-    rowIncomplete: "Without prompt",
+    rowIncomplete: "Incomplete",
     skillsCovered: "Skills covered",
+    tasksFilled: "Tasks filled",
     knowledgeTitle: "A — knowledge: test items",
     knowledgeLead:
       "One test item per knowledge component (A) — type, question, options, criteria. The test list syncs with the competency structure.",

@@ -2334,6 +2334,7 @@ export function NewCompetencyPage() {
                   <AssessmentConstructorV2
                     structure={formData.structure}
                     value={formData.assessmentV2}
+                    levels={formationLevelsForEducation(formData.educationLevel)}
                     onChange={(assessmentV2) =>
                       setFormData((prev) => ({
                         ...prev,

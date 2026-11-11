@@ -514,6 +514,13 @@ function testCoversComponent(test: AssessmentV2TestItem, componentId: string) {
   return (test.componentIds || []).includes(componentId);
 }
 
+/** Практическое задание 6.1 считается заполненным, если есть компоненты, формулировка и критерий. */
+export function isPracticalV2TaskComplete(task: AssessmentV2PracticalTask): boolean {
+  if (!(task.componentIds || []).length) return false;
+  if (!String(task.prompt || "").trim()) return false;
+  return (task.criteria || []).some((line) => String(line || "").trim());
+}
+
 /** Сводка панели «Теория» (только знания A → тесты). */
 export function theoryDashboardStats(structure: StructureABC, tests: AssessmentV2TestItem[]) {
   const knowledge = listKnowledgeComponents(structure);
@@ -526,28 +533,43 @@ export function theoryDashboardStats(structure: StructureABC, tests: AssessmentV
   const created = rows.filter((t) => t && testHasPrompt(t)).length;
   const withAnswers = rows.filter((t) => t && testHasPrompt(t) && testHasAnswer(t)).length;
   const withoutAnswers = rows.filter((t) => t && testHasPrompt(t) && !testHasAnswer(t)).length;
-  const incomplete = quantity - created;
+  // Как бейдж «заполнено» и гейт отправки: нужен критерий + ответ (isAssessmentTaskComplete).
+  const complete = rows.filter((t) => t && isAssessmentTaskComplete(t)).length;
+  const incomplete = quantity - complete;
   return {
     quantity,
     created,
     withAnswers,
     withoutAnswers,
+    complete,
     incomplete,
-    percent: quantity === 0 ? 0 : Math.round((100 * created) / quantity),
+    percent: quantity === 0 ? 0 : Math.round((100 * complete) / quantity),
   };
 }
 
 /** Сводка панели «Практика» (задания и охват B/C). */
 export function practiceDashboardStats(structure: StructureABC, tasks: AssessmentV2PracticalTask[]) {
   const coverage = practicalCoverage(structure, tasks);
+  const completeTasks = tasks.filter(isPracticalV2TaskComplete).length;
+  const taskCount = tasks.length;
+  // Не показываем 100%, пока B/C покрыты, но задания без формулировки/критериев.
+  const percent = !coverage.complete
+    ? coverage.percent
+    : taskCount === 0
+      ? 0
+      : Math.round((100 * completeTasks) / taskCount);
   return {
     tasks: tasks.map((task, index) => ({
       id: task.id,
       name: task.name?.trim() || `Задание ${index + 1}`,
       variants: 1,
       skills: task.componentIds.length,
+      complete: isPracticalV2TaskComplete(task),
     })),
     coverage,
+    completeTasks,
+    taskCount,
+    percent,
   };
 }
 
@@ -655,17 +677,40 @@ export function createOption(isCorrect = false) {
   return { ...opt, id: nid("o"), text: "", isCorrect };
 }
 
-/** Практическое задание 6.1 считается заполненным, если есть компоненты, формулировка и критерий. */
-export function isPracticalV2TaskComplete(task: AssessmentV2PracticalTask): boolean {
-  if (!(task.componentIds || []).length) return false;
-  if (!String(task.prompt || "").trim()) return false;
-  return (task.criteria || []).some((line) => String(line || "").trim());
+function theoryCompleteCount(structure: StructureABC, tests: AssessmentV2TestItem[]): number {
+  const knowledge = listKnowledgeComponents(structure);
+  return knowledge.reduce((count, item) => {
+    const test = (tests || []).find((row) => (row.componentIds || []).includes(item.id));
+    return count + (test && isAssessmentTaskComplete(test) ? 1 : 0);
+  }, 0);
+}
+
+function practiceStatusLabel(
+  structure: StructureABC,
+  tasks: AssessmentV2PracticalTask[],
+): { ok: boolean; label: string } {
+  const coverage = practicalCoverage(structure, tasks);
+  if (!coverage.complete) {
+    return {
+      ok: false,
+      label: `покрыто ${coverage.covered} из ${coverage.total}`,
+    };
+  }
+  if (!tasks.length) {
+    return { ok: false, label: "нет заданий" };
+  }
+  const complete = tasks.filter(isPracticalV2TaskComplete).length;
+  return {
+    ok: complete === tasks.length,
+    label: `${complete}/${tasks.length}`,
+  };
 }
 
 /**
  * Проверка готовности оценочных средств v2 (шаг 6) перед отправкой на экспертизу.
- * Считает: тесты по каждому знанию A + практические задания с полным покрытием B/C —
- * на каждом уровне сформированности.
+ * На каждом уровне из `levels` (обычно formationLevelsForEducation):
+ * - теория: isAssessmentTaskComplete по каждому знанию A (как бейдж «заполнено»);
+ * - практика: полное покрытие B/C и isPracticalV2TaskComplete по каждому заданию.
  */
 export function assessmentV2WizardErrorMessage(
   structure: StructureABC,
@@ -683,37 +728,22 @@ export function assessmentV2WizardErrorMessage(
     return "Добавьте умения и навыки (B/C) в структуру, затем составьте практические задания на шаге 6";
   }
 
-  let planned = 0;
-  let complete = 0;
+  const theoryTotal = knowledge.length;
+  const failing: string[] = [];
 
   for (const level of levels) {
     const block = synced[level];
-    for (const item of knowledge) {
-      planned += 1;
-      const test = (block.tests || []).find((row) => (row.componentIds || []).includes(item.id));
-      if (test && isAssessmentTaskComplete(test)) complete += 1;
-    }
-
-    const coverage = practicalCoverage(structure, block.practicalTasks || []);
-    if (!coverage.complete) {
-      return (
-        `На шаге 6 (${level}) включите все умения и навыки в практические задания: ` +
-        `покрыто ${coverage.covered} из ${coverage.total}`
+    const theoryDone = theoryCompleteCount(structure, block.tests || []);
+    const practice = practiceStatusLabel(structure, block.practicalTasks || []);
+    if (theoryDone < theoryTotal || !practice.ok) {
+      failing.push(
+        `Шаг 6 (${level}), теория: ${theoryDone}/${theoryTotal}; практика: ${practice.label}`,
       );
     }
-    if (!(block.practicalTasks || []).length) {
-      return `На шаге 6 (${level}) создайте хотя бы одно практическое задание`;
-    }
-    for (const task of block.practicalTasks) {
-      planned += 1;
-      if (isPracticalV2TaskComplete(task)) complete += 1;
-    }
   }
 
-  if (complete < planned) {
-    return `Заполните оценочные средства на шаге 6: готово ${complete} из ${planned}`;
-  }
-  return null;
+  if (!failing.length) return null;
+  return failing.join(". ");
 }
 
 /** @deprecated kept for preview helpers that still reference TF–TD labels */

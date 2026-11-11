@@ -1196,8 +1196,9 @@ export const extraZh: ExtraMessages = {
     rowTestsCreated: "已建测验",
     rowWithAnswers: "有答案",
     rowWithoutAnswers: "无答案",
-    rowIncomplete: "无表述",
+    rowIncomplete: "未完成",
     skillsCovered: "已覆盖技能",
+    tasksFilled: "已填写任务",
     knowledgeTitle: "A — 知识：测验题",
     knowledgeLead:
       "与第6步相同：每个知识（A）对应一道测验。第6步的测验会自动导入。",
