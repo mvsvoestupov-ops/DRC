@@ -130,15 +130,66 @@
       text-align: center;
     }
 
+    .hero-box.speaker-box {
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      text-align: left;
+      gap: clamp(24px, 3.6vw, 48px);
+      max-width: 1080px;
+    }
+    .speaker-photo-wrap {
+      flex: 0 0 auto;
+      width: clamp(205px, min(24vw, 38vh), 300px);
+      aspect-ratio: 3 / 4;
+      border-radius: 18px;
+      padding: 4px;
+      background: linear-gradient(145deg, rgba(185, 220, 255, 0.7), rgba(255, 255, 255, 0.16));
+      box-shadow: 0 18px 44px rgba(3, 16, 48, 0.5);
+    }
+    .speaker-photo {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+      object-position: center top;
+      border-radius: 14px;
+    }
+    .speaker-info {
+      flex: 1 1 auto;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .speaker-info h1 {
+      margin-top: 6px;
+      font-size: clamp(32px, min(4.8vw, 6.8vh), 60px);
+    }
+    .speaker-info .person {
+      margin-top: clamp(14px, 2.2vh, 24px);
+    }
+    .speaker-info .role {
+      margin-top: 10px;
+      max-width: 660px;
+      font-size: clamp(16px, min(1.65vw, 2.5vh), 22px);
+      line-height: 1.4;
+      color: rgba(255, 255, 255, 0.94);
+    }
+
     .slide.active .event,
     .slide.active .hero-box,
     .slide.active .card,
-    .slide.active .two {
+    .slide.active .two,
+    .slide.active .three-mods,
+    .slide.active .two-mods {
       animation: riseIn 0.7s ease both;
     }
     .slide.active .hero-box { animation-delay: 0.1s; }
     .slide.active .card,
-    .slide.active .two { animation-delay: 0.22s; }
+    .slide.active .two,
+    .slide.active .three-mods,
+    .slide.active .two-mods { animation-delay: 0.22s; }
 
     .event {
       font-size: clamp(18px, 2.1vw, 28px);
@@ -203,7 +254,13 @@
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
     }
-    .card .label,
+    .card .label {
+      font-size: clamp(15px, 1.55vw, 19px);
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #b9dcff;
+      font-weight: 750;
+    }
     .two .label {
       font-size: 13px;
       letter-spacing: 0.16em;
@@ -241,6 +298,87 @@
     .two .org { margin-top: 10px; font-size: clamp(14px, min(1.35vw, 2vh), 17px); }
     .two .role { font-size: clamp(13px, min(1.25vw, 1.9vh), 16px); }
     .two .label { margin-top: 14px; display: block; }
+    .three-mods {
+      width: 100%;
+      max-width: 1180px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: clamp(14px, 1.8vw, 24px);
+      align-items: stretch;
+    }
+    .two-mods {
+      width: 100%;
+      max-width: 960px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: clamp(18px, 2.4vw, 32px);
+      align-items: stretch;
+    }
+    .two-mods .mod-photo-wrap {
+      width: clamp(148px, min(17vw, 27vh), 220px);
+    }
+    .mod-tag {
+      margin-top: 8px;
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(185, 220, 255, 0.45);
+      background: rgba(185, 220, 255, 0.12);
+      font-size: clamp(11px, 1.05vw, 13px);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #b9dcff;
+      font-weight: 700;
+    }
+    .mod-card {
+      background: rgba(8, 28, 72, 0.38);
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      border-radius: 22px;
+      padding: clamp(14px, 2vh, 22px) clamp(14px, 1.6vw, 22px);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .mod-photo-wrap {
+      width: clamp(132px, min(15vw, 24vh), 196px);
+      aspect-ratio: 3 / 4;
+      border-radius: 16px;
+      padding: 4px;
+      background: linear-gradient(145deg, rgba(185, 220, 255, 0.7), rgba(255, 255, 255, 0.16));
+      box-shadow: 0 14px 34px rgba(3, 16, 48, 0.5);
+      flex: 0 0 auto;
+    }
+    .mod-photo {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+      object-position: center top;
+      border-radius: 12px;
+    }
+    .mod-name {
+      margin-top: clamp(10px, 1.6vh, 16px);
+      font-size: clamp(17px, min(1.7vw, 2.6vh), 22px);
+      line-height: 1.2;
+      font-weight: 720;
+      letter-spacing: -0.01em;
+    }
+    .mod-role {
+      margin-top: 8px;
+      font-size: clamp(13px, min(1.25vw, 1.95vh), 16px);
+      line-height: 1.35;
+      color: #d5e8ff;
+    }
+    .hero-box.mods-header {
+      padding: clamp(12px, 1.8vh, 20px) clamp(22px, 3vw, 40px);
+      max-width: 1180px;
+    }
+    .hero-box.mods-header h1 {
+      font-size: clamp(30px, min(4.4vw, 6vh), 54px);
+    }
     .note {
       margin-top: 10px;
       font-size: clamp(14px, 1.4vw, 17px);
@@ -350,7 +488,16 @@
 
     @media (max-width: 900px) {
       .two { grid-template-columns: 1fr; }
+      .three-mods { grid-template-columns: 1fr; }
+      .two-mods { grid-template-columns: 1fr; }
       .side-btn { display: none; }
+      .hero-box.speaker-box {
+        flex-direction: column;
+        text-align: center;
+      }
+      .speaker-info {
+        align-items: center;
+      }
     }
   </style>
 </head>
@@ -389,17 +536,21 @@
       <div class="pad">
         <div class="event">III Международный образовательный форум · 11–14 ноября 2026</div>
         <div class="stage">
-          <div class="hero-box">
-            <h1>Медицина</h1>
-            <div class="person">Ильенко Лидия Ивановна</div>
-            <div class="org">ФГБОУ ВО РНИМУ им. Н.И. Пирогова<br />Институт материнства и детства</div>
-            <div class="role">Директор института материнства и детства</div>
+          <div class="hero-box speaker-box">
+            <div class="speaker-photo-wrap">
+              <img
+                class="speaker-photo"
+                src="kochetova-suit-brooch.jpg"
+                onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src='file:///C:/Users/Mihail/.cursor/projects/c-IT-DRC/assets/kochetova-suit-brooch.jpg';}"
+                alt="Кочетова Светлана Михайловна"
+              />
+            </div>
+            <div class="speaker-info">
+              <h1>Открытие секции</h1>
+              <div class="person">Кочетова Светлана Михайловна</div>
+              <div class="role">Заместитель руководителя Федеральной службы по надзору в сфере образования и науки, к.ю.н.</div>
+            </div>
           </div>
-        </div>
-        <div class="card">
-          <div class="label">Компетенции</div>
-          <p>Способен составить прогностический сценарий развития новорожденных в зависимости от перинатальных факторов.</p>
-          <p>Способен разработать индивидуальную программу реабилитации для профилактики ранней инвалидности.</p>
         </div>
       </div>
     </section>
@@ -408,16 +559,47 @@
       <div class="pad">
         <div class="event">III Международный образовательный форум · 11–14 ноября 2026</div>
         <div class="stage">
-          <div class="hero-box">
-            <h1>Транспорт</h1>
-            <div class="person">Мерзликина Александра Сергеевна</div>
-            <div class="org">ФГБОУ ВО СПбГУ ГА им. А.А. Новикова</div>
-            <div class="role">Начальник УМУ</div>
+          <div class="hero-box mods-header">
+            <h1>Модераторы</h1>
           </div>
-        </div>
-        <div class="card">
-          <div class="label">Компетенция</div>
-          <p>Способен разрабатывать программы, организовывать и проводить испытания технологических систем и оборудования атомных станций, обрабатывать и анализировать результаты, обеспечивать соблюдение требований безопасности и нормативной документации.</p>
+          <div class="three-mods">
+            <article class="mod-card">
+              <div class="mod-photo-wrap">
+                <img
+                  class="mod-photo"
+                  src="borisova-suit-v6.jpg"
+                  onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src='file:///C:/Users/Mihail/.cursor/projects/c-IT-DRC/assets/borisova-suit-v6.jpg';}"
+                  alt="Борисова Марина Петровна"
+                />
+              </div>
+              <h2 class="mod-name">Борисова Марина Петровна</h2>
+              <div class="mod-role">Президент АО «Национальные квалификации», к.ю.н.</div>
+            </article>
+            <article class="mod-card">
+              <div class="mod-photo-wrap">
+                <img
+                  class="mod-photo"
+                  src="podolko-suit.jpg"
+                  onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src='file:///C:/Users/Mihail/.cursor/projects/c-IT-DRC/assets/podolko-suit.jpg';}"
+                  alt="Подолько Павел Михайлович"
+                />
+              </div>
+              <h2 class="mod-name">Подолько Павел Михайлович</h2>
+              <div class="mod-role">Директор Департамента обеспечения качества образовательных программ УОП РУДН, к.т.н.</div>
+            </article>
+            <article class="mod-card">
+              <div class="mod-photo-wrap">
+                <img
+                  class="mod-photo"
+                  src="kuliev-suit.jpg"
+                  onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src='file:///C:/Users/Mihail/.cursor/projects/c-IT-DRC/assets/kuliev-suit.jpg';}"
+                  alt="Кулиев Натик Адалатович"
+                />
+              </div>
+              <h2 class="mod-name">Кулиев Натик Адалатович</h2>
+              <div class="mod-role">Исполняющий обязанности директора РОСАККРЕДАГЕНСТВА</div>
+            </article>
+          </div>
         </div>
       </div>
     </section>
@@ -426,16 +608,37 @@
       <div class="pad">
         <div class="event">III Международный образовательный форум · 11–14 ноября 2026</div>
         <div class="stage">
-          <div class="hero-box">
-            <h1>Сельское хозяйство</h1>
-            <div class="person">Сергазиева Ольга Дмитриевна</div>
-            <div class="org">ФГБОУ ВО Московский государственный университет технологий и управления имени К.Г. Разумовского (Первый казачий университет)</div>
-            <div class="role">Доцент кафедры ихтиологии и рыболовства</div>
+          <div class="hero-box mods-header">
+            <h1>Руководители проекта</h1>
           </div>
-        </div>
-        <div class="card">
-          <div class="label">Компетенция</div>
-          <p>Способен организовать технологический процесс по разведению и выращиванию водных биологических ресурсов на предприятиях аквакультуры.</p>
+          <div class="two-mods">
+            <article class="mod-card">
+              <div class="mod-photo-wrap">
+                <img
+                  class="mod-photo"
+                  src="svoestupov-suit.jpg"
+                  onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src='file:///C:/Users/Mihail/.cursor/projects/c-IT-DRC/assets/svoestupov-suit.jpg';}"
+                  alt="Своеступов Михаил Васильевич"
+                />
+              </div>
+              <h2 class="mod-name">Своеступов Михаил Васильевич</h2>
+              <div class="mod-role">Генеральный директор АО «Национальные квалификации»</div>
+              <span class="mod-tag">Руководитель ИТ разработки проекта</span>
+            </article>
+            <article class="mod-card">
+              <div class="mod-photo-wrap">
+                <img
+                  class="mod-photo"
+                  src="khomyakova-final-v2.jpg"
+                  onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src='file:///C:/Users/Mihail/.cursor/projects/c-IT-DRC/assets/khomyakova-final-v2.jpg';}"
+                  alt="Хомякова Надежда Анатольевна"
+                />
+              </div>
+              <h2 class="mod-name">Хомякова Надежда Анатольевна</h2>
+              <div class="mod-role">Заместитель директора МОУ «Аккредагенство», к.ф.н.</div>
+              <span class="mod-tag">Руководитель проекта</span>
+            </article>
+          </div>
         </div>
       </div>
     </section>
@@ -445,20 +648,75 @@
         <div class="event">III Международный образовательный форум · 11–14 ноября 2026</div>
         <div class="stage">
           <div class="hero-box">
-            <h1>Промышленность</h1>
-            <div class="person">Крючкова Ирина Николаевна</div>
-            <div class="org">ФГБОУ ВО Воронежский государственный технический университет</div>
-            <div class="role">Начальник Управления качества образования</div>
+            <h1>Медицина</h1>
+            <div class="person">Ильенко Лидия Ивановна</div>
+            <div class="org">ФГБОУ ВО РНИМУ им. Н.И. Пирогова<br />Институт материнства и детства</div>
+            <div class="role">Директор института материнства и детства</div>
           </div>
-        </div>
-        <div class="card">
-          <div class="label">Компетенция</div>
-          <p>Способен разрабатывать программы, организовывать и проводить испытания технологических систем и оборудования атомных станций, обрабатывать и анализировать результаты, обеспечивать соблюдение требований безопасности и нормативной документации.</p>
+          <div class="card">
+            <div class="label">Компетенции</div>
+            <p>Способен составить прогностический сценарий развития новорожденных в зависимости от перинатальных факторов.</p>
+            <p>Способен разработать индивидуальную программу реабилитации для профилактики ранней инвалидности.</p>
+          </div>
         </div>
       </div>
     </section>
 
     <section class="slide" data-slide="5">
+      <div class="pad">
+        <div class="event">III Международный образовательный форум · 11–14 ноября 2026</div>
+        <div class="stage">
+          <div class="hero-box">
+            <h1>Транспорт</h1>
+            <div class="person">Мерзликина Александра Сергеевна</div>
+            <div class="org">ФГБОУ ВО СПбГУ ГА им. А.А. Новикова</div>
+            <div class="role">Начальник УМУ</div>
+          </div>
+          <div class="card">
+            <div class="label">Компетенция</div>
+            <p>Способен разрабатывать программы, организовывать и проводить испытания технологических систем и оборудования атомных станций, обрабатывать и анализировать результаты, обеспечивать соблюдение требований безопасности и нормативной документации.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-slide="6">
+      <div class="pad">
+        <div class="event">III Международный образовательный форум · 11–14 ноября 2026</div>
+        <div class="stage">
+          <div class="hero-box">
+            <h1>Сельское хозяйство</h1>
+            <div class="person">Сергазиева Ольга Дмитриевна</div>
+            <div class="org">ФГБОУ ВО Московский государственный университет технологий и управления имени К.Г. Разумовского (Первый казачий университет)</div>
+            <div class="role">Доцент кафедры ихтиологии и рыболовства</div>
+          </div>
+          <div class="card">
+            <div class="label">Компетенция</div>
+            <p>Способен организовать технологический процесс по разведению и выращиванию водных биологических ресурсов на предприятиях аквакультуры.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-slide="7">
+      <div class="pad">
+        <div class="event">III Международный образовательный форум · 11–14 ноября 2026</div>
+        <div class="stage">
+          <div class="hero-box">
+            <h1>Промышленность</h1>
+            <div class="person">Крючкова Ирина Николаевна</div>
+            <div class="org">ФГБОУ ВО Воронежский государственный технический университет</div>
+            <div class="role">Начальник Управления качества образования</div>
+          </div>
+          <div class="card">
+            <div class="label">Компетенция</div>
+            <p>Способен разрабатывать программы, организовывать и проводить испытания технологических систем и оборудования атомных станций, обрабатывать и анализировать результаты, обеспечивать соблюдение требований безопасности и нормативной документации.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-slide="8">
       <div class="pad">
         <div class="event">III Международный образовательный форум · 11–14 ноября 2026</div>
         <div class="stage">
@@ -478,15 +736,15 @@
               <div class="role">Помощник ректора</div>
             </article>
           </div>
-        </div>
-        <div class="card">
-          <div class="label">Компетенция</div>
-          <p>Предупреждение коррупционных рисков и правовое обеспечение антикоррупционной деятельности организации.</p>
+          <div class="card">
+            <div class="label">Компетенция</div>
+            <p>Предупреждение коррупционных рисков и правовое обеспечение антикоррупционной деятельности организации.</p>
+          </div>
         </div>
       </div>
     </section>
 
-    <section class="slide" data-slide="6">
+    <section class="slide" data-slide="9">
       <div class="pad">
         <div class="event">III Международный образовательный форум · 11–14 ноября 2026</div>
         <div class="stage">
@@ -515,7 +773,7 @@
         <path d="M9.5 20v-6h5v6" />
       </svg>
     </button>
-    <div class="counter" id="counter">1 / 7</div>
+    <div class="counter" id="counter">1 / 10</div>
   </main>
 
   <script>

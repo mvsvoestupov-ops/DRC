@@ -278,6 +278,11 @@ export function NewCompetencyPage() {
   // Чтобы снова показать в навигаторе — уберите 6 из множества.
   const HIDDEN_WIZARD_STEPS = useMemo(() => new Set([6]), []);
   const SHOW_LEGACY_ASSESSMENT_STEP = false;
+  // TEMP: restore later — step 9.2 for the whole working group, not only admin/intl.
+  const showStep92 =
+    isIntlMethodologist ||
+    workingCompetence?.collaboration_role === "leader" ||
+    workingCompetence?.collaboration_role === "member";
   const steps = useMemo(() => {
     const list = [
       { number: 1, name: t("wizard.step1"), label: "1" },
@@ -292,14 +297,14 @@ export function NewCompetencyPage() {
       { number: 10, name: t("wizard.step9"), label: "9" },
       { number: 11, name: t("wizard.step91"), label: "9.1" },
     ];
-    if (isIntlMethodologist) {
+    if (showStep92) {
       list.push({ number: 12, name: t("wizard.step92"), label: "9.2" });
       list.push({ number: 13, name: t("wizard.step10"), label: "10" });
     } else {
       list.push({ number: 12, name: t("wizard.step10"), label: "10" });
     }
     return list;
-  }, [t, isIntlMethodologist]);
+  }, [t, showStep92]);
   const visibleSteps = useMemo(
     () => steps.filter((step) => !HIDDEN_WIZARD_STEPS.has(step.number)),
     [steps, HIDDEN_WIZARD_STEPS],
@@ -2422,7 +2427,7 @@ export function NewCompetencyPage() {
                 </div>
               )}
 
-              {isIntlMethodologist && currentStep === 12 && (
+              {showStep92 && currentStep === 12 && (
                 <div data-presence-fragment="intl-harmonization">
                   <HarmonizationStep92 competenceId={competenceId} />
                 </div>

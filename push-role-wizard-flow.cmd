@@ -14,7 +14,7 @@ REM    C:\IT\DRC\push-role-wizard-flow.cmd /push
 REM    C:\IT\DRC\push-role-wizard-flow.cmd /deploy
 REM ============================================================
 
-set "MSG=fix: 9.2 step 3 finds ESCO and EQF analogues beyond the fire-rescue corpus"
+set "MSG=TEMP: restore later — working group can develop steps 9-9.2"
 
 if /I "%~1"=="/deploy" (
   call "%~dp0push-and-deploy.cmd" /deploy

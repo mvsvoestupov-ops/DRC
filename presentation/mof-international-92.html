@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Международное сопоставление компетенций и шаг 9.2 — АО «Национальные квалификации»</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #072c6b;
+      color: #ffffff;
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .deck {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #0b4199;
+    }
+
+    /* Живой фон МОФ: видео со сферой + фирменный эллипс */
+    .video-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100vh;
+      z-index: 0;
+      min-height: 500px;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .video-bg::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 50% 48%, rgba(6, 22, 62, 0.36) 0%, rgba(6, 24, 68, 0.62) 62%, rgba(4, 18, 52, 0.78) 100%);
+      z-index: 1;
+    }
+    .video-bg video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center center;
+      display: block;
+    }
+    .ellipse {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: min(88vw, 920px);
+      height: min(88vw, 920px);
+      transform: translate(-50%, -50%);
+      background: url("https://mof.rudn.ru/assets/images/ellipse.png") center / contain no-repeat;
+      z-index: 1;
+      pointer-events: none;
+      opacity: 0.72;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.5s ease, visibility 0.5s;
+    }
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .slide-logo {
+      position: absolute;
+      top: 18px;
+      right: 28px;
+      height: 54px;
+      width: auto;
+      z-index: 6;
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 7px 11px;
+      box-shadow: 0 8px 24px rgba(0, 12, 38, 0.35);
+    }
+
+    .pad {
+      position: relative;
+      z-index: 1;
+      height: 100%;
+      padding: clamp(18px, 2.8vh, 34px) clamp(44px, 5.4vw, 86px) clamp(78px, 9.5vh, 94px);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(12px, 1.8vh, 20px);
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding-right: 215px;
+    }
+    .kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 16px;
+      border-radius: 999px;
+      background: rgba(160, 215, 255, 0.18);
+      border: 1px solid rgba(190, 230, 255, 0.42);
+      color: #dff2ff;
+      font-size: clamp(14px, 1.25vw, 18px);
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .top-meta {
+      font-size: clamp(14px, 1.2vw, 18px);
+      color: rgba(255, 255, 255, 0.86);
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+
+    h1.hero-title {
+      font-size: clamp(38px, min(5vw, 7vh), 68px);
+      line-height: 1.06;
+      font-weight: 760;
+      letter-spacing: -0.025em;
+      text-shadow: 0 8px 32px rgba(0, 18, 56, 0.55);
+    }
+    h2.slide-title {
+      font-size: clamp(28px, min(3.3vw, 4.7vh), 46px);
+      line-height: 1.1;
+      font-weight: 750;
+      letter-spacing: -0.02em;
+      max-width: 1320px;
+      padding-right: 190px;
+      text-shadow: 0 4px 24px rgba(0, 18, 56, 0.5);
+    }
+    .subtitle {
+      font-size: clamp(18px, min(1.75vw, 2.5vh), 25px);
+      line-height: 1.32;
+      color: #e4f1ff;
+      max-width: 1220px;
+      font-weight: 500;
+    }
+
+    /* Стеклянные подложки в стиле МОФ (высокий контраст для проектора) */
+    .glass {
+      background: rgba(6, 22, 60, 0.68);
+      border: 1px solid rgba(255, 255, 255, 0.32);
+      border-radius: 22px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 14px 38px rgba(2, 12, 38, 0.35);
+    }
+    .glass-accent {
+      background: linear-gradient(145deg, rgba(14, 58, 128, 0.78), rgba(6, 24, 66, 0.78));
+      border: 1.5px solid rgba(150, 218, 255, 0.55);
+    }
+
+    .stage-center {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: clamp(16px, 2.4vh, 26px);
+    }
+
+    .title-box {
+      width: 100%;
+      max-width: 1180px;
+      padding: clamp(26px, 4vh, 46px) clamp(28px, 4vw, 56px);
+    }
+    .speaker-box {
+      width: 100%;
+      max-width: 980px;
+      padding: clamp(18px, 2.6vh, 28px) clamp(24px, 3.2vw, 42px);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      text-align: left;
+    }
+    .speaker-name {
+      font-size: clamp(24px, 2.4vw, 34px);
+      font-weight: 740;
+      line-height: 1.15;
+    }
+    .speaker-role {
+      margin-top: 6px;
+      font-size: clamp(17px, 1.55vw, 22px);
+      color: #cde6ff;
+      font-weight: 500;
+    }
+    .speaker-badge {
+      padding: 10px 18px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      font-size: clamp(15px, 1.3vw, 19px);
+      font-weight: 650;
+      color: #ffffff;
+      text-align: right;
+    }
+
+    /* Двухколоночный макет со снимком экрана для проектора */
+    .split-shot {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 1.36fr 0.84fr;
+      gap: clamp(16px, 1.8vw, 26px);
+      align-items: stretch;
+    }
+    .shot-frame {
+      position: relative;
+      min-height: 0;
+      border-radius: 20px;
+      overflow: hidden;
+      background: #ffffff;
+      border: 2px solid rgba(255, 255, 255, 0.65);
+      box-shadow: 0 18px 44px rgba(2, 10, 32, 0.5);
+      display: flex;
+      flex-direction: column;
+      cursor: zoom-in;
+    }
+    .shot-bar {
+      background: #0f294d;
+      color: #e8f3ff;
+      padding: 8px 16px;
+      font-size: clamp(13px, 1.1vw, 16px);
+      font-weight: 650;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .shot-bar span.hint {
+      color: #9ed2ff;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .shot-img-wrap {
+      flex: 1;
+      min-height: 0;
+      background: #f8fafc;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .shot-img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top center;
+      display: block;
+    }
+    .shot-img-wrap.contain img {
+      object-fit: contain;
+      object-position: center center;
+    }
+
+    .callouts {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: clamp(10px, 1.5vh, 16px);
+      min-height: 0;
+    }
+    .callout {
+      padding: clamp(14px, 1.9vh, 20px) clamp(16px, 1.8vw, 24px);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .callout-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: clamp(18px, min(1.65vw, 2.4vh), 24px);
+      font-weight: 740;
+      color: #ffffff;
+      line-height: 1.2;
+    }
+    .pill-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 34px;
+      height: 34px;
+      padding: 0 10px;
+      border-radius: 10px;
+      background: #38bdf8;
+      color: #041e42;
+      font-size: 17px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .callout p {
+      margin-top: 7px;
+      font-size: clamp(15px, min(1.38vw, 2.05vh), 20px);
+      line-height: 1.32;
+      color: #e6f2ff;
+    }
+    .chips {
+      margin-top: 9px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .chip {
+      padding: 4px 12px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.22);
+      border: 1px solid rgba(140, 218, 255, 0.55);
+      color: #ffffff;
+      font-size: clamp(13px, 1.15vw, 16px);
+      font-weight: 700;
+    }
+    .chip.ok {
+      background: rgba(16, 185, 129, 0.28);
+      border-color: rgba(110, 231, 183, 0.65);
+    }
+    .chip.warn {
+      background: rgba(245, 158, 11, 0.28);
+      border-color: rgba(252, 211, 77, 0.7);
+    }
+
+    /* Сетки карточек для архитектурных, проблемных и итоговых слайдов */
+    .cards-2 {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(16px, 2vw, 28px);
+    }
+    .cards-3 {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: clamp(14px, 1.6vw, 22px);
+    }
+    .cards-2x2 {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: clamp(14px, 1.6vw, 20px);
+    }
+    .big-card {
+      padding: clamp(18px, 2.4vh, 28px) clamp(20px, 2.2vw, 30px);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .big-card h3 {
+      font-size: clamp(21px, min(2vw, 2.9vh), 30px);
+      line-height: 1.18;
+      font-weight: 750;
+      color: #ffffff;
+    }
+    .big-card p, .big-card li {
+      font-size: clamp(16px, min(1.45vw, 2.15vh), 21px);
+      line-height: 1.34;
+      color: #e6f2ff;
+    }
+    .big-card ul {
+      margin-top: 10px;
+      padding-left: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .tag-top {
+      display: inline-block;
+      align-self: flex-start;
+      padding: 5px 13px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.24);
+      border: 1px solid rgba(150, 220, 255, 0.55);
+      font-size: clamp(13px, 1.15vw, 16px);
+      font-weight: 750;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #e0f4ff;
+      margin-bottom: 10px;
+    }
+    .tag-top.amber {
+      background: rgba(245, 158, 11, 0.28);
+      border-color: rgba(252, 211, 77, 0.7);
+      color: #fef3c7;
+    }
+    .tag-top.emerald {
+      background: rgba(16, 185, 129, 0.28);
+      border-color: rgba(110, 231, 183, 0.7);
+      color: #d1fae5;
+    }
+
+    .bottom-strip {
+      padding: 12px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      font-size: clamp(15px, 1.35vw, 20px);
+      font-weight: 600;
+      color: #eef7ff;
+    }
+
+    /* Анимация появления на переключении слайдов */
+    .slide.active .top-bar,
+    .slide.active h2.slide-title,
+    .slide.active .title-box,
+    .slide.active .speaker-box,
+    .slide.active .shot-frame,
+    .slide.active .callouts,
+    .slide.active .cards-2,
+    .slide.active .cards-3,
+    .slide.active .cards-2x2,
+    .slide.active .bottom-strip {
+      animation: riseIn 0.55s ease both;
+    }
+    .slide.active .shot-frame,
+    .slide.active .cards-2,
+    .slide.active .cards-3,
+    .slide.active .cards-2x2,
+    .slide.active .speaker-box { animation-delay: 0.1s; }
+    .slide.active .callouts,
+    .slide.active .bottom-strip { animation-delay: 0.18s; }
+
+    /* Лайтбокс увеличения снимка по клику во время доклада */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: rgba(3, 12, 34, 0.92);
+      backdrop-filter: blur(10px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 28px;
+      cursor: zoom-out;
+    }
+    .lightbox.open { display: flex; }
+    .lightbox img {
+      max-width: 96vw;
+      max-height: 92vh;
+      border-radius: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.65);
+      background: #fff;
+    }
+
+    /* Навигация как в презентации МОФ */
+    .nav {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 18px;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      pointer-events: none;
+    }
+    .nav > * { pointer-events: auto; }
+    .nav-btn {
+      width: 50px;
+      height: 50px;
+      border: 1px solid rgba(255, 255, 255, 0.48);
+      border-radius: 50%;
+      background: rgba(8, 28, 72, 0.48);
+      color: #fff;
+      font-size: 26px;
+      line-height: 1;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: background 0.2s, transform 0.2s, border-color 0.2s;
+    }
+    .nav-btn:hover { background: rgba(255, 255, 255, 0.18); border-color: #fff; transform: scale(1.05); }
+    .dots { display: flex; gap: 9px; align-items: center; }
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 0;
+      background: rgba(255, 255, 255, 0.35);
+      cursor: pointer;
+      transition: transform 0.2s, background 0.2s;
+    }
+    .dot.active { background: #fff; transform: scale(1.28); }
+    .home-btn {
+      position: absolute;
+      left: 24px;
+      bottom: 18px;
+      z-index: 5;
+      width: 42px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      border-radius: 50%;
+      background: rgba(8, 28, 72, 0.48);
+      color: #fff;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: background 0.2s, transform 0.2s, border-color 0.2s;
+    }
+    .home-btn:hover { background: rgba(255, 255, 255, 0.18); border-color: #fff; transform: scale(1.06); }
+    .home-btn svg { width: 19px; height: 19px; display: block; }
+    .counter {
+      position: absolute;
+      right: 28px;
+      bottom: 24px;
+      z-index: 5;
+      font-size: 16px;
+      font-weight: 650;
+      letter-spacing: 0.12em;
+      color: rgba(255, 255, 255, 0.85);
+    }
+    .side-btn {
+      position: absolute;
+      top: 50%;
+      z-index: 5;
+      transform: translateY(-50%);
+      width: 52px;
+      height: 52px;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      border-radius: 50%;
+      background: rgba(8, 28, 72, 0.38);
+      color: #fff;
+      font-size: 28px;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+    }
+    .side-btn.prev { left: 12px; }
+    .side-btn.next { right: 12px; }
+    .side-btn:hover { background: rgba(255, 255, 255, 0.18); }
+
+    @keyframes riseIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @page { size: 13.333in 7.5in; margin: 0; }
+    @media print {
+      html, body { height: auto; overflow: visible; background: #0b4199; }
+      .deck { height: auto; overflow: visible; }
+      .video-bg, .ellipse, .nav, .side-btn, .home-btn, .counter, .lightbox { display: none !important; }
+      .slide {
+        position: relative !important;
+        inset: auto !important;
+        width: 1280px;
+        height: 720px;
+        opacity: 1 !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+        page-break-after: always;
+        break-after: page;
+        background:
+          radial-gradient(circle at 50% 42%, rgba(90, 180, 255, 0.28), transparent 44%),
+          linear-gradient(160deg, #0b4199 0%, #072968 100%);
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="deck" id="deck">
+    <div class="video-bg" aria-hidden="true">
+      <video
+        id="bgVideo"
+        autoplay
+        muted
+        loop
+        playsinline
+        preload="auto"
+        poster="https://mof.rudn.ru/assets/images/poster.jpg"
+      >
+        <source src="https://mof.rudn.ru/assets/video/main.webm" type="video/webm" />
+        <source src="https://mof.rudn.ru/assets/video/main.ogv" type="video/ogg" />
+        <source src="https://mof.rudn.ru/assets/video/main.mp4" type="video/mp4" />
+      </video>
+    </div>
+    <div class="ellipse" aria-hidden="true"></div>
+
+    <!-- СЛАЙД 1: ТИТУЛ -->
+    <section class="slide active" data-slide="0">
+      <div class="pad">
+        <div class="top-bar">
+          <span class="kicker">III Международный образовательный форум · 11–14 ноября 2026</span>
+          <span class="top-meta">Национальный реестр компетенций</span>
+        </div>
+        <div class="stage-center">
+          <div class="glass glass-accent title-box">
+            <div class="tag-top">Международная интеграция цифровых ресурсов</div>
+            <h1 class="hero-title">Международное сопоставление компетенций и реализация шага 9.2</h1>
+            <p class="subtitle" style="margin: 16px auto 0; text-align: center;">
+              Справочник международных мостов (шаги 1–2–4–5) и контур сопоставления паспорта компетенции с зарубежными рамками квалификаций
+            </p>
+          </div>
+          <div class="glass speaker-box">
+            <div>
+              <div class="speaker-name">Борисова Марина Петровна</div>
+              <div class="speaker-role">Президент АО «Национальные квалификации», кандидат юридических наук</div>
+            </div>
+            <div class="speaker-badge">
+              Цифровой реестр компетенций<br />drc.ao-nk.online
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- СЛАЙД 2: ДВУХУРОВНЕВАЯ АРХИТЕКТУРА -->
+    <section class="slide" data-slide="1">
+      <div class="pad">
+        <div class="top-bar">
+          <span class="kicker">Архитектура решения</span>
+          <span class="top-meta">Разделение справочника мостов и паспорта компетенции</span>
+        </div>
+        <h2 class="slide-title">Два связанных контура: единый справочник мостов и шаг 9.2 в паспорте</h2>
+        <div class="cards-2">
+          <article class="glass glass-accent big-card">
+            <div>
+              <span class="tag-top">Контур 1 · Глобальный справочник</span>
+              <h3>Международное сопоставление (справочник)</h3>
+              <p style="margin-top: 10px;">Формируется один раз методистом-международником и переиспользуется во всех паспортах компетенций:</p>
+              <ul>
+                <li><strong>Шаг 1. Реестры-аналоги:</strong> 33 зарубежные системы (ЕС, БРИКС, ЕАЭС, АСЕАН, США, Австралия) с оценкой совместимости.</li>
+                <li><strong>Шаг 2. Матрица уровней:</strong> мост 9 уровней НСК (приказ № 148н) ↔ EQF ↔ национальные рамки стран.</li>
+                <li><strong>Шаг 4. Образование / ISCED:</strong> уровни образования РФ, включая профобучение по ст. 73 № 273-ФЗ.</li>
+                <li><strong>Шаг 5. Компоненты A / B / C:</strong> правила пересчёта знаний, умений и навыков в классы целевых систем.</li>
+              </ul>
+            </div>
+            <div class="chips">
+              <span class="chip ok">Только 1 эталонная версия «Готова для применения»</span>
+              <span class="chip">Черновик ИИ + верификация экспертом</span>
+            </div>
+          </article>
+
+          <article class="glass big-card">
+            <div>
+              <span class="tag-top emerald">Контур 2 · Конструктор компетенции</span>
+              <h3>Шаг 9.2 «Международное сопоставление»</h3>
+              <p style="margin-top: 10px;">Применяет утверждённый мост к конкретному паспорту действующей компетенции (не ломая шаги 9 и 9.1):</p>
+              <ul>
+                <li><strong>Связка с мостом + локальный ESCO RDF:</strong> фиксация снимка моста (EQF, ISCED) и база 3 046 занятий / 15 163 навыков.</li>
+                <li><strong>Выбор целевых систем:</strong> точечный отбор нужных стран из 33 систем моста под задачу программы.</li>
+                <li><strong>Шаг 6 ТЗ. Цель сопряжения:</strong> сетевые программы, подбор выпускников, экспорт образования, миграция.</li>
+                <li><strong>Шаг 3 ТЗ. ТФ / ТД ↔ системы:</strong> построчное сопоставление с источником права и шкалой уверенности.</li>
+              </ul>
+            </div>
+            <div class="chips">
+              <span class="chip ok">Запрет выдуманных ссылок (anti-hallucination)</span>
+              <span class="chip">Двухэтапное подтверждение шагов 6 и 3</span>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- СЛАЙД 3: СПРАВОЧНИК — ВЕРСИИ И РЕЕСТРЫ-АНАЛОГИ (ШАГ 1) -->
+    <section class="slide" data-slide="2">
+      <div class="pad">
+        <div class="top-bar">
+          <span class="kicker">Справочник · Шаг 1</span>
+          <span class="top-meta">Версионирование мостов и каталог зарубежных реестров</span>
+        </div>
+        <h2 class="slide-title">Справочник мостов: 33 системы по странам и оценка совместимости с ЦРК</h2>
+        <div class="split-shot">
+          <div class="shot-frame" data-zoom="file:///C:/Users/Mihail/AppData/Local/Temp/cursor/screenshots/c1b-dict-card-esco.png">
+            <div class="shot-bar">
+              <span>Экран системы: Справочник → Шаг 1 «Реестры-аналоги» (карточка ESCO и EQF)</span>
+              <span class="hint">Нажмите для увеличения ⤢</span>
+            </div>
+            <div class="shot-img-wrap">
+              <img src="file:///C:/Users/Mihail/AppData/Local/Temp/cursor/screenshots/c1b-dict-card-esco.png" alt="Карточка ESCO в справочнике международного сопоставления" />
+            </div>
+          </div>
+          <div class="callouts">
+            <div class="glass glass-accent callout">
+              <div class="callout-head"><span class="pill-num">1</span>Приоритет интеграции (шкала 1–5)</div>
+              <p>Каждому зарубежному реестру задаётся роль: <strong>1 — основной мост с ЦРК</strong> (ESCO, O*NET), <strong>2 — ключевая НРК страны</strong> (AQF, NSQF Индии, VNQF Вьетнама, SAQA ЮАР, НСК Казахстана).</p>
+            </div>
+            <div class="glass callout">
+              <div class="callout-head"><span class="pill-num">2</span>6 критериев совместимости</div>
+              <p>Структурированная проверка: уровневая рамка, трудовые функции, машиночитаемость (RDF / JSON-LD / CSV), многоязычность, открытый API и блокчейн-верификация.</p>
+              <div class="chips">
+                <span class="chip ok">ESCO: RDF + API</span>
+                <span class="chip warn">Нац. рамки: PDF / HTML</span>
+              </div>
+            </div>
+            <div class="glass callout">
+              <div class="callout-head"><span class="pill-num">3</span>Управление версиями</div>
+              <p>Клонирование версий для экспериментов и строгий статус <strong>«Готова для применения»</strong> — в паспорта попадает только проверенный методистом мост.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- СЛАЙД 4: СПРАВОЧНИК — МАТРИЦА УРОВНЕЙ НСК ↔ НРК (ШАГ 2) -->
+    <section class="slide" data-slide="3">
+      <div class="pad">
+        <div class="top-bar">
+          <span class="kicker">Справочник · Шаг 2</span>
+          <span class="top-meta">Сопоставление квалификационных шкал разных стран</span>
+        </div>
+        <h2 class="slide-title">Матрица уровней НСК (1–9) ↔ EQF (1–8) ↔ национальные рамки стран</h2>
+        <div class="split-shot">
+          <div class="shot-frame" data-zoom="file:///C:/Users/Mihail/AppData/Local/Temp/cursor/screenshots/c2-dict-step2-matrix.png">
+            <div class="shot-bar">
+              <span>Экран системы: Шаг 2 «Матрица уровней НСК ↔ НРК» (Вьетнам, Индия, ЮАР)</span>
+              <span class="hint">Нажмите для увеличения ⤢</span>
+            </div>
+            <div class="shot-img-wrap contain">
+              <img src="file:///C:/Users/Mihail/AppData/Local/Temp/cursor/screenshots/c2-dict-step2-matrix.png" alt="Матрица уровней НСК и зарубежных НРК" />
+            </div>
+          </div>
+          <div class="callouts">
+            <div class="glass glass-accent callout">
+              <div class="callout-head"><span class="pill-num">9→8</span>Несовпадение размерности шкал</div>
+              <p>В России 9 уровней по приказу Минтруда № 148н, в EQF и Вьетнаме (VNQF) — 8, в Индии (NSQF) и ЮАР (SAQA) — <strong>10 уровней</strong>, в США (O*NET) — 5 Job Zones.</p>
+            </div>
+            <div class="glass callout">
+              <div class="callout-head"><span class="pill-num">≈</span>Подсветка приближений и пробелов</div>
+              <p>Система автоматически маркирует точные соответствия, диапазоны (например, уровень 9 НСК → <strong>9–10 в Индии и ЮАР</strong>) и пустые ячейки.</p>
+              <div class="chips">
+                <span class="chip ok">Уровни 6–9: высокая уверенность</span>
+                <span class="chip warn">Уровни 1–5: средняя</span>
+              </div>
+            </div>
+            <div class="glass callout">
+              <div class="callout-head"><span class="pill-num">!</span>Журнал расхождений по странам</div>
+              <p>Под каждой системой фиксируются правовые и методические допущения пересчёта, чтобы эксперт видел обоснование каждого моста.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- СЛАЙД 5: СПРАВОЧНИК — ОБРАЗОВАНИЕ / ISCED И ПРАВИЛА A/B/C (ШАГИ 4 И 5) -->
+    <section class="slide" data-slide="4">
+      <div class="pad">
+        <div class="top-bar">
+          <span class="kicker">Справочник · Шаги 4 и 5</span>
+          <span class="top-meta">Образовательные цензы ISCED и перевод структуры A / B / C</span>
+        </div>
+        <h2 class="slide-title">Учёт российской специфики (ст. 73 № 273-ФЗ) и правила пересчёта A / B / C</h2>
+        <div class="split-shot">
+          <div class="shot-frame" data-zoom="file:///C:/Users/Mihail/AppData/Local/Temp/cursor/screenshots/c4-dict-step5-abc.png">
+            <div class="shot-bar">
+              <span>Экран системы: Шаг 5 «Правила пересчёта A/B/C» по 33 зарубежным системам</span>
+              <span class="hint">Нажмите для увеличения ⤢</span>
+            </div>
+            <div class="shot-img-wrap">
+              <img src="file:///C:/Users/Mihail/AppData/Local/Temp/cursor/screenshots/c4-dict-step5-abc.png" alt="Правила пересчёта компонентов A/B/C" />
+            </div>
+          </div>
+          <div class="callouts">
+            <div class="glass glass-accent callout">
+              <div class="callout-head"><span class="pill-num">4</span>Образование ↔ ISCED-2011</div>
+              <p>В матрицу встроен отдельный трек <strong>профессионального обучения по ст. 73 № 273-ФЗ</strong> (профессии рабочих и должности служащих до 5 уровня НСК), чтобы не смешивать его с СПО.</p>
+            </div>
+            <div class="glass callout">
+              <div class="callout-head"><span class="pill-num">5</span>Перевод модели A / B / C</div>
+              <p><strong>A (Знания)</strong>, <strong>B (Умения)</strong>, <strong>C (Навыки)</strong> и <strong>Soft skills</strong> получают точные правила отображения: в классы онтологии для ESCO / O*NET / CTDL или в дескрипторы уровней для национальных рамок СНГ и БРИКС.</p>
+            </div>
+            <div class="glass callout">
+              <div class="callout-head"><span class="pill-num">✓</span>Единый методический язык</div>
+              <p>Правила написаны строгим нормативно-методическим языком и автоматически подставляются подсказкой в шаг 9.2 при оценке каждой трудовой функции.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- СЛАЙД 6: ШАГ 9.2 — СВЯЗКА С МОСТОМ И ВЫБОР ЦЕЛЕВЫХ СИСТЕМ -->
+    <section class="slide" data-slide="5">
+      <div class="pad">
+        <div class="top-bar">
+          <span class="kicker">Реализация шага 9.2 · Раздел 1</span>
+          <span class="top-meta">Применение моста и локального графа ESCO к паспорту</span>
+        </div>
+        <h2 class="slide-title">Шаг 9.2 в паспорте: снимок моста, локальный ESCO RDF и выбор стран</h2>
+        <div class="split-shot">
+          <div class="shot-frame" data-zoom="file:///C:/Users/Mihail/AppData/Local/Temp/cursor/screenshots/c6b-step92-bridge-full.png">
+            <div class="shot-bar">
+              <span>Экран системы: Шаг 9.2 → Блок 1 «Связка с мостом (шаги 1, 2, 4, 5)»</span>
+              <span class="hint">Нажмите для увеличения ⤢</span>
+            </div>
+            <div class="shot-img-wrap">
+              <img src="file:///C:/Users/Mihail/AppData/Local/Temp/cursor/screenshots/c6b-step92-bridge-full.png" alt="Шаг 9.2 Связка паспорта с мостом и локальным ESCO" />
+            </div>
+          </div>
+          <div class="callouts">
+            <div class="glass glass-accent callout">
+              <div class="callout-head"><span class="pill-num">1</span>Неизменяемый снимок моста</div>
+              <p>Кнопка <strong>«Применить мост к паспорту»</strong> автоматически вычисляет целевые уровни EQF и ISCED и сохраняет <code>bridge_snapshot</code> — паспорт защищён от будущих правок справочника.</p>
+            </div>
+            <div class="glass callout">
+              <div class="callout-head"><span class="pill-num">2</span>Автономный граф ESCO v1.2</div>
+              <p>Локально развёрнутая RDF-база: <strong>3 046 занятий</strong> и <strong>15 163 навыка</strong>. Быстрый поиск без зависимости от зарубежных облачных сервисов и сетевых сбоев.</p>
+            </div>
+            <div class="glass callout">
+              <div class="callout-head"><span class="pill-num">3</span>Таргетированный выбор из 33 систем</div>
+              <p>Методист отмечает только те страны и реестры, с которыми реально строится сопряжение по данной компетенции — без информационного шума.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- СЛАЙД 7: ШАГ 9.2 — ЦЕЛЬ СОПРЯЖЕНИЯ (ШАГ 6 ТЗ) -->
+    <section class="slide" data-slide="6">
+      <div class="pad">
+        <div class="top-bar">
+          <span class="kicker">Реализация шага 9.2 · Раздел 2</span>
+          <span class="top-meta">Цели международного сопряжения и глубина требований</span>
+        </div>
+        <h2 class="slide-title">Настройка под прикладную цель: от сетевых программ до миграции</h2>
+        <div class="split-shot">
+          <div class="shot-frame" data-zoom="file:///C:/Users/Mihail/AppData/Local/Temp/cursor/screenshots/c7-step92-sec2-purpose.png">
+            <div class="shot-bar">
+              <span>Экран системы: Шаг 9.2 → Блок 2 «Цель сопряжения» (шаг 6 ТЗ)</span>
+              <span class="hint">Нажмите для увеличения ⤢</span>
+            </div>
+            <div class="shot-img-wrap">
+              <img src="file:///C:/Users/Mihail/AppData/Local/Temp/cursor/screenshots/c7-step92-sec2-purpose.png" alt="Цель сопряжения и требования к данным, форматам и верификации" />
+            </div>
+          </div>
+          <div class="callouts">
+            <div class="glass glass-accent callout">
+              <div class="callout-head"><span class="pill-num">4</span>Четыре прикладных сценария</div>
+              <p>Можно комбинировать цели: <strong>сетевые образовательные программы</strong>, <strong>экспорт образования</strong>, <strong>подбор выпускников</strong> и <strong>регулирование миграции</strong>.</p>
+            </div>
+            <div class="glass callout">
+              <div class="callout-head"><span class="pill-num">3×</span>Автоформирование регламента</div>
+              <p>По выбранным целям и глубине (<em>базовая / средняя / полная</em>) формируются 3 блока требований: <strong>Состав данных (Data)</strong>, <strong>Машиночитаемые форматы (Formats)</strong> и <strong>Процедура верификации (Verification)</strong>.</p>
+            </div>
+            <div class="glass callout">
+              <div class="callout-head"><span class="pill-num">✓</span>Двойной контроль качества</div>
+              <p>ИИ-агент готовит структурированный проект требований, но статус <strong>«Подтверждено»</strong> выставляет только уполномоченный методист.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- СЛАЙД 8: ШАГ 9.2 — ПОСТРОЧНОЕ СОПОСТАВЛЕНИЕ ТФ / ТД (ШАГ 3 ТЗ) -->
+    <section class="slide" data-slide="7">
+      <div class="pad">
+        <div class="top-bar">
+          <span class="kicker">Реализация шага 9.2 · Раздел 3</span>
+          <span class="top-meta">Построчное сопоставление трудовых функций и компонентов паспорта</span>
+        </div>
+        <h2 class="slide-title">Доказательное сопоставление: аналог, нормативный источник и уверенность</h2>
+        <div class="split-shot">
+          <div class="shot-frame" data-zoom="file:///C:/Users/Mihail/AppData/Local/Temp/cursor/screenshots/c8-step92-sec3-rows.png">
+            <div class="shot-bar">
+              <span>Экран системы: Шаг 9.2 → Блок 3 «ТФ/ТД ↔ системы моста» (пример НСК Казахстана)</span>
+              <span class="hint">Нажмите для увеличения ⤢</span>
+            </div>
+            <div class="shot-img-wrap">
+              <img src="file:///C:/Users/Mihail/AppData/Local/Temp/cursor/screenshots/c8-step92-sec3-rows.png" alt="Построчное сопоставление трудовой функции с НСК Казахстана" />
+            </div>
+          </div>
+          <div class="callouts">
+            <div class="glass glass-accent callout">
+              <div class="callout-head"><span class="pill-num">ТФ</span>Декомпозиция до действия</div>
+              <p>Каждая трудовая функция и компонент A / B / C сопоставляются отдельно с каждой выбранной страновой системой с подстановкой уровня и правила из моста.</p>
+            </div>
+            <div class="glass callout">
+              <div class="callout-head"><span class="pill-num">§</span>Обязательная ссылка на акт</div>
+              <p>Для страновых систем указывается реальный нормативный источник (например, <em>Приказ МЧС РК № 350</em>), степень совпадения (<strong>полное / частичное / нет аналога</strong>) и уверенность.</p>
+            </div>
+            <div class="glass callout">
+              <div class="callout-head"><span class="pill-num">0%</span>Защита от «выдуманных» норм</div>
+              <p>Принцип <code>partner_mapping_search</code>: если подтверждённого кандидата нет в проверенном корпусе или ESCO RDF — слот остаётся пустым на решение эксперта.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- СЛАЙД 9: СЛОЖНОСТИ И БАРЬЕРЫ НА ПУТИ МЕЖДУНАРОДНОГО СОПОСТАВЛЕНИЯ -->
+    <section class="slide" data-slide="8">
+      <div class="pad">
+        <div class="top-bar">
+          <span class="kicker">Вызовы и ограничения</span>
+          <span class="top-meta">Что объективно усложняет международное сопоставление</span>
+        </div>
+        <h2 class="slide-title">Ключевые сложности на пути международного сопоставления компетенций</h2>
+        <div class="cards-2x2">
+          <article class="glass big-card">
+            <div>
+              <span class="tag-top amber">Барьер 1 · Методологический</span>
+              <h3>Асимметрия шкал и единиц учёта</h3>
+              <p style="margin-top: 8px;">9 уровней НСК РФ против 8 уровней EQF/АСЕАН, 10 уровней Индии и ЮАР или 5 Job Zones США. Одни системы оперируют «трудовыми функциями», другие — атомарными «навыками» или «квалификациями в целом».</p>
+            </div>
+          </article>
+
+          <article class="glass big-card">
+            <div>
+              <span class="tag-top amber">Барьер 2 · Технологический</span>
+              <h3>Дефицит открытых API и машиночитаемых данных</h3>
+              <p style="margin-top: 8px;">Полные онтологии в RDF/API доступны лишь у части систем (ESCO, O*NET). Большинство национальных рамок стран БРИКС и СНГ публикуются в виде PDF-документов и разрозненных ведомственных приказов.</p>
+            </div>
+          </article>
+
+          <article class="glass big-card">
+            <div>
+              <span class="tag-top amber">Барьер 3 · Правовой и регуляторный</span>
+              <h3>Национально-замкнутые и регулируемые профессии</h3>
+              <p style="margin-top: 8px;">В праве, медицине, атомной отрасли, безопасности и госуправлении прямая эквивалентность невозможна без учёта национального законодательства, лицензирования и локального допуска к профессии.</p>
+            </div>
+          </article>
+
+          <article class="glass big-card">
+            <div>
+              <span class="tag-top amber">Барьер 4 · Лингвистический и ИИ-риски</span>
+              <h3>Терминологические ловушки и риск галлюцинаций ИИ</h3>
+              <p style="margin-top: 8px;">Буквальный перевод терминов («умение», «skill», «competence», «профобучение по ст. 73») искажает юридический смысл, а генеративные модели без верифицированного корпуса склонны выдумывать реквизиты актов.</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- СЛАЙД 10: ЗАДАЧИ, КОТОРЫЕ НЕОБХОДИМО РЕШИТЬ -->
+    <section class="slide" data-slide="9">
+      <div class="pad">
+        <div class="top-bar">
+          <span class="kicker">Дорожная карта задач</span>
+          <span class="top-meta">Практические шаги для масштабирования контура 9.2</span>
+        </div>
+        <h2 class="slide-title">Задачи, которые необходимо решить для промышленного внедрения</h2>
+        <div class="cards-3">
+          <article class="glass glass-accent big-card">
+            <div>
+              <span class="tag-top">Задача 1 · Данные</span>
+              <h3>Пополнение верифицированного корпуса стран-партнёров</h3>
+              <ul>
+                <li>Оцифровка отраслевых профстандартов и рамок стран ЕАЭС, БРИКС и АСЕАН в локальный проверенный корпус.</li>
+                <li>Регулярная синхронизация релизов ESCO RDF и классификаторов ISCO / ОКЗ / ISCED.</li>
+              </ul>
+            </div>
+            <div class="chips"><span class="chip">ЕАЭС · БРИКС · АСЕАН</span></div>
+          </article>
+
+          <article class="glass big-card">
+            <div>
+              <span class="tag-top">Задача 2 · Экспертиза</span>
+              <h3>Институт методистов-международников и СПК</h3>
+              <ul>
+                <li>Регламент перекрёстной верификации матриц минимум двумя профильными экспертами.</li>
+                <li>Согласование отраслевых изъятий и условий адаптационного допуска с советами по профквалификациям.</li>
+              </ul>
+            </div>
+            <div class="chips"><span class="chip ok">Роль intl_methodologist в ЦРК</span></div>
+          </article>
+
+          <article class="glass big-card">
+            <div>
+              <span class="tag-top">Задача 3 · Интероперабельность</span>
+              <h3>Двусторонние протоколы и API обмена паспортами</h3>
+              <ul>
+                <li>Унификация выгрузки сопоставленных паспортов в JSON-LD, XML, RDF и DOCX на языках стран-партнёров.</li>
+                <li>Межведомственные и межуниверситетские соглашения о взаимном учёте профилей компетенций.</li>
+              </ul>
+            </div>
+            <div class="chips"><span class="chip">RU · EN · ZH · HI · VI</span></div>
+          </article>
+        </div>
+        <div class="glass bottom-strip">
+          <span>Ключевой принцип реализации в ЦРК:</span>
+          <span><strong>ИИ ускоряет черновую аналитику в десятки раз, но юридически и методически значимую точку всегда ставит эксперт.</strong></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- СЛАЙД 11: ПРЕИМУЩЕСТВА ОТ РЕАЛИЗАЦИИ -->
+    <section class="slide" data-slide="10">
+      <div class="pad">
+        <div class="top-bar">
+          <span class="kicker">Эффекты и преимущества</span>
+          <span class="top-meta">Практическая отдача для образования, рынка труда и государства</span>
+        </div>
+        <h2 class="slide-title">Преимущества реализации справочника мостов и шага 9.2</h2>
+        <div class="cards-2x2">
+          <article class="glass glass-accent big-card">
+            <div>
+              <span class="tag-top emerald">Для университетов и колледжей</span>
+              <h3>Быстрый запуск сетевых программ и экспорт образования</h3>
+              <p style="margin-top: 8px;">Готовая доказательная таблица эквивалентности модулей, зачётных единиц и результатов обучения для совместных дипломов, международных аккредитаций и привлечения иностранных абитуриентов.</p>
+            </div>
+          </article>
+
+          <article class="glass glass-accent big-card">
+            <div>
+              <span class="tag-top emerald">Для работодателей и СПК</span>
+              <h3>Прозрачный найм и управляемая трудовая мобильность</h3>
+              <p style="margin-top: 8px;">Понятный перевод зарубежной квалификации на язык российских трудовых функций (приказ № 148н): что специалист уже умеет, а где требуется дообучение или независимая оценка квалификации.</p>
+            </div>
+          </article>
+
+          <article class="glass big-card">
+            <div>
+              <span class="tag-top">Для государства и регуляторов</span>
+              <h3>Суверенная цифровая инфраструктура сопоставления</h3>
+              <p style="margin-top: 8px;">Собственный эталонный банк международных мостов на территории РФ: прозрачные основания для признания образования, настройки миграционных фильтров и продвижения российских стандартов за рубежом.</p>
+            </div>
+          </article>
+
+          <article class="glass big-card">
+            <div>
+              <span class="tag-top">Для методистов и экспертов</span>
+              <h3>Сокращение трудоёмкости с месяцев до часов</h3>
+              <p style="margin-top: 8px;">Один раз подтверждённый мост (шаги 1–2–4–5) автоматически применяется к сотням паспортов компетенций с полным аудиторским следом версий, источников и экспертных решений.</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- СЛАЙД 12: ФИНАЛЬНЫЙ -->
+    <section class="slide" data-slide="11">
+      <div class="pad">
+        <div class="top-bar">
+          <span class="kicker">III Международный образовательный форум · 11–14 ноября 2026</span>
+          <span class="top-meta">АО «Национальные квалификации»</span>
+        </div>
+        <div class="stage-center">
+          <div class="glass glass-accent title-box">
+            <div class="tag-top emerald">Национальный реестр компетенций</div>
+            <h1 class="hero-title">Спасибо за внимание!</h1>
+            <p class="subtitle" style="margin: 16px auto 0; text-align: center;">
+              Готовы к совместному пилотированию международных мостов компетенций с университетами, СПК и партнёрами стран ЕАЭС и БРИКС
+            </p>
+          </div>
+          <div class="glass speaker-box">
+            <div>
+              <div class="speaker-name">Борисова Марина Петровна</div>
+              <div class="speaker-role">Президент АО «Национальные квалификации», к.ю.н.</div>
+            </div>
+            <div class="speaker-badge">
+              drc.ao-nk.online · ao-nk.ru<br />aonk@ao-nk.ru
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Лайтбокс для показа любого скриншота крупно на весь экран проектора -->
+    <div class="lightbox" id="lightbox" role="dialog" aria-label="Увеличенный снимок экрана">
+      <img id="lightboxImg" src="" alt="Увеличенный экран системы" />
+    </div>
+
+    <button class="side-btn prev" type="button" id="prevSide" aria-label="Предыдущий слайд">‹</button>
+    <button class="side-btn next" type="button" id="nextSide" aria-label="Следующий слайд">›</button>
+
+    <div class="nav">
+      <button class="nav-btn" type="button" id="prev" aria-label="Предыдущий слайд">‹</button>
+      <div class="dots" id="dots"></div>
+      <button class="nav-btn" type="button" id="next" aria-label="Следующий слайд">›</button>
+    </div>
+    <button class="home-btn" type="button" id="home" title="Домой" aria-label="Домой — на первый слайд">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 10.5 12 3l9 7.5" />
+        <path d="M5.5 9.5V20h13V9.5" />
+        <path d="M9.5 20v-6h5v6" />
+      </svg>
+    </button>
+    <div class="counter" id="counter">1 / 12</div>
+  </main>
+
+  <script>
+    const slides = Array.from(document.querySelectorAll(".slide"));
+    const dotsBox = document.getElementById("dots");
+    const counter = document.getElementById("counter");
+    const video = document.getElementById("bgVideo");
+    const lightbox = document.getElementById("lightbox");
+    const lightboxImg = document.getElementById("lightboxImg");
+    let index = 0;
+
+    // Логотип АО «НК» в правом верхнем углу на каждом слайде
+    slides.forEach((slide) => {
+      const logo = document.createElement("img");
+      logo.className = "slide-logo";
+      logo.src = "file:///C:/Users/Mihail/.cursor/projects/c-IT-DRC/assets/______________________________________________-f8fa6238-8053-476c-a538-b02b50bdf32b.png";
+      logo.alt = "Национальные Квалификации";
+      slide.appendChild(logo);
+    });
+
+    function resizeVideo() {
+      const wrapper = document.querySelector(".video-bg");
+      if (!wrapper || !video) return;
+      const w = wrapper.clientWidth;
+      const h = wrapper.clientHeight;
+      if (window.innerWidth <= 500) {
+        video.style.height = w + "px";
+        video.style.width = h + "px";
+      } else {
+        video.style.height = h + "px";
+        video.style.width = w + "px";
+      }
+    }
+
+    async function ensurePlay() {
+      if (!video) return;
+      video.muted = true;
+      try { await video.play(); } catch (_) {}
+    }
+
+    slides.forEach((_, i) => {
+      const dot = document.createElement("button");
+      dot.className = "dot" + (i === 0 ? " active" : "");
+      dot.type = "button";
+      dot.setAttribute("aria-label", "Слайд " + (i + 1));
+      dot.addEventListener("click", () => go(i));
+      dotsBox.appendChild(dot);
+    });
+    const dots = Array.from(dotsBox.children);
+
+    function go(next) {
+      index = (next + slides.length) % slides.length;
+      slides.forEach((slide, i) => slide.classList.toggle("active", i === index));
+      dots.forEach((dot, i) => dot.classList.toggle("active", i === index));
+      counter.textContent = (index + 1) + " / " + slides.length;
+    }
+
+    // По клику на любой снимок экрана открываем его во весь проектор
+    document.querySelectorAll(".shot-frame[data-zoom]").forEach((frame) => {
+      frame.addEventListener("click", () => {
+        lightboxImg.src = frame.getAttribute("data-zoom") || "";
+        lightbox.classList.add("open");
+      });
+    });
+    lightbox.addEventListener("click", () => {
+      lightbox.classList.remove("open");
+      lightboxImg.src = "";
+    });
+
+    document.getElementById("home").addEventListener("click", () => go(0));
+    document.getElementById("prev").addEventListener("click", () => go(index - 1));
+    document.getElementById("next").addEventListener("click", () => go(index + 1));
+    document.getElementById("prevSide").addEventListener("click", () => go(index - 1));
+    document.getElementById("nextSide").addEventListener("click", () => go(index + 1));
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && lightbox.classList.contains("open")) {
+        lightbox.classList.remove("open");
+        lightboxImg.src = "";
+        return;
+      }
+      if (event.key === "ArrowRight" || event.key === "PageDown" || event.key === " ") {
+        event.preventDefault();
+        go(index + 1);
+      }
+      if (event.key === "ArrowLeft" || event.key === "PageUp") {
+        event.preventDefault();
+        go(index - 1);
+      }
+      if (event.key === "Home") go(0);
+      if (event.key === "End") go(slides.length - 1);
+      if (event.key.toLowerCase() === "f") {
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+        else document.exitFullscreen?.();
+      }
+    });
+
+    let touchX = null;
+    document.addEventListener("touchstart", (event) => {
+      touchX = event.changedTouches[0].clientX;
+    }, { passive: true });
+    document.addEventListener("touchend", (event) => {
+      if (touchX === null) return;
+      const dx = event.changedTouches[0].clientX - touchX;
+      if (Math.abs(dx) > 50) go(index + (dx < 0 ? 1 : -1));
+      touchX = null;
+    }, { passive: true });
+
+    window.addEventListener("resize", resizeVideo);
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) ensurePlay();
+    });
+    resizeVideo();
+    ensurePlay();
+  </script>
+</body>
+</html>

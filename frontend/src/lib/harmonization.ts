@@ -84,6 +84,7 @@ export type PassportHarmonization = {
   step3: PassportStepBlock;
   step6: PassportStepBlock;
   version?: HarmonizationVersion;
+  versions?: Array<{ id: number; title: string; ready_for_apply: boolean }>;
   ai_agent?: { configured?: boolean; model?: string };
   bridge_context?: BridgeContext;
   esco?: EscoLocalStatus;

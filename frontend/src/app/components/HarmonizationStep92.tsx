@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router";
 import { Bot, Check, Globe2, Link2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/context/AuthContext";
 import { useI18n } from "@/context/I18nContext";
 import { apiClient } from "@/api/client";
 import { AutoTextarea } from "@/app/components/AutoTextarea";
@@ -43,6 +44,7 @@ type SkillRow = {
 
 export function HarmonizationStep92({ competenceId }: Props) {
   const { t } = useI18n();
+  const { isIntlMethodologist } = useAuth();
   const [data, setData] = useState<PassportHarmonization | null>(null);
   const [versions, setVersions] = useState<Array<{ id: number; title: string; ready_for_apply: boolean }>>([]);
   const [versionId, setVersionId] = useState<number | null>(null);
@@ -52,10 +54,28 @@ export function HarmonizationStep92({ competenceId }: Props) {
   const load = useCallback(async () => {
     if (!competenceId) return;
     setError(null);
-    const [passport, vers] = await Promise.all([
-      apiClient.getPassportHarmonization(competenceId, versionId || undefined),
-      apiClient.listHarmonizationVersions(),
-    ]);
+    const passport = await apiClient.getPassportHarmonization(competenceId, versionId || undefined);
+    let vers = passport.versions ?? [];
+    if (vers.length === 0) {
+      try {
+        const listed = await apiClient.listHarmonizationVersions();
+        vers = listed.map((v) => ({
+          id: v.id,
+          title: v.title,
+          ready_for_apply: v.ready_for_apply,
+        }));
+      } catch {
+        if (passport.version) {
+          vers = [
+            {
+              id: passport.version.id,
+              title: passport.version.title,
+              ready_for_apply: Boolean(passport.version.ready_for_apply),
+            },
+          ];
+        }
+      }
+    }
     setData(passport);
     setVersions(vers.map((v) => ({ id: v.id, title: v.title, ready_for_apply: v.ready_for_apply })));
     setVersionId(passport.version_id);
@@ -224,12 +244,14 @@ export function HarmonizationStep92({ competenceId }: Props) {
             <h2 className="text-xl font-semibold text-gray-900">{t("wizard.step92Title")}</h2>
             <p className="text-sm text-gray-500 mt-1 max-w-3xl">{t("wizard.step92Lead")}</p>
           </div>
-          <Link
-            to="/admin/international-mapping"
-            className="shrink-0 text-xs font-semibold text-primary hover:underline"
-          >
-            {t("intl.openVersions")}
-          </Link>
+          {isIntlMethodologist ? (
+            <Link
+              to="/admin/international-mapping"
+              className="shrink-0 text-xs font-semibold text-primary hover:underline"
+            >
+              {t("intl.openVersions")}
+            </Link>
+          ) : null}
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-gray-100 pt-4">
           <Globe2 className="w-4 h-4 text-slate-600" />

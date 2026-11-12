@@ -3085,6 +3085,37 @@ def _competence_context_for_ai(comp: Competence) -> dict:
     }
 
 
+def _harmonization_version_choices(session) -> list[dict]:
+    rows = (
+        session.query(HarmonizationVersion)
+        .order_by(HarmonizationVersion.ready_for_apply.desc(), HarmonizationVersion.updated_at.desc())
+        .all()
+    )
+    return [
+        {
+            "id": row.id,
+            "title": row.title,
+            "ready_for_apply": bool(row.ready_for_apply),
+        }
+        for row in rows
+    ]
+
+
+def _require_passport_mapping_editor(session, user, comp: Competence) -> None:
+    """TEMP: restore later — steps 9–9.2 for every accepted member of this competence.
+
+    Catalog routes stay admin / intl_methodologist. See docs/temp-relaxed-validation.md.
+    """
+    if is_intl_methodologist_role(user):
+        return
+    if _collaboration_role(session, user, comp) in ("leader", "member"):
+        return
+    raise HTTPException(
+        403,
+        "Шаги 9–9.2 доступны участникам рабочей группы этой компетенции",
+    )
+
+
 def _resolve_passport_version(session, version_id: int | None) -> HarmonizationVersion:
     if version_id:
         return _get_harmonization_version(session, int(version_id))
@@ -3108,13 +3139,14 @@ def _resolve_passport_version(session, version_id: int | None) -> HarmonizationV
 async def get_passport_harmonization(
     comp_id: int,
     version_id: Optional[int] = None,
-    current_user: User = Depends(get_current_intl_methodologist),
+    current_user: User = Depends(get_current_user),
 ):
     session = SessionLocal()
     try:
         comp = session.query(Competence).filter(Competence.id == comp_id).first()
         if not comp:
             raise HTTPException(404, "Компетенция не найдена")
+        _require_passport_mapping_editor(session, current_user, comp)
         version = _resolve_passport_version(session, version_id)
         row = (
             session.query(PassportHarmonization)
@@ -3138,6 +3170,7 @@ async def get_passport_harmonization(
         return {
             **serialize_passport(row),
             "version": serialize_version(version, include_steps=False),
+            "versions": _harmonization_version_choices(session),
             "ai_agent": ai_agent_status(),
             **_passport_bridge_bundle(session, comp, version),
         }
@@ -3149,13 +3182,14 @@ async def get_passport_harmonization(
 async def put_passport_harmonization(
     comp_id: int,
     data: PassportHarmonizationPut,
-    current_user: User = Depends(get_current_intl_methodologist),
+    current_user: User = Depends(get_current_user),
 ):
     session = SessionLocal()
     try:
         comp = session.query(Competence).filter(Competence.id == comp_id).first()
         if not comp:
             raise HTTPException(404, "Компетенция не найдена")
+        _require_passport_mapping_editor(session, current_user, comp)
         version = _resolve_passport_version(session, data.version_id)
         row = (
             session.query(PassportHarmonization)
@@ -3205,7 +3239,7 @@ async def put_passport_harmonization(
 async def apply_passport_bridge(
     comp_id: int,
     data: PassportApplyBridgeRequest = PassportApplyBridgeRequest(),
-    current_user: User = Depends(get_current_intl_methodologist),
+    current_user: User = Depends(get_current_user),
 ):
     """Встраивает снимок моста 1/2/4/5 в шаг 6 паспорта (шаги 9 и 9.1 не затрагиваются)."""
     session = SessionLocal()
@@ -3213,6 +3247,7 @@ async def apply_passport_bridge(
         comp = session.query(Competence).filter(Competence.id == comp_id).first()
         if not comp:
             raise HTTPException(404, "Компетенция не найдена")
+        _require_passport_mapping_editor(session, current_user, comp)
         version = _resolve_passport_version(session, data.version_id)
         row = (
             session.query(PassportHarmonization)
@@ -3269,7 +3304,7 @@ async def ai_draft_passport_harmonization_step(
     comp_id: int,
     step: int,
     data: PassportStepAiRequest = PassportStepAiRequest(),
-    current_user: User = Depends(get_current_intl_methodologist),
+    current_user: User = Depends(get_current_user),
 ):
     if step not in PASSPORT_STEPS:
         raise HTTPException(400, "Шаг должен быть 3 или 6")
@@ -3278,6 +3313,7 @@ async def ai_draft_passport_harmonization_step(
         comp = session.query(Competence).filter(Competence.id == comp_id).first()
         if not comp:
             raise HTTPException(404, "Компетенция не найдена")
+        _require_passport_mapping_editor(session, current_user, comp)
         version = _resolve_passport_version(session, data.version_id)
         row = (
             session.query(PassportHarmonization)
@@ -3387,7 +3423,7 @@ async def verify_passport_harmonization_step(
     comp_id: int,
     step: int,
     data: PassportStepAiRequest = PassportStepAiRequest(),
-    current_user: User = Depends(get_current_intl_methodologist),
+    current_user: User = Depends(get_current_user),
 ):
     if step not in PASSPORT_STEPS:
         raise HTTPException(400, "Шаг должен быть 3 или 6")
@@ -3396,6 +3432,7 @@ async def verify_passport_harmonization_step(
         comp = session.query(Competence).filter(Competence.id == comp_id).first()
         if not comp:
             raise HTTPException(404, "Компетенция не найдена")
+        _require_passport_mapping_editor(session, current_user, comp)
         version = _resolve_passport_version(session, data.version_id)
         row = (
             session.query(PassportHarmonization)
@@ -4336,11 +4373,16 @@ def _serialize_competence_for_user(
     can_invite = (admin or role == "leader") and status != CompetenceStatus.APPROVED and not moderator_only
     # Методист-международник может открывать паспорт для 9.2 (и править поля при необходимости).
     # Модератор только смотрит и назначает экспертов — без участия в разработке.
+    # TEMP: restore later — accepted RG member may edit an approved competence
+    # to fill steps 9–9.2 (docs/temp-relaxed-validation.md).
     can_edit = (not moderator_only) and (
         admin
         or intl_only
         or role == "leader"
-        or (role == "member" and status == CompetenceStatus.DRAFT)
+        or (
+            role == "member"
+            and status in (CompetenceStatus.DRAFT, CompetenceStatus.APPROVED)
+        )
     )
     payload = serialize_competence(
         comp,
@@ -5544,8 +5586,12 @@ async def update_competence(comp_id: int, data: CompetenceUpdate, current_user: 
             elif role not in ("admin",) and not is_owner and not assigned:
                 if not is_collab:
                     raise HTTPException(403, "Доступ запрещён")
-                if comp.status != CompetenceStatus.DRAFT:
-                    raise HTTPException(403, "Участник рабочей группы может править только черновик")
+                # TEMP: restore later — member may save steps 9–9.2 on an approved competence.
+                if comp.status not in (CompetenceStatus.DRAFT, CompetenceStatus.APPROVED):
+                    raise HTTPException(
+                        403,
+                        "Участник рабочей группы может править черновик и шаги 9–9.2 действующей компетенции",
+                    )
         raw_fields: dict[str, Any] = {}
         for key in (
             "description",
