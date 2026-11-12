@@ -22,4 +22,5 @@ from .swot_models import (  # noqa: F401
     SwotArchiveEntry,
     SWOT_TOPICS,
     SWOT_TABLE_COUNT,
+    SWOT_TABLE_TITLES,
 )

@@ -44,6 +44,7 @@ from .db.swot_models import (
     SwotArchiveEntry,
     SWOT_TOPICS,
     SWOT_TABLE_COUNT,
+    SWOT_TABLE_TITLES,
 )
 from .deepseek_client import chat_json, deepseek_configured, deepseek_status
 from .db.notification_models import Notification
@@ -291,14 +292,17 @@ ensure_prof_training_professions()
 
 
 def ensure_swot_tables() -> None:
-    """Создаёт 6 столов SWOT, если их ещё нет."""
+    """Создаёт 6 столов SWOT и выставляет отраслевые названия."""
     session = SessionLocal()
     try:
-        existing = {row.number for row in session.query(SwotTable).all()}
+        by_number = {row.number: row for row in session.query(SwotTable).all()}
         for number in range(1, SWOT_TABLE_COUNT + 1):
-            if number in existing:
-                continue
-            session.add(SwotTable(number=number, title=f"Стол {number}"))
+            title = SWOT_TABLE_TITLES.get(number) or f"Стол {number}"
+            row = by_number.get(number)
+            if row is None:
+                session.add(SwotTable(number=number, title=title))
+            elif (row.title or "") != title:
+                row.title = title
         session.commit()
     except Exception as exc:
         session.rollback()
@@ -5931,7 +5935,7 @@ async def list_swot_tables(current_user: User = Depends(get_current_user)):
                 {
                     "id": table.id,
                     "number": table.number,
-                    "title": table.title or f"Стол {table.number}",
+                    "title": SWOT_TABLE_TITLES.get(table.number) or table.title or f"Стол {table.number}",
                     "participants": len(participant_ids),
                     "my_filled_topics": filled_topics,
                     "my_total_topics": len(SWOT_TOPICS),
@@ -5976,7 +5980,7 @@ async def get_swot_table(table_id: int, current_user: User = Depends(get_current
         return {
             "id": table.id,
             "number": table.number,
-            "title": table.title or f"Стол {table.number}",
+            "title": SWOT_TABLE_TITLES.get(table.number) or table.title or f"Стол {table.number}",
             "topics": list(SWOT_TOPICS),
             "analyses": analyses,
         }
@@ -6085,7 +6089,11 @@ def _collect_swot_corpus(session) -> tuple[str, int]:
             continue
         used += 1
         table = table_by_id.get(row.table_id)
-        table_label = f"Стол {table.number}" if table else f"table#{row.table_id}"
+        table_label = (
+            SWOT_TABLE_TITLES.get(table.number) or table.title or f"Стол {table.number}"
+            if table
+            else f"table#{row.table_id}"
+        )
         topic_label = _TOPIC_TITLES_RU.get(row.topic, row.topic)
         blocks.append(
             "\n".join(

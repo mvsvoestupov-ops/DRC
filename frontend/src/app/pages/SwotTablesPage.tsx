@@ -100,7 +100,7 @@ export function SwotTablesPage() {
                   ) : null}
                 </div>
                 <h2 className="text-xl font-semibold text-gray-900 group-hover:text-primary transition-colors">
-                  {t("swot.tableName", { n: table.number })}
+                  {t(`swot.tableNames.${table.number}`)}
                 </h2>
                 <p className="mt-2 text-sm text-gray-600">{t("swot.tableHint")}</p>
                 <div className="mt-5 flex items-center justify-between text-sm text-gray-500">

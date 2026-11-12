@@ -195,7 +195,7 @@ export function SwotTableWorkspacePage() {
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">
           {tableNumber != null
-            ? t("swot.tableWorkspaceTitle", { n: tableNumber })
+            ? t(`swot.tableNames.${tableNumber}`)
             : t("swot.title")}
         </h1>
         <p className="mt-1 text-gray-600">{t("swot.workspaceLead")}</p>

@@ -14,7 +14,7 @@ REM    C:\IT\DRC\push-role-wizard-flow.cmd /push
 REM    C:\IT\DRC\push-role-wizard-flow.cmd /deploy
 REM ============================================================
 
-set "MSG=TEMP: restore later — working group can develop steps 9-9.2"
+set "MSG=TEMP: restore later — RG can fill steps 9-9.2; SWOT tables named by sector"
 
 if /I "%~1"=="/deploy" (
   call "%~dp0push-and-deploy.cmd" /deploy

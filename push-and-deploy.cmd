@@ -12,7 +12,7 @@ set "REMOTE_DIR=/opt/drc"
 set "BRANCH=main"
 set "VITE_API_URL=https://drc.ao-nk.online/api"
 set "SITE_URL=https://drc.ao-nk.online"
-set "COMMIT_MSG=TEMP: restore later — working group can develop steps 9-9.2"
+set "COMMIT_MSG=TEMP: restore later — RG can fill steps 9-9.2; SWOT tables named by sector"
 REM =====================================================
 
 REM Запускайте из cmd.exe (не PowerShell Cursor):
@@ -32,12 +32,17 @@ if /I "%~1"=="/deploy" goto :deploy
 
 if /I "%~1"=="/push" (
   set "PUSH_ONLY=1"
-  if /I "%~2"=="/y" set "SKIP_PAUSE=1"
-  if not "%~2"=="" if /I not "%~2"=="/y" set "COMMIT_MSG=%~2"
+  if /I "%~2"=="/y" (
+    set "SKIP_PAUSE=1"
+    if not "%~3"=="" set "COMMIT_MSG=%~3"
+  ) else if not "%~2"=="" (
+    set "COMMIT_MSG=%~2"
+  )
   goto :after_args
 )
 if /I "%~1"=="/y" (
   set "SKIP_PAUSE=1"
+  if not "%~2"=="" set "COMMIT_MSG=%~2"
   goto :after_args
 )
 if not "%~1"=="" set "COMMIT_MSG=%~1"

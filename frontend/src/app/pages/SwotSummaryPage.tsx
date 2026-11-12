@@ -365,7 +365,7 @@ export function SwotSummaryPage() {
                               .map((tableNo) => (
                                 <div key={tableNo} className="space-y-3">
                                   <h4 className="text-sm font-medium text-gray-700">
-                                    {t("swot.tableName", { n: tableNo })}
+                                    {t(`swot.tableNames.${tableNo}`)}
                                   </h4>
                                   {groupedEntries[tableNo].map((entry) => (
                                     <div
