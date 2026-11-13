@@ -1,4 +1,4 @@
-"""Отправка писем через SMTP Яндекса."""
+"""Отправка писем через корпоративный SMTP (АО НК / mail.ao-nk.site)."""
 from __future__ import annotations
 
 import hashlib
@@ -17,6 +17,11 @@ CONFIRM_TTL_DAYS = 14
 RESET_TTL_HOURS = 2
 REPO_ROOT = Path(__file__).resolve().parents[2]
 BACKEND_DIR = Path(__file__).resolve().parents[1]
+
+# Как у ps/id: smtp.lite-host.in (не Яндекс). Пароль только из .env.
+_DEFAULT_SMTP_HOST = "smtp.lite-host.in"
+_DEFAULT_SMTP_PORT = "465"
+_DEFAULT_SMTP_FROM = "system@id.ao-nk.ru"
 
 
 def _load_env_file(path: Path, *, override_empty: bool = True) -> None:
@@ -61,13 +66,25 @@ def _read_password_file() -> tuple[str, str]:
     return "", lines[0]
 
 
+def _env_flag(name: str, default: bool = False) -> bool:
+    raw = (os.getenv(name) or "").strip().lower()
+    if not raw:
+        return default
+    return raw in {"1", "true", "yes", "on"}
+
+
 def smtp_settings() -> dict:
     file_user, file_password = _read_password_file()
-    user = (os.getenv("SMTP_USER") or file_user or "ao-nkv@yandex.ru").strip()
+    host = (os.getenv("SMTP_HOST") or _DEFAULT_SMTP_HOST).strip()
+    port = int(os.getenv("SMTP_PORT") or _DEFAULT_SMTP_PORT)
+    user = (os.getenv("SMTP_USER") or file_user or "").strip()
     password = (os.getenv("SMTP_PASSWORD") or file_password).strip()
-    host = (os.getenv("SMTP_HOST") or "smtp.yandex.ru").strip()
-    port = int(os.getenv("SMTP_PORT") or "465")
-    sender = (os.getenv("SMTP_FROM") or user).strip()
+    sender = (os.getenv("SMTP_FROM") or user or _DEFAULT_SMTP_FROM).strip()
+    # 465 = implicit SSL; 587 = STARTTLS; 25 = часто без TLS во внутренней сети
+    use_ssl = port == 465 or _env_flag("SMTP_SSL", False)
+    use_tls = (not use_ssl) and _env_flag("SMTP_TLS", port == 587)
+    # Внутренний postfix (mynetworks) часто без логина
+    use_auth = _env_flag("SMTP_AUTH", bool(user and password))
     return {
         "host": host,
         "port": port,
@@ -75,6 +92,10 @@ def smtp_settings() -> dict:
         "password": password,
         "sender": sender,
         "from_name": os.getenv("SMTP_FROM_NAME") or "Цифровой реестр компетенций",
+        "use_ssl": use_ssl,
+        "use_tls": use_tls,
+        "use_auth": use_auth,
+        "tls_verify": _env_flag("SMTP_TLS_VERIFY", True),
     }
 
 
@@ -207,10 +228,11 @@ class _SMTP(smtplib.SMTP):
 
 def send_email(to_addr: str, subject: str, text_body: str, html_body: str | None = None) -> None:
     settings = smtp_settings()
-    if not settings["password"]:
-        raise RuntimeError("Не задан пароль SMTP (SMTP_PASSWORD или PassForDRC_mail.txt)")
-    if not settings["user"]:
-        raise RuntimeError("Не задан ящик SMTP_USER")
+    if settings["use_auth"]:
+        if not settings["user"]:
+            raise RuntimeError("Не задан ящик SMTP_USER (нужен при SMTP_AUTH=1)")
+        if not settings["password"]:
+            raise RuntimeError("Не задан пароль SMTP_PASSWORD или PassForDRC_mail.txt")
 
     message = EmailMessage()
     message["Subject"] = subject
@@ -221,27 +243,38 @@ def send_email(to_addr: str, subject: str, text_body: str, html_body: str | None
         message.add_alternative(html_body, subtype="html")
 
     context = ssl.create_default_context()
+    if not settings["tls_verify"]:
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
+
     port = settings["port"]
     host = settings["host"]
-    timeout = float(os.getenv("SMTP_TIMEOUT") or "10")
+    timeout = float(os.getenv("SMTP_TIMEOUT") or "15")
     started = time.monotonic()
     try:
-        if port == 465:
+        if settings["use_ssl"]:
             with _SMTP_SSL(host, port, timeout=timeout, context=context) as server:
-                server.login(settings["user"], settings["password"])
+                if settings["use_auth"]:
+                    server.login(settings["user"], settings["password"])
                 server.send_message(message)
         else:
             with _SMTP(host, port, timeout=timeout) as server:
-                server.starttls(context=context)
-                server.login(settings["user"], settings["password"])
+                if settings["use_tls"]:
+                    server.starttls(context=context)
+                if settings["use_auth"]:
+                    server.login(settings["user"], settings["password"])
                 server.send_message(message)
-        print(f"SMTP sent to {to_addr} in {time.monotonic() - started:.1f}s")
+        print(
+            f"SMTP sent to {to_addr} via {host}:{port} "
+            f"auth={int(settings['use_auth'])} in {time.monotonic() - started:.1f}s"
+        )
     except smtplib.SMTPAuthenticationError as exc:
         raise RuntimeError(
-            "Яндекс отклонил вход в почту. Проверьте SMTP_USER и пароль приложения."
+            "SMTP отклонил вход. Проверьте SMTP_USER/SMTP_PASSWORD "
+            "или отправку без auth (SMTP_AUTH=0) во внутренней сети."
         ) from exc
     except Exception as exc:
-        raise RuntimeError(f"Не удалось отправить письмо: {exc}") from exc
+        raise RuntimeError(f"Не удалось отправить письмо через {host}:{port}: {exc}") from exc
 
 
 def send_collaboration_invite_email(
