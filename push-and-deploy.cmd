@@ -3,19 +3,22 @@ setlocal DisableDelayedExpansion
 chcp 65001 >nul
 cd /d "%~dp0"
 
-REM === конфигурация сервера (правьте при смене VPS) ===
-set "SSH_HOST=201.34.149.65"
+REM === конфигурация сервера АО НК (CT 228) ===
+set "JUMP_HOST=10.100.4.20"
 set "SSH_PORT=22"
 set "SSH_USER=root"
-set "SSH_KEY=%USERPROFILE%\.ssh\id_ed25519_drc"
+set "SSH_KEY=%USERPROFILE%\.ssh\id_ed25519"
+set "PCT_ID=228"
 set "REMOTE_DIR=/opt/drc"
 set "BRANCH=main"
-set "VITE_API_URL=https://drc.ao-nk.online/api"
-set "SITE_URL=https://drc.ao-nk.online"
-set "COMMIT_MSG=TEMP: restore later — RG can fill steps 9-9.2; SWOT tables named by sector"
+set "GIT_URL=git@git.ao-nk.site:svoestupov/drc.git"
+set "VITE_API_URL=https://drc.ao-nk.ru/api"
+set "SITE_URL=https://drc.ao-nk.ru"
+set "COMMIT_MSG=chore: deploy"
+REM Старый TimeWeb (только справка): 201.34.149.65 / drc.ao-nk.online → 301 на .ru
 REM =====================================================
 
-REM Запускайте из cmd.exe (не PowerShell Cursor):
+REM Запускайте из cmd.exe (не PowerShell Cursor), нужен VPN/ход до JUMP_HOST:
 REM   push-and-deploy.cmd              — пауза → commit + push + deploy
 REM   push-and-deploy.cmd /y           — без паузы
 REM   push-and-deploy.cmd /push        — только commit + push (без SSH)
@@ -23,6 +26,7 @@ REM   push-and-deploy.cmd /deploy      — только деплой уже за
 REM   deploy-only.cmd                  — то же, что /deploy
 REM   push-and-deploy.cmd "текст"      — свой commit message
 REM
+REM Push: GitHub (origin) + GitLab (gitlab). Деплой: hv1 → pct exec 228.
 REM ESCO RDF на сервер отдельно: upload-esco-to-server.cmd
 
 set "SKIP_PAUSE="
@@ -53,17 +57,18 @@ if defined SKIP_PAUSE goto :ready
 echo.
 echo Репозиторий: %CD%
 echo Ветка:       %BRANCH%
-echo Сервер:      %SSH_USER%@%SSH_HOST%:%SSH_PORT%  %REMOTE_DIR%
+echo Прыжок:      %SSH_USER%@%JUMP_HOST%:%SSH_PORT%  → CT %PCT_ID%  %REMOTE_DIR%
+echo GitLab:      %GIT_URL%
 echo Сайт:        %SITE_URL%
 echo Коммит:      %COMMIT_MSG%
 if defined PUSH_ONLY echo Режим:       только commit + push
 echo.
 echo Шаги:
 echo   1. git add + commit ^(без секретов и локальной БД^)
-echo   2. git push origin %BRANCH%
+echo   2. git push origin + gitlab %BRANCH%
 if not defined PUSH_ONLY (
-  echo   3. ssh: pull, pip, seed example competences, build frontend,
-  echo      restart backend, nginx ^(без SWOT-демо, SEED_SWOT_DEMO=0^)
+  echo   3. ssh %JUMP_HOST% → pct exec %PCT_ID%: pull, pip, build frontend,
+  echo      restart backend, nginx ^(SEED_SWOT_DEMO=0^)
 )
 echo.
 echo Не попадёт в коммит:
@@ -107,6 +112,7 @@ git restore --staged -- ^
   "пароли и команды.txt" ^
   "PassForDRC_mail.txt" ^
   "Локальный старт.txt" ^
+  "_drc-online-redirect.conf" ^
   "backend/venv" ^
   "backend/profstandart.db" ^
   "ESCO" ^
@@ -153,11 +159,25 @@ if not errorlevel 1 (
 )
 
 echo.
-echo == git push origin %BRANCH%
+echo == git push origin %BRANCH% ^(GitHub^)
 git push -u origin %BRANCH%
 if errorlevel 1 (
-  echo Ошибка git push.
+  echo Ошибка git push origin.
   echo Если снова GH001 Large files — запустите: fix-push-lfs.cmd
+  exit /b 1
+)
+
+echo.
+echo == git push gitlab %BRANCH%
+git remote get-url gitlab >nul 2>&1
+if errorlevel 1 (
+  git remote add gitlab %GIT_URL%
+)
+set "GIT_SSH_COMMAND=C:/Windows/System32/OpenSSH/ssh.exe -i %USERPROFILE%/.ssh/id_ed25519 -o IdentitiesOnly=yes"
+git push -u gitlab %BRANCH%
+if errorlevel 1 (
+  echo Ошибка git push gitlab.
+  echo Проверьте VPN и: ssh -T git@git.ao-nk.site
   exit /b 1
 )
 
@@ -175,13 +195,14 @@ if errorlevel 1 (
   exit /b 1
 )
 
-REM Ключ: заданный → id_ed25519_drc → id_ed25519 → id_rsa → агент/пароль
+REM Ключ: заданный → id_ed25519 → id_ed25519_drc → id_rsa → агент/пароль
 if not exist "%SSH_KEY%" if exist "%USERPROFILE%\.ssh\id_ed25519" set "SSH_KEY=%USERPROFILE%\.ssh\id_ed25519"
+if not exist "%SSH_KEY%" if exist "%USERPROFILE%\.ssh\id_ed25519_drc" set "SSH_KEY=%USERPROFILE%\.ssh\id_ed25519_drc"
 if not exist "%SSH_KEY%" if exist "%USERPROFILE%\.ssh\id_rsa" set "SSH_KEY=%USERPROFILE%\.ssh\id_rsa"
 
 set "SSH_OPTS=-p %SSH_PORT% -o StrictHostKeyChecking=accept-new"
 if exist "%SSH_KEY%" (
-  set SSH_OPTS=-i %SSH_KEY% -p %SSH_PORT% -o StrictHostKeyChecking=accept-new
+  set SSH_OPTS=-i "%SSH_KEY%" -p %SSH_PORT% -o StrictHostKeyChecking=accept-new
   echo SSH-ключ: %SSH_KEY%
 ) else (
   echo Ключ не найден в %%USERPROFILE%%\.ssh
@@ -189,14 +210,15 @@ if exist "%SSH_KEY%" (
 )
 
 echo.
-echo == deploy %SSH_USER%@%SSH_HOST% → %REMOTE_DIR%
+echo == deploy via %SSH_USER%@%JUMP_HOST% → CT %PCT_ID% %REMOTE_DIR%
 REM По умолчанию без SWOT-демо на сервере. Для демо: set SEED_SWOT_DEMO=1
 if not defined SEED_SWOT_DEMO set "SEED_SWOT_DEMO=0"
-type "%~dp0deploy-remote.sh" | ssh %SSH_OPTS% %SSH_USER%@%SSH_HOST% "export VITE_API_URL=%VITE_API_URL% BRANCH=%BRANCH% REMOTE_DIR=%REMOTE_DIR% SEED_SWOT_DEMO=%SEED_SWOT_DEMO%; tr -d '\r' | bash -s"
+type "%~dp0deploy-remote.sh" | ssh %SSH_OPTS% %SSH_USER%@%JUMP_HOST% "cat > /tmp/drc-deploy.sh && pct push %PCT_ID% /tmp/drc-deploy.sh /tmp/drc-deploy.sh && pct exec %PCT_ID% -- bash -lc \"export VITE_API_URL='%VITE_API_URL%' BRANCH='%BRANCH%' GIT_URL='%GIT_URL%' REMOTE_DIR='%REMOTE_DIR%' SEED_SWOT_DEMO='%SEED_SWOT_DEMO%'; tr -d '\\r' < /tmp/drc-deploy.sh | bash -s\""
 if errorlevel 1 (
   echo.
   echo Деплой не прошёл.
-  echo   - порт/хост: SSH_HOST / SSH_PORT в начале скрипта
+  echo   - прыжок: JUMP_HOST=%JUMP_HOST% ^(нужен ход с этой машины / VPN / терминальник^)
+  echo   - контейнер: PCT_ID=%PCT_ID%
   echo   - ключ: SSH_KEY=%SSH_KEY%
   echo   - только деплой: deploy-only.cmd
   exit /b 1

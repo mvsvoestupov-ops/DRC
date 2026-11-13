@@ -65,3 +65,4 @@ PassForDRC_mail.txt
 chat*.txt
 frontend_old_backup/
 DRCFigma/
+_drc-online-redirect.conf

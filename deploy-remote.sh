@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-API_URL="${VITE_API_URL:-https://drc.ao-nk.online/api}"
+API_URL="${VITE_API_URL:-https://drc.ao-nk.ru/api}"
 BRANCH="${BRANCH:-main}"
-GIT_URL="${GIT_URL:-https://github.com/mvsvoestupov-ops/DRC.git}"
+GIT_URL="${GIT_URL:-git@git.ao-nk.site:svoestupov/drc.git}"
 PREFERRED="${REMOTE_DIR:-/opt/drc}"
 
 echo "==> remote: $(hostname) $(date -Is)"

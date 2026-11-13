@@ -93,6 +93,7 @@ const ruCore = {
   loginPage: {
     title: "Вход в систему",
     description: "Войдите, чтобы продолжить работу с реестром компетенций",
+    emailPlaceholder: "Введите Ваш e-mail...",
     password: "Пароль",
     hidePassword: "Скрыть пароль",
     showPassword: "Показать пароль",
@@ -226,6 +227,7 @@ export const translations: Record<Locale, Messages> = {
     loginPage: {
       title: "Sign in",
       description: "Sign in to continue working with the competency registry",
+      emailPlaceholder: "Enter your e-mail...",
       password: "Password",
       hidePassword: "Hide password",
       showPassword: "Show password",
@@ -353,6 +355,7 @@ export const translations: Record<Locale, Messages> = {
     loginPage: {
       title: "सिस्टम में प्रवेश",
       description: "क्षमता रजिस्ट्री के साथ काम जारी रखने के लिए साइन इन करें",
+      emailPlaceholder: "अपना e-mail दर्ज करें...",
       password: "पासवर्ड",
       hidePassword: "पासवर्ड छिपाएँ",
       showPassword: "पासवर्ड दिखाएँ",
@@ -480,6 +483,7 @@ export const translations: Record<Locale, Messages> = {
     loginPage: {
       title: "登录系统",
       description: "登录后继续使用能力登记册",
+      emailPlaceholder: "请输入您的 e-mail...",
       password: "密码",
       hidePassword: "隐藏密码",
       showPassword: "显示密码",
@@ -607,6 +611,7 @@ export const translations: Record<Locale, Messages> = {
     loginPage: {
       title: "Đăng nhập hệ thống",
       description: "Đăng nhập để tiếp tục làm việc với sổ đăng ký năng lực",
+      emailPlaceholder: "Nhập e-mail của bạn...",
       password: "Mật khẩu",
       hidePassword: "Ẩn mật khẩu",
       showPassword: "Hiện mật khẩu",

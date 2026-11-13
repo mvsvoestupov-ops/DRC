@@ -64,7 +64,7 @@ export function LoginPage() {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="admin@aonk.ru"
+                    placeholder={t("loginPage.emailPlaceholder")}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
