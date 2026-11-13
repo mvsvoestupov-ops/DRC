@@ -2,5 +2,7 @@
 export function apiBaseUrl(): string {
   if (import.meta.env.DEV) return "/api";
   const raw = String(import.meta.env.VITE_API_URL || "").trim().replace(/\/$/, "");
-  return raw || "http://127.0.0.1:10000";
+  // Production behind nginx: same-origin /api. Never fall back to localhost
+  // (empty VITE_API_URL at build time would break login in the browser).
+  return raw || "/api";
 }

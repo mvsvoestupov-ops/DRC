@@ -137,21 +137,25 @@ fi
 grep -viE '^(sentence-transformers|torch|#)' requirements.txt > /tmp/drc-req-prod.txt
 venv/bin/pip install --disable-pip-version-check --no-input -r /tmp/drc-req-prod.txt
 
-echo "==> repair TF/OTF codes and 148н levels (existing DB, in place)"
-venv/bin/python -u scripts/repair_tf_levels.py
-# Точечно: заголовки «3.3.6 Трудовая функция» без точки — доразбор только
-# затронутых ПС из source_html (без сети, без полного обхода всех HTML).
-echo "==> repair missing TF from source_html (headers without trailing dot)"
-if ! venv/bin/python -u scripts/repair_missing_tf_from_html.py; then
-  echo "WARNING: full missing-TF repair failed (OOM?) — trying reg 1674 only"
-  venv/bin/python -u scripts/repair_missing_tf_from_html.py 1674 || \
-    echo "WARNING: repair for 1674 also failed — continuing deploy"
-fi
-# Полный разбор HTML/XML всех ПС на VPS убивает процесс (OOM).
-# Список рекомендованных ПС по ФГОС ищет ОКСО прямо в source_html/xml.
-
-echo "==> seed example competences RUS-PK-0019 / RUS-PK-0020"
-venv/bin/python scripts/seed_example_competences.py
+# Тяжёлые проходы по ~2GB SQLite — не на каждый деплой (минуты/OOM).
+# Явно: RUN_DB_REPAIR=1
+case "${RUN_DB_REPAIR:-0}" in
+  1|true|yes|force)
+    echo "==> repair TF/OTF codes and 148н levels (existing DB, in place)"
+    venv/bin/python -u scripts/repair_tf_levels.py
+    echo "==> repair missing TF from source_html (headers without trailing dot)"
+    if ! venv/bin/python -u scripts/repair_missing_tf_from_html.py; then
+      echo "WARNING: full missing-TF repair failed (OOM?) — trying reg 1674 only"
+      venv/bin/python -u scripts/repair_missing_tf_from_html.py 1674 || \
+        echo "WARNING: repair for 1674 also failed — continuing deploy"
+    fi
+    echo "==> seed example competences RUS-PK-0019 / RUS-PK-0020"
+    venv/bin/python scripts/seed_example_competences.py
+    ;;
+  *)
+    echo "==> DB repair/seed skipped (RUN_DB_REPAIR=0) — обычный git-деплой"
+    ;;
+esac
 
 # Тестовые SWOT-данные на прод не льём. Явно: SEED_SWOT_DEMO=1|force
 case "${SEED_SWOT_DEMO:-0}" in

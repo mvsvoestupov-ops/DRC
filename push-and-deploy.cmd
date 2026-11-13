@@ -15,18 +15,20 @@ set "GIT_URL=git@git.ao-nk.site:svoestupov/drc.git"
 set "VITE_API_URL=https://drc.ao-nk.ru/api"
 set "SITE_URL=https://drc.ao-nk.ru"
 set "COMMIT_MSG=chore: deploy"
-REM Старый TimeWeb (только справка): 201.34.149.65 / drc.ao-nk.online → 301 на .ru
+REM Деплой как в ps-control: код только из GitLab → на hv1 pct exec + git pull.
+REM SSH с ПК на JUMP_HOST часто недоступен — тогда одна команда на консоли hv1.
+REM Старый TimeWeb (справка): 201.34.149.65 / drc.ao-nk.online → 301 на .ru
 REM =====================================================
 
-REM Запускайте из cmd.exe (не PowerShell Cursor), нужен VPN/ход до JUMP_HOST:
+REM Запускайте из cmd.exe (не PowerShell Cursor):
 REM   push-and-deploy.cmd              — пауза → commit + push + deploy
 REM   push-and-deploy.cmd /y           — без паузы
-REM   push-and-deploy.cmd /push        — только commit + push (без SSH)
+REM   push-and-deploy.cmd /push        — только commit + push
 REM   push-and-deploy.cmd /deploy      — только деплой уже запушенной ветки
 REM   deploy-only.cmd                  — то же, что /deploy
 REM   push-and-deploy.cmd "текст"      — свой commit message
 REM
-REM Push: GitHub (origin) + GitLab (gitlab). Деплой: hv1 → pct exec 228.
+REM Push: GitHub (origin) + GitLab (gitlab). Деплой: CT тянет git@git.ao-nk.site.
 REM ESCO RDF на сервер отдельно: upload-esco-to-server.cmd
 
 set "SKIP_PAUSE="
@@ -67,8 +69,8 @@ echo Шаги:
 echo   1. git add + commit ^(без секретов и локальной БД^)
 echo   2. git push origin + gitlab %BRANCH%
 if not defined PUSH_ONLY (
-  echo   3. ssh %JUMP_HOST% → pct exec %PCT_ID%: pull, pip, build frontend,
-  echo      restart backend, nginx ^(SEED_SWOT_DEMO=0^)
+  echo   3. деплой: pct exec %PCT_ID% git pull из GitLab + build/restart
+  echo      ^(SSH на %JUMP_HOST% если есть, иначе команда на hv1^)
 )
 echo.
 echo Не попадёт в коммит:
@@ -173,13 +175,21 @@ git remote get-url gitlab >nul 2>&1
 if errorlevel 1 (
   git remote add gitlab %GIT_URL%
 )
-set "GIT_SSH_COMMAND=C:/Windows/System32/OpenSSH/ssh.exe -i %USERPROFILE%/.ssh/id_ed25519 -o IdentitiesOnly=yes"
+REM Для git/ssh на Windows — только прямые слэши в пути к ключу
+set "SSH_KEY_UNIX=%USERPROFILE:\=/%"
+if exist "%USERPROFILE%\.ssh\id_ed25519" (
+  set "SSH_KEY_UNIX=%SSH_KEY_UNIX%/.ssh/id_ed25519"
+) else (
+  set "SSH_KEY_UNIX=%SSH_KEY_UNIX%/.ssh/id_ed25519_drc"
+)
+set "GIT_SSH_COMMAND=C:/Windows/System32/OpenSSH/ssh.exe -i %SSH_KEY_UNIX% -o IdentitiesOnly=yes"
 git push -u gitlab %BRANCH%
 if errorlevel 1 (
   echo Ошибка git push gitlab.
   echo Проверьте VPN и: ssh -T git@git.ao-nk.site
   exit /b 1
 )
+set "GIT_SSH_COMMAND="
 
 if defined PUSH_ONLY (
   echo.
@@ -189,41 +199,52 @@ if defined PUSH_ONLY (
 )
 
 :deploy
-where ssh >nul 2>&1
-if errorlevel 1 (
-  echo Ошибка: ssh не найден. Установите OpenSSH Client.
-  exit /b 1
-)
+REM Не оставлять GIT_SSH_COMMAND — иначе мешает обычному ssh
+set "GIT_SSH_COMMAND="
+
+REM По умолчанию без SWOT-демо на сервере. Для демо: set SEED_SWOT_DEMO=1
+if not defined SEED_SWOT_DEMO set "SEED_SWOT_DEMO=0"
 
 REM Ключ: заданный → id_ed25519 → id_ed25519_drc → id_rsa → агент/пароль
 if not exist "%SSH_KEY%" if exist "%USERPROFILE%\.ssh\id_ed25519" set "SSH_KEY=%USERPROFILE%\.ssh\id_ed25519"
 if not exist "%SSH_KEY%" if exist "%USERPROFILE%\.ssh\id_ed25519_drc" set "SSH_KEY=%USERPROFILE%\.ssh\id_ed25519_drc"
 if not exist "%SSH_KEY%" if exist "%USERPROFILE%\.ssh\id_rsa" set "SSH_KEY=%USERPROFILE%\.ssh\id_rsa"
 
-set "SSH_OPTS=-p %SSH_PORT% -o StrictHostKeyChecking=accept-new"
+set "SSH_IDENTITY="
 if exist "%SSH_KEY%" (
-  set SSH_OPTS=-i "%SSH_KEY%" -p %SSH_PORT% -o StrictHostKeyChecking=accept-new
+  set "SSH_IDENTITY=%SSH_KEY:\=/%"
   echo SSH-ключ: %SSH_KEY%
 ) else (
-  echo Ключ не найден в %%USERPROFILE%%\.ssh
-  echo Пробую ssh без -i ^(пароль / агент^)
+  echo Ключ не найден в %%USERPROFILE%%\.ssh — пробую ssh без -i
 )
 
 echo.
-echo == deploy via %SSH_USER%@%JUMP_HOST% → CT %PCT_ID% %REMOTE_DIR%
-REM По умолчанию без SWOT-демо на сервере. Для демо: set SEED_SWOT_DEMO=1
-if not defined SEED_SWOT_DEMO set "SEED_SWOT_DEMO=0"
-type "%~dp0deploy-remote.sh" | ssh %SSH_OPTS% %SSH_USER%@%JUMP_HOST% "cat > /tmp/drc-deploy.sh && pct push %PCT_ID% /tmp/drc-deploy.sh /tmp/drc-deploy.sh && pct exec %PCT_ID% -- bash -lc \"export VITE_API_URL='%VITE_API_URL%' BRANCH='%BRANCH%' GIT_URL='%GIT_URL%' REMOTE_DIR='%REMOTE_DIR%' SEED_SWOT_DEMO='%SEED_SWOT_DEMO%'; tr -d '\\r' < /tmp/drc-deploy.sh | bash -s\""
-if errorlevel 1 (
-  echo.
-  echo Деплой не прошёл.
-  echo   - прыжок: JUMP_HOST=%JUMP_HOST% ^(нужен ход с этой машины / VPN / терминальник^)
-  echo   - контейнер: PCT_ID=%PCT_ID%
-  echo   - ключ: SSH_KEY=%SSH_KEY%
-  echo   - только деплой: deploy-only.cmd
-  exit /b 1
-)
+echo == deploy: GitLab → CT %PCT_ID% %REMOTE_DIR% ^(через %SSH_USER%@%JUMP_HOST%^)
 
+where ssh >nul 2>&1
+if errorlevel 1 goto :deploy_manual
+
+REM Как ps-control: pipe remote script → ssh hv1 → pct exec bash -s
+if defined SSH_IDENTITY (
+  type "%~dp0scripts\remote-pull-deploy.sh" | ssh -p %SSH_PORT% -o ConnectTimeout=8 -o StrictHostKeyChecking=accept-new -i "%SSH_IDENTITY%" %SSH_USER%@%JUMP_HOST% "pct exec %PCT_ID% -- env VITE_API_URL=%VITE_API_URL% BRANCH=%BRANCH% GIT_URL=%GIT_URL% REMOTE_DIR=%REMOTE_DIR% SEED_SWOT_DEMO=%SEED_SWOT_DEMO% bash -s"
+) else (
+  type "%~dp0scripts\remote-pull-deploy.sh" | ssh -p %SSH_PORT% -o ConnectTimeout=8 -o StrictHostKeyChecking=accept-new %SSH_USER%@%JUMP_HOST% "pct exec %PCT_ID% -- env VITE_API_URL=%VITE_API_URL% BRANCH=%BRANCH% GIT_URL=%GIT_URL% REMOTE_DIR=%REMOTE_DIR% SEED_SWOT_DEMO=%SEED_SWOT_DEMO% bash -s"
+)
+if errorlevel 1 goto :deploy_manual
+goto :deploy_done
+
+:deploy_manual
+echo.
+echo SSH до hv1 с этой машины нет — это нормально. Код уже в GitLab.
+echo На hv1 ^(консоль Proxmox / терминальный сервер^) выполните:
+echo.
+echo pct exec %PCT_ID% -- bash -lc "cd %REMOTE_DIR% && git fetch origin %BRANCH% && git reset --hard origin/%BRANCH% && export VITE_API_URL=%VITE_API_URL% BRANCH=%BRANCH% GIT_URL=%GIT_URL% REMOTE_DIR=%REMOTE_DIR% SEED_SWOT_DEMO=%SEED_SWOT_DEMO% && bash ./deploy-remote.sh"
+echo.
+echo Пришлите хвост вывода. Сайт после деплоя: %SITE_URL%
+endlocal
+exit /b 0
+
+:deploy_done
 echo.
 echo Готово: %SITE_URL%
 echo Методика: %SITE_URL%/methodology/harmonization

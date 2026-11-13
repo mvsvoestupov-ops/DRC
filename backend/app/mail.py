@@ -93,7 +93,7 @@ def frontend_base_url(request=None) -> str:
             parsed = urlparse(referer)
             if parsed.scheme and parsed.netloc:
                 return f"{parsed.scheme}://{parsed.netloc}"
-    return "https://drc.ao-nk.online"
+    return "https://drc.ao-nk.ru"
 
 
 def hash_confirm_token(token: str) -> str:
