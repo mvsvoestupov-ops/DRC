@@ -95,7 +95,7 @@ export function HomePage() {
   useEffect(() => {
     Promise.all([
       apiClient.getPublicCompetenceStats(),
-      apiClient.getPublicCompetences(),
+      apiClient.getPublicCompetences({ limit: 3 }),
     ])
       .then(([statsData, competences]) => {
         setStats({
@@ -105,7 +105,7 @@ export function HomePage() {
           draft: statsData.draft ?? 0,
           archived: statsData.archived ?? 0,
         });
-        const items = (competences as Competence[]).slice(0, 3).map(toListItem);
+        const items = (competences as Competence[]).map(toListItem);
         setRecentCompetencies(items);
       })
       .catch(() => {

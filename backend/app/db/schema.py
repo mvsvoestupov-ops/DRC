@@ -147,6 +147,30 @@ def ensure_competence_public_code_column() -> list[str]:
     return added
 
 
+def ensure_competence_list_indexes() -> list[str]:
+    """Индексы для списков компетенций (существующие SQLite-базы)."""
+    created: list[str] = []
+    specs = (
+        ("ix_competences_status", "competences", "status"),
+        ("ix_competences_is_active", "competences", "is_active"),
+        ("ix_competences_user_id", "competences", "user_id"),
+        ("ix_competences_updated_at", "competences", "updated_at"),
+        ("ix_competences_active_status", "competences", "is_active, status"),
+    )
+    inspector = inspect(engine)
+    if "competences" not in inspector.get_table_names():
+        return created
+    existing = {idx["name"] for idx in inspector.get_indexes("competences")}
+    with engine.connect() as conn:
+        for name, table, cols in specs:
+            if name in existing:
+                continue
+            conn.execute(text(f"CREATE INDEX IF NOT EXISTS {name} ON {table} ({cols})"))
+            created.append(name)
+        conn.commit()
+    return created
+
+
 def ensure_competence_activity_columns() -> list[str]:
     added: list[str] = []
     specs = (

@@ -43,13 +43,13 @@ class Competence(Base):
     resources = Column(JSON)  # ["оборудование", "ПО", "помещения"]
     
     # Статус и метаданные
-    status = Column(Enum(CompetenceStatus), default=CompetenceStatus.DRAFT)
+    status = Column(Enum(CompetenceStatus), default=CompetenceStatus.DRAFT, index=True)
     developer = Column(String(255))      # разработчик (ОО)
     validator = Column(String(255))      # валидатор (СПК/работодатель)
     validation_notes = Column(Text)      # замечания валидатора
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
-    is_active = Column(Integer, default=1)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow, index=True)
+    is_active = Column(Integer, default=1, index=True)
     
     # Дополнительные данные (description, industry, hours и пр.)
     raw_data = Column(JSON, default={})
@@ -59,7 +59,7 @@ class Competence(Base):
     qualification = relationship("Qualification", backref="competences")
     
     # Привязка к пользователю
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=True, index=True)
     user = relationship("User", backref="competences")
     reviewer_links = relationship("CompetenceReviewer", back_populates="competence", cascade="all, delete-orphan")
     collaborator_links = relationship("CompetenceCollaborator", back_populates="competence", cascade="all, delete-orphan")

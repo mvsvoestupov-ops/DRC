@@ -1,0 +1,79 @@
+# DRC: код только из GitLab. Секреты — CI Variables / .env на CT, не Public/O:.
+#
+# Требуется runner с тегом aonk (или shell) внутри vlan 20/28,
+# с доступом к CT 228 (ssh root@10.100.28.44) либо к hv1 (pct exec).
+#
+# CI/CD Variables (masked/protected), опционально:
+#   DEEPSEEK_API_KEY, SMTP_PASSWORD, SMTP_USER, SMTP_HOST, SMTP_PORT,
+#   SMTP_FROM, SMTP_FROM_NAME, PUBLIC_APP_URL, SMTP_AUTH
+#   DEPLOY_SSH_PRIVATE_KEY — ключ для SSH на CT/hv1 (File или Variable)
+#   CT_HOST (default 10.100.28.44), JUMP_HOST (если задан — pct через hv1),
+#   PCT_ID (default 228), REMOTE_DIR (default /opt/drc)
+
+stages:
+  - deploy
+
+variables:
+  BRANCH: "main"
+  GIT_URL: "git@git.ao-nk.site:svoestupov/drc.git"
+  REMOTE_DIR: "/opt/drc"
+  PCT_ID: "228"
+  CT_HOST: "10.100.28.44"
+  VITE_API_URL: "https://drc.ao-nk.ru/api"
+  SEED_SWOT_DEMO: "0"
+
+deploy_ct:
+  stage: deploy
+  tags:
+    - aonk
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+  script:
+    - |
+      set -euo pipefail
+      echo "== DRC deploy: GitLab → CT (no Public/O:)"
+      if [ -n "${DEPLOY_SSH_PRIVATE_KEY:-}" ]; then
+        mkdir -p ~/.ssh
+        chmod 700 ~/.ssh
+        printf '%s\n' "$DEPLOY_SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        SSH_OPTS="-i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes"
+      else
+        SSH_OPTS="-o StrictHostKeyChecking=accept-new"
+      fi
+
+      REMOTE_PULL='cd "'"$REMOTE_DIR"'" && git fetch origin '"$BRANCH"' && git reset --hard origin/'"$BRANCH"' && export VITE_API_URL='"$VITE_API_URL"' BRANCH='"$BRANCH"' GIT_URL='"$GIT_URL"' REMOTE_DIR='"$REMOTE_DIR"' SEED_SWOT_DEMO='"$SEED_SWOT_DEMO"' && bash ./deploy-remote.sh'
+
+      if [ -n "${JUMP_HOST:-}" ]; then
+        echo "== via jump $JUMP_HOST pct $PCT_ID"
+        ssh $SSH_OPTS "root@${JUMP_HOST}" "pct exec ${PCT_ID} -- bash -lc $(printf '%q' "$REMOTE_PULL")"
+      else
+        echo "== direct $CT_HOST"
+        ssh $SSH_OPTS "root@${CT_HOST}" "bash -lc $(printf '%q' "$REMOTE_PULL")"
+      fi
+
+      # Опционально: записать CI Variables в .env на CT (если заданы)
+      if [ -n "${DEEPSEEK_API_KEY:-}${SMTP_PASSWORD:-}${PUBLIC_APP_URL:-}" ]; then
+        echo "== sync CI secrets into .env (values not printed)"
+        {
+          [ -n "${PUBLIC_APP_URL:-}" ] && echo "PUBLIC_APP_URL=${PUBLIC_APP_URL}"
+          [ -n "${SMTP_HOST:-}" ] && echo "SMTP_HOST=${SMTP_HOST}"
+          [ -n "${SMTP_PORT:-}" ] && echo "SMTP_PORT=${SMTP_PORT}"
+          [ -n "${SMTP_AUTH:-}" ] && echo "SMTP_AUTH=${SMTP_AUTH}"
+          [ -n "${SMTP_USER:-}" ] && echo "SMTP_USER=${SMTP_USER}"
+          [ -n "${SMTP_PASSWORD:-}" ] && echo "SMTP_PASSWORD=${SMTP_PASSWORD}"
+          [ -n "${SMTP_FROM:-}" ] && echo "SMTP_FROM=${SMTP_FROM}"
+          [ -n "${SMTP_FROM_NAME:-}" ] && echo "SMTP_FROM_NAME=${SMTP_FROM_NAME}"
+          [ -n "${DEEPSEEK_API_KEY:-}" ] && echo "DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}"
+        } > /tmp/drc-ci-env.env
+        if [ -n "${JUMP_HOST:-}" ]; then
+          scp $SSH_OPTS /tmp/drc-ci-env.env "root@${JUMP_HOST}:/tmp/drc-ci-env.env"
+          ssh $SSH_OPTS "root@${JUMP_HOST}" "pct push ${PCT_ID} /tmp/drc-ci-env.env /tmp/drc-ci-env.env && pct exec ${PCT_ID} -- bash -lc 'python3 ${REMOTE_DIR}/scripts/merge-env-keys.py ${REMOTE_DIR}/backend/.env < /tmp/drc-ci-env.env && systemctl restart drc-backend && rm -f /tmp/drc-ci-env.env'"
+          ssh $SSH_OPTS "root@${JUMP_HOST}" "rm -f /tmp/drc-ci-env.env"
+        else
+          scp $SSH_OPTS /tmp/drc-ci-env.env "root@${CT_HOST}:/tmp/drc-ci-env.env"
+          ssh $SSH_OPTS "root@${CT_HOST}" "python3 ${REMOTE_DIR}/scripts/merge-env-keys.py ${REMOTE_DIR}/backend/.env < /tmp/drc-ci-env.env && systemctl restart drc-backend && rm -f /tmp/drc-ci-env.env"
+        fi
+        rm -f /tmp/drc-ci-env.env
+      fi
+      echo "== deploy done"

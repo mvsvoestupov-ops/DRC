@@ -541,11 +541,17 @@ class ApiClient {
     );
 
   // Competences — публичный реестр (без авторизации)
-  getPublicCompetences = (params?: { q?: string; industry?: string; status?: string }) => {
+  getPublicCompetences = (params?: {
+    q?: string;
+    industry?: string;
+    status?: string;
+    limit?: number;
+  }) => {
     const search = new URLSearchParams();
     if (params?.q) search.set('q', params.q);
     if (params?.industry) search.set('industry', params.industry);
     if (params?.status) search.set('status', params.status);
+    if (params?.limit != null && params.limit > 0) search.set('limit', String(params.limit));
     const qs = search.toString();
     return this.get<any[]>(`/competences/public${qs ? `?${qs}` : ''}`);
   };

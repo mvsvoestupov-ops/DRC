@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Национальный реестр компетенций — презентация</title>
+  <style>
+    :root {
+      --navy: #0e2a6b;
+      --navy-2: #16398a;
+      --blue: #1d4ed8;
+      --sky: #e8f0ff;
+      --ink: #142033;
+      --muted: #4c5d75;
+      --line: #d7e0ee;
+      --paper: #f4f7fb;
+      --gold: #c9842a;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: "Segoe UI", "PT Sans", system-ui, sans-serif;
+      color: var(--ink);
+      background: #dfe6f2;
+    }
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 22px;
+      background: var(--navy);
+      color: #fff;
+    }
+    .toolbar p { margin: 2px 0 0; font-size: 13px; color: #c9d7f5; }
+    .toolbar button {
+      border: 0;
+      background: #fff;
+      color: var(--navy);
+      font: 600 15px/1 "Segoe UI", sans-serif;
+      padding: 12px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .toolbar button:hover { background: #e8f0ff; }
+    .deck { padding: 18px 0 40px; }
+    .slide {
+      width: 338.67mm;
+      height: 190.5mm;
+      margin: 0 auto 16px;
+      background: #fff;
+      box-shadow: 0 10px 32px rgba(14, 42, 107, 0.14);
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    .bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      height: 10mm;
+      padding: 0 10mm;
+      background: var(--navy);
+      color: #fff;
+      flex: none;
+    }
+    .mark {
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      font-size: 12px;
+      background: rgba(255,255,255,.14);
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+    .bar-title { font-size: 13px; font-weight: 600; }
+    .bar-meta { margin-left: auto; font-size: 12px; color: #c9d7f5; }
+    .body { flex: 1; padding: 5mm 10mm 0; min-height: 0; }
+    .foot {
+      height: 7mm;
+      padding: 0 10mm;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 11px;
+      border-top: 1px solid var(--line);
+      flex: none;
+    }
+    h1 { margin: 0 0 8px; font-size: 34px; line-height: 1.12; letter-spacing: -0.02em; }
+    h2 { margin: 0 0 6px; font-size: 24px; line-height: 1.15; letter-spacing: -0.02em; }
+    h3 { margin: 0 0 6px; font-size: 16px; }
+    p { margin: 0 0 8px; }
+    .lead { font-size: 15px; line-height: 1.4; color: #24344c; }
+    .muted { color: var(--muted); }
+    .kicker {
+      color: var(--blue);
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+    .grid-2 { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 6mm; height: 100%; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4mm; }
+    .grid-4 { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm 4mm; }
+    .card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+    .card h3 { color: var(--navy); }
+    .card p, .card li { font-size: 13.5px; line-height: 1.4; color: #24344c; }
+    .card ul { margin: 6px 0 0; padding-left: 18px; }
+    .num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: var(--navy);
+      color: #fff;
+      font-weight: 700;
+      font-size: 13px;
+      margin-right: 8px;
+    }
+    .shot {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: left top;
+      display: block;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #f7f9fc;
+    }
+    .frame { min-height: 0; display: flex; flex-direction: column; }
+    .frame .shot { flex: 1; min-height: 0; }
+    .cap { margin-top: 6px; font-size: 12px; color: var(--muted); }
+    .flow { display: flex; gap: 8px; align-items: stretch; }
+    .flow .step {
+      flex: 1;
+      background: var(--sky);
+      border-radius: 10px;
+      padding: 10px 12px;
+      position: relative;
+    }
+    .flow .step strong { display: block; color: var(--navy); margin-bottom: 4px; font-size: 14px; }
+    .flow .step span { font-size: 12.5px; line-height: 1.35; color: #24344c; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .chip {
+      background: var(--sky);
+      color: var(--navy);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .hero {
+      background: linear-gradient(145deg, #0e2a6b 0%, #1d4ed8 70%, #3b82f6 100%);
+      color: #fff;
+    }
+    .hero .kicker { color: #b9d0ff; }
+    .hero h1 { font-size: 38px; max-width: 16ch; }
+    .hero .lead { color: #e7eeff; font-size: 16px; max-width: 40ch; }
+    .hero .chip { background: rgba(255,255,255,.14); color: #fff; }
+    .split { display: grid; grid-template-columns: 1.05fr 0.95fr; height: 100%; }
+    .split .copy { padding: 12mm 8mm 10mm 12mm; display: flex; flex-direction: column; }
+    .split .visual { padding: 8mm 10mm 8mm 0; display: flex; flex-direction: column; }
+    .hero .shot { border-color: rgba(255,255,255,.35); }
+    .hero .cap { color: #d5e2ff; }
+    .site { margin-top: auto; font-size: 15px; font-weight: 600; }
+    .links { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 5mm; }
+    .link {
+      border-left: 3px solid var(--blue);
+      padding: 8px 10px;
+      background: #fff;
+      border-radius: 0 8px 8px 0;
+      font-size: 13.5px;
+      line-height: 1.35;
+    }
+    .link b { color: var(--navy); }
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { color: var(--navy); font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; }
+    .tag {
+      display: inline-block;
+      background: #fff4e5;
+      color: #8a5a12;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    ol.plain { margin: 0; padding-left: 18px; }
+    ol.plain li { margin: 0 0 6px; font-size: 14px; line-height: 1.4; }
+    @page { size: 338.67mm 190.5mm; margin: 0; }
+    @media print {
+      body { background: #fff; }
+      .toolbar, .no-print { display: none !important; }
+      .deck { padding: 0; }
+      .slide {
+        width: 338.67mm;
+        height: 190.5mm;
+        margin: 0;
+        box-shadow: none;
+        page-break-after: always;
+        break-after: page;
+      }
+      .slide:last-child { page-break-after: auto; break-after: auto; }
+      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar no-print">
+    <div>
+      <strong>Национальный реестр компетенций</strong>
+      <p>12 слайдов, 16:9. В диалоге печати: «Сохранить как PDF», поля — нет. Размер страницы берётся из файла.</p>
+    </div>
+    <button type="button" onclick="window.print()">Сохранить как PDF</button>
+  </div>
+
+  <main class="deck">
+    <section class="slide hero">
+      <div class="split">
+        <div class="copy">
+          <div class="kicker">Цифровой сервис паспортов компетенций</div>
+          <h1>Национальный реестр компетенций</h1>
+          <p class="lead">Компетенция собирается как проверяемый паспорт: от трудовой функции профессионального стандарта до дисциплины, оценки, экспертизы и открытой публикации.</p>
+          <div class="chips">
+            <span class="chip">Шаги 1–7 · разработка</span>
+            <span class="chip">Шаг 8 · валидация</span>
+            <span class="chip">Шаги 9–9.2 · сопоставление</span>
+            <span class="chip">Публикация · DOCX</span>
+          </div>
+          <div class="site">https://drc.ao-nk.ru</div>
+        </div>
+        <div class="visual">
+          <img class="shot" src="screens/drc-home.png" alt="Главная страница Национального реестра компетенций" />
+          <div class="cap">Главная страница сервиса. Скриншот снят 20.11.2026.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <header class="bar">
+        <span class="mark">НРК</span>
+        <span class="bar-title">Назначение</span>
+        <span class="bar-meta">drc.ao-nk.ru</span>
+      </header>
+      <div class="body">
+        <div class="grid-2">
+          <div>
+            <div class="kicker">Зачем сервис</div>
+            <h2>Согласовать язык стандарта, квалификации и программы</h2>
+            <p class="lead">Профессиональные стандарты, квалификации, ФГОС и образовательные программы описывают одно поле деятельности разными языками. Реестр собирает их в одну карточку компетенции.</p>
+            <div class="grid-4" style="margin-top:4mm">
+              <div class="card">
+                <h3>Образование</h3>
+                <p>Паспорт для ОПОП, ДПО и профобучения: трудовые функции, структура A/B/C, дисциплины и оценочные средства.</p>
+              </div>
+              <div class="card">
+                <h3>Работодатели и СПК</h3>
+                <p>Требование стандарта переводится в единицу, которую можно освоить и оценить, с уровнем по приказу № 148н.</p>
+              </div>
+              <div class="card">
+                <h3>Эксперты</h3>
+                <p>Одна процедура: дескрипторы, шкалы важности и объёма, фонд оценочных средств и чек-лист экспертизы.</p>
+              </div>
+              <div class="card">
+                <h3>Обучающиеся и НОК</h3>
+                <p>Видно, из каких действий состоит компетенция, чем она подтверждается и к каким квалификациям относится.</p>
+              </div>
+            </div>
+          </div>
+          <div class="frame">
+            <img class="shot" src="screens/drc-about.png" alt="Раздел «О проекте»" />
+            <div class="cap">Раздел «О проекте»: концептуальные основания реестра.</div>
+          </div>
+        </div>
+      </div>
+      <footer class="foot"><span>Национальный реестр компетенций</span><span>02</span></footer>
+    </section>
+
+    <section class="slide">
+      <header class="bar">
+        <span class="mark">НРК</span>
+        <span class="bar-title">Справочники</span>
+        <span class="bar-meta">drc.ao-nk.ru</span>
+      </header>
+      <div class="body">
+        <div class="kicker">Нормативная база внутри сервиса</div>
+        <h2>В системе — вся база ПС, квалификаций и ФГОС и связи между ними</h2>
+        <p class="lead">Конструктор подставляет трудовые функции, уровни и образовательные программы из этих справочников. Связи хранятся в реестре и используются при подборе на шаге паспорта.</p>
+        <div class="grid-3" style="margin-top:4mm">
+          <div class="card">
+            <h3>Профессиональные стандарты</h3>
+            <p>Полная база ПС: обобщённые трудовые функции, трудовые функции, трудовые действия, знания и умения. Компетенция опирается на ТФ одного уровня квалификации.</p>
+          </div>
+          <div class="card">
+            <h3>Квалификации</h3>
+            <p>Полная база квалификаций и уровней по приказу Минтруда № 148н (шкала 1–9). Уровень паспорта фиксируется выбранными трудовыми функциями.</p>
+          </div>
+          <div class="card">
+            <h3>ФГОС</h3>
+            <p>Полная база ФГОС. На шаге 1 паспорт привязывается к виду и уровню образования и к выбранному ФГОС либо к профессии рабочего / должности служащего.</p>
+          </div>
+        </div>
+        <div class="links">
+          <div class="link"><b>ПС → ФГОС.</b> Подбор профессиональных стандартов по коду ОКСО выбранного ФГОС.</div>
+          <div class="link"><b>ПС → профессия.</b> Подбор стандартов по коду ОКПДТР выбранной профессии или должности.</div>
+          <div class="link"><b>ПС → квалификация.</b> Трудовые функции одного уровня 148н; смешение уровней в одном паспорте исключено.</div>
+          <div class="link"><b>ФГОС → программа.</b> Компоненты A/B/C привязываются к дисциплинам, модулям и практикам образовательного контура.</div>
+        </div>
+      </div>
+      <footer class="foot"><span>Справочники и связи между ними</span><span>03</span></footer>
+    </section>
+
+    <section class="slide">
+      <header class="bar">
+        <span class="mark">НРК</span>
+        <span class="bar-title">Жизненный цикл</span>
+        <span class="bar-meta">drc.ao-nk.ru</span>
+      </header>
+      <div class="body">
+        <div class="grid-2">
+          <div>
+            <div class="kicker">От черновика до открытой карточки</div>
+            <h2>Как компетенция проходит сервис</h2>
+            <div class="flow" style="flex-direction:column; gap:8px; margin-top:4mm">
+              <div class="step"><strong>1. Разработка, шаги 1–7</strong><span>Рабочая группа собирает паспорт: общая информация, профстандарт, структура A/B/C, дескрипторы, дисциплины, оценочные средства, МТО. Статус — «проект».</span></div>
+              <div class="step"><strong>2. Валидация, шаг 8</strong><span>Руководитель направляет паспорт на экспертизу. Статус — «на экспертизе». Модератор назначает экспертов, эксперты заполняют чек-лист.</span></div>
+              <div class="step"><strong>3. Утверждение</strong><span>После положительного решения статус в интерфейсе — «действующая». Открываются шаги международного сопоставления.</span></div>
+              <div class="step"><strong>4. Сопоставление, шаги 9 / 9.1 / 9.2</strong><span>ГАРМ-ESCO, Harmoni-BRICS и мосты паспорта. Черновик ИИ уточняет эксперт.</span></div>
+              <div class="step"><strong>5. Публикация</strong><span>Карточка в открытом поиске и выгрузка паспорта в DOCX.</span></div>
+            </div>
+          </div>
+          <div class="frame">
+            <img class="shot" src="screens/drc-methodology.png" alt="Раздел «Методология»" />
+            <div class="cap">Раздел «Методология»: разработка, ГАРМ-ESCO, Harmoni-BRICS, ФОС и матрица уровней.</div>
+          </div>
+        </div>
+      </div>
+      <footer class="foot"><span>Порядок работы в конструкторе</span><span>04</span></footer>
+    </section>
+
+    <section class="slide">
+      <header class="bar">
+        <span class="mark">НРК</span>
+        <span class="bar-title">Шаги 1–7</span>
+        <span class="bar-meta">drc.ao-nk.ru</span>
+      </header>
+      <div class="body">
+        <div class="grid-2">
+          <div>
+            <div class="kicker">Конструктор паспорта</div>
+            <h2>Семь шагов разработки компетенции</h2>
+            <p class="lead">Черновик сохраняется на любом шаге. На экспертизу руководитель рабочей группы направляет заполненный паспорт после шага 7.</p>
+            <table>
+              <thead><tr><th>Шаг</th><th>Содержание</th></tr></thead>
+              <tbody>
+                <tr><td>1</td><td>Общая информация: название, описание, область, вид и уровень образования, ФГОС или профессия</td></tr>
+                <tr><td>2</td><td>Профстандарт и уровень квалификации по приказу № 148н, трудовые функции одного уровня</td></tr>
+                <tr><td>3</td><td>Структура A / B / C: знания, умения, практические навыки</td></tr>
+                <tr><td>4</td><td>Дескрипторы сформированности: базовый, продвинутый, экспертный</td></tr>
+                <tr><td>5</td><td>Привязка к дисциплинам, модулям и практикам; важность и объём по шкале 1–10</td></tr>
+                <tr><td>6</td><td>Оценочные средства: тесты на знания и практические задания на умения и навыки</td></tr>
+                <tr><td>7</td><td>Материально-техническая база отдельно для знаний, умений и практических навыков</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="frame">
+            <img class="shot" src="screens/drc-steps.png" alt="Методика шагов 1–7" />
+            <div class="cap">Методика «Разработка компетенции: шаги 1–7» в самом сервисе.</div>
+          </div>
+        </div>
+      </div>
+      <footer class="foot"><span>Разработка паспорта</span><span>05</span></footer>
+    </section>
+
+    <section class="slide">
+      <header class="bar">
+        <span class="mark">НРК</span>
+        <span class="bar-title">Шаги 1–4</span>
+        <span class="bar-meta">drc.ao-nk.ru</span>
+      </header>
+      <div class="body">
+        <div class="kicker">Идентификация и содержание</div>
+        <h2>От шапки паспорта к дескрипторам</h2>
+        <div class="grid-4" style="margin-top:4mm">
+          <div class="card">
+            <h3><span class="num">1</span>Общая информация</h3>
+            <p>Название и описание компетенции, область профессиональной деятельности, вид и уровень образования, ФГОС либо профессия рабочего / должность служащего, организация-разработчик и ориентир по трудоёмкости.</p>
+          </div>
+          <div class="card">
+            <h3><span class="num">2</span>Профстандарт и уровень</h3>
+            <p>Уровень 1–9 по приказу № 148н. Профессиональный стандарт подбирается по ОКСО ФГОС или по ОКПДТР. Трудовые функции — одного уровня; знания и умения распределяются по трудовым действиям. Несколько ПС допустимы при совпадении уровня.</p>
+          </div>
+          <div class="card">
+            <h3><span class="num">3</span>Структура A / B / C</h3>
+            <p>A — знания, B — умения, C — практические навыки. Формулировки из выбранных трудовых функций дедуплицируются. Умение при необходимости переносится в практический навык.</p>
+          </div>
+          <div class="card">
+            <h3><span class="num">4</span>Дескрипторы</h3>
+            <p>Матрица проявлений A/B/C на базовом, продвинутом и экспертном уровнях. Типовые формулировки подставляются из матрицы уровней. Для СПО и бакалавриата экспертный уровень не заполняется.</p>
+          </div>
+        </div>
+        <p class="muted" style="margin-top:5mm;font-size:13.5px">Для общепрофессиональных и универсальных компетенций связь с профессиональным стандартом может быть необязательной. Уровень по приказу № 148н остаётся рамкой паспорта.</p>
+      </div>
+      <footer class="foot"><span>Шаги 1–4</span><span>06</span></footer>
+    </section>
+
+    <section class="slide">
+      <header class="bar">
+        <span class="mark">НРК</span>
+        <span class="bar-title">Шаги 5–7</span>
+        <span class="bar-meta">drc.ao-nk.ru</span>
+      </header>
+      <div class="body">
+        <div class="kicker">Программа, оценка, условия</div>
+        <h2>Дисциплины, фонд оценочных средств и МТО</h2>
+        <div class="grid-3" style="margin-top:4mm">
+          <div class="card">
+            <h3><span class="num">5</span>Дисциплины</h3>
+            <p>Каждый компонент A/B/C связывается с дисциплиной, модулем или практикой. Для привязки указываются форма контроля, важность и объём по шкале 1–10. Баллы — основание рекомендуемого объёма по методике МОВК-ЗЕ.</p>
+          </div>
+          <div class="card">
+            <h3><span class="num">6</span>Оценочные средства</h3>
+            <p>На каждом уровне сформированности знания закрываются тестами: одно знание — один тест. Умения и навыки компонуются в практические задания по дереву ТФ → ТД → умение/навык. Компоновка завершается при полном охвате B и C.</p>
+          </div>
+          <div class="card">
+            <h3><span class="num">7</span>Материально-техническая база</h3>
+            <p>Ресурсы описываются отдельно для знаний, умений и практических навыков: оборудование, программное обеспечение, помещения, материалы. В каждой части — хотя бы одна позиция, согласованная с оценочными средствами.</p>
+          </div>
+        </div>
+        <div class="card" style="margin-top:5mm;background:#fff8ee;border-color:#f0d7b0">
+          <h3>После шага 7</h3>
+          <p>Руководитель рабочей группы нажимает «Направить на экспертизу». Статус становится «на экспертизе». Участник группы правит черновик, отправка доступна руководителю. Дальше — шаг 8, валидация.</p>
+        </div>
+      </div>
+      <footer class="foot"><span>Шаги 5–7 и передача на экспертизу</span><span>07</span></footer>
+    </section>
+
+    <section class="slide">
+      <header class="bar">
+        <span class="mark">НРК</span>
+        <span class="bar-title">Шаг 8 · валидация</span>
+        <span class="bar-meta">drc.ao-nk.ru</span>
+      </header>
+      <div class="body">
+        <div class="kicker">Экспертиза паспорта</div>
+        <h2>Валидация перед статусом «действующая»</h2>
+        <p class="lead">Пока идёт экспертиза, шаги международного сопоставления закрыты. Они открываются после утверждения.</p>
+        <div class="grid-4" style="margin-top:3mm">
+          <div class="card">
+            <h3><span class="num">1</span>Направление</h3>
+            <p>Руководитель подтверждает отправку. В карточке статус «на экспертизе». Конструктор показывает, что дальнейшие шаги откроются после утверждения.</p>
+          </div>
+          <div class="card">
+            <h3><span class="num">2</span>Назначение</h3>
+            <p>Модератор или администратор назначает экспертов на карточке компетенции.</p>
+          </div>
+          <div class="card">
+            <h3><span class="num">3</span>Чек-лист</h3>
+            <p>Эксперт проходит критерии валидации: по каждому пункту «Да» или «Нет» и при необходимости комментарий.</p>
+          </div>
+          <div class="card">
+            <h3><span class="num">4</span>Решение</h3>
+            <p>Заявку утверждают, возвращают на доработку или отклоняют. Утверждённая компетенция в интерфейсе получает статус «действующая».</p>
+          </div>
+        </div>
+        <div class="chips">
+          <span class="chip">проект</span>
+          <span class="chip">на экспертизе</span>
+          <span class="chip">действующая</span>
+          <span class="chip">далее шаги 9, 9.1, 9.2</span>
+        </div>
+      </div>
+      <footer class="foot"><span>Шаг 8</span><span>08</span></footer>
+    </section>
+
+    <section class="slide">
+      <header class="bar">
+        <span class="mark">НРК</span>
+        <span class="bar-title">ГАРМ-ESCO · шаг 9</span>
+        <span class="bar-meta">drc.ao-nk.ru</span>
+      </header>
+      <div class="body">
+        <div class="grid-2">
+          <div>
+            <div class="kicker">Модель 1 · версия 1.1-draft</div>
+            <h2>Международное сопоставление ГАРМ-ESCO</h2>
+            <p class="lead">Паспорт переводится в язык занятий и навыков ESCO и уровня EQF. Якоря: профессиональный стандарт, ОКЗ и приказ № 148н.</p>
+            <ol class="plain">
+              <li><b>ОКЗ → ISCO-08.</b> Занятие российского паспорта сопоставляется с международной классификацией занятий.</li>
+              <li><b>ISCO-08 → ESCO.</b> Подбираются занятия и навыки. Степени покрытия: полное, частичное, отсутствует, только национальная норма.</li>
+              <li><b>148н → EQF.</b> Уровни 1–8 сопоставляются напрямую. Уровень 9 относится к EQF 8 как верхняя граница рамки.</li>
+              <li><b>ФГОС → ISCED.</b> Образовательный контур паспорта получает международный код.</li>
+            </ol>
+            <p class="muted" style="font-size:13.5px">ИИ-агент готовит черновик по верифицированным кандидатам ESCO. Утверждённый результат фиксирует эксперт. Публикация эквивалента создаёт сопоставимую основу и оформляется как версия методики.</p>
+          </div>
+          <div class="frame">
+            <img class="shot" src="screens/drc-garm.png" alt="Методика ГАРМ-ESCO в сервисе" />
+            <div class="cap">Методика ГАРМ-ESCO в разделе «Методология» сервиса.</div>
+          </div>
+        </div>
+      </div>
+      <footer class="foot"><span>Шаг 9</span><span>09</span></footer>
+    </section>
+
+    <section class="slide">
+      <header class="bar">
+        <span class="mark">НРК</span>
+        <span class="bar-title">Harmoni-BRICS · шаг 9.1</span>
+        <span class="bar-meta">drc.ao-nk.ru</span>
+      </header>
+      <div class="body">
+        <div class="grid-2">
+          <div>
+            <div class="kicker">Модель 2 · версия 1.0-draft</div>
+            <h2>Сопоставление с рамками БРИКС+</h2>
+            <p class="lead">Harmoni-BRICS сопоставляет паспорт с национальной рамкой квалификаций страны-партнёра через ISCO-08 и EQF. ГАРМ-ESCO остаётся слоем детализации навыков.</p>
+            <p style="font-size:14px">Цепочка: паспорт РФ → ISCO-08 → EQF → NQF партнёра. Эксперт фиксирует тип связи и режим мобильности: уведомительный допуск, допуск с адаптацией, отказ / локальная аттестация.</p>
+            <div class="grid-4">
+              <div class="card"><h3>Бразилия</h3><p>CBO и каталоги MEC, мост через ISCO и ISCED.</p></div>
+              <div class="card"><h3>Индия</h3><p>NSQF (1–10), мост NSQF → EQF, занятия NCO/ISCO.</p></div>
+              <div class="card"><h3>Китай</h3><p>Национальные стандарты профессий; ISCO и ISCED как общая линейка.</p></div>
+              <div class="card"><h3>ЮАР</h3><p>SAQA NQF (1–10), referencing к EQF, OFO ↔ ISCO.</p></div>
+              <div class="card"><h3>Индонезия</h3><p>KKNI (1–9), мост через AQRF и EQF, KBJI/ISCO.</p></div>
+              <div class="card"><h3>ОАЭ</h3><p>QFEmirates, referencing к EQF, занятия через ISCO.</p></div>
+            </div>
+          </div>
+          <div class="frame">
+            <img class="shot" src="screens/drc-brics.png" alt="Методика Harmoni-BRICS в сервисе" />
+            <div class="cap">Методика Harmoni-BRICS, версия 1.0-draft, в самом сервисе.</div>
+          </div>
+        </div>
+      </div>
+      <footer class="foot"><span>Шаг 9.1</span><span>10</span></footer>
+    </section>
+
+    <section class="slide">
+      <header class="bar">
+        <span class="mark">НРК</span>
+        <span class="bar-title">Мосты · шаг 9.2</span>
+        <span class="bar-meta">drc.ao-nk.ru</span>
+      </header>
+      <div class="body">
+        <div class="kicker">Модель 3 · паспорт и каталог мостов</div>
+        <h2>Шаг 9.2. Связка паспорта с международными системами</h2>
+        <p class="lead">Шаги 9 и 9.1 остаются на месте. На шаге 9.2 к уже собранному паспорту применяется готовая версия мостов: EQF, ISCED и правила перевода структуры A/B/C в навыки ESCO, а также другие системы, включённые в выбранную версию.</p>
+        <div class="grid-3" style="margin-top:3mm">
+          <div class="card">
+            <h3>Что выбирает эксперт</h3>
+            <ul>
+              <li>Версию каталога мостов</li>
+              <li>Системы сопоставления: ESCO, EQF, NST, NSQF и другие системы этой версии</li>
+              <li>Глубину сопоставления и локальный кэш ESCO</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Как готовится результат</h3>
+            <ul>
+              <li>ИИ-агент формирует черновик по выбранным системам</li>
+              <li>Эксперт подтверждает шаги протокола</li>
+              <li>Готовая версия моста применяется к паспорту и сохраняется снимком</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Граница результата</h3>
+            <p>Сопоставление даёт общую линейку: занятие, навык, уровень рамки партнёра. Оно создаёт основу для сетевых программ и кадрового скрининга. Межгосударственное взаимное признание квалификаций оформляется отдельным актом.</p>
+          </div>
+        </div>
+        <p class="muted" style="margin-top:5mm;font-size:13.5px">Каталог версий мостов ведут администратор и международный методолог. Сопоставление выполняется по компетенции со статусом «действующая»; черновик ИИ подтверждает эксперт.</p>
+      </div>
+      <footer class="foot"><span>Шаг 9.2</span><span>11</span></footer>
+    </section>
+
+    <section class="slide">
+      <header class="bar">
+        <span class="mark">НРК</span>
+        <span class="bar-title">Публикация</span>
+        <span class="bar-meta">drc.ao-nk.ru</span>
+      </header>
+      <div class="body">
+        <div class="grid-2">
+          <div>
+            <div class="kicker">Открытый реестр</div>
+            <h2>Карточка, поиск и документ DOCX</h2>
+            <p class="lead">После утверждения компетенция видна в открытом поиске со статусом «действующая». Запись на экспертизе тоже видна в открытом контуре. Черновик остаётся у рабочей группы.</p>
+            <div class="card" style="margin-bottom:8px">
+              <h3>Что в карточке</h3>
+              <p>Вкладки повторяют паспорт: основное, уровни освоения, структура A/B/C, дисциплины, оценочные средства, ресурсы и международное сопоставление. Кнопка «Скачать DOCX» выгружает документ. Без входа доступна публичная версия утверждённой записи.</p>
+            </div>
+            <div class="card">
+              <h3>Как найти</h3>
+              <p>Поиск по названию, коду RUS-PK и числовому ID. Фильтры: область профессиональной деятельности, статус, уровень образования. Пример открытой карточки: компетенция со статусом «действующая» на https://drc.ao-nk.ru/competency/16.</p>
+            </div>
+          </div>
+          <div class="frame">
+            <img class="shot" src="screens/drc-card.png" alt="Карточка действующей компетенции" />
+            <div class="cap">Карточка компетенции в открытом реестре: статус «Действующая», вкладки паспорта и международное сопоставление.</div>
+          </div>
+        </div>
+      </div>
+      <footer class="foot"><span>Публикация · скриншоты сервиса от 20.11.2026</span><span>12</span></footer>
+    </section>
+  </main>
+</body>
+</html>

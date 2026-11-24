@@ -159,6 +159,7 @@ from .db.schema import (
     ensure_users_columns,
     ensure_assessment_tools_columns,
     ensure_competence_public_code_column,
+    ensure_competence_list_indexes,
     ensure_competence_activity_columns,
     ensure_feedback_columns,
 )
@@ -224,6 +225,8 @@ for col in ensure_assessment_tools_columns():
     print(f"DB migration: added column {col}")
 for col in ensure_competence_public_code_column():
     print(f"DB migration: added column {col}")
+for idx in ensure_competence_list_indexes():
+    print(f"DB migration: added index {idx}")
 for col in ensure_competence_activity_columns():
     print(f"DB migration: added column {col}")
 for col in ensure_feedback_columns():
@@ -4166,17 +4169,64 @@ def _leader_collaborator(session, comp: Competence) -> dict | None:
 
 
 def _collaborators_payload(session, comp: Competence) -> list[dict]:
-    leader = _leader_collaborator(session, comp)
+    return _collaborators_map(session, [comp.id], {comp.id: comp}).get(comp.id, [])
+
+
+def _collaborators_map(
+    session,
+    competence_ids: list[int],
+    competences_by_id: dict[int, Competence] | None = None,
+) -> dict[int, list[dict]]:
+    """Пакетная загрузка РГ для списков — без N+1 на каждую компетенцию."""
+    if not competence_ids:
+        return {}
+    comps = competences_by_id or {}
+    missing_ids = [cid for cid in competence_ids if cid not in comps]
+    if missing_ids:
+        for row in session.query(Competence).filter(Competence.id.in_(missing_ids)).all():
+            comps[row.id] = row
+
+    owner_ids = {c.user_id for c in comps.values() if c and c.user_id}
+    owners = {
+        u.id: u
+        for u in session.query(User).filter(User.id.in_(owner_ids)).all()
+    } if owner_ids else {}
+
     rows = (
         session.query(CompetenceCollaborator)
-        .filter(CompetenceCollaborator.competence_id == comp.id)
+        .options(
+            joinedload(CompetenceCollaborator.user),
+            joinedload(CompetenceCollaborator.invited_by),
+        )
+        .filter(CompetenceCollaborator.competence_id.in_(competence_ids))
         .order_by(CompetenceCollaborator.invited_at.asc())
         .all()
     )
-    members = [_serialize_collaborator(row) for row in rows if row.status != COLLABORATOR_DECLINED]
-    if leader:
-        return [leader, *members]
-    return members
+    members_by_comp: dict[int, list[dict]] = {cid: [] for cid in competence_ids}
+    for link in rows:
+        if link.status == COLLABORATOR_DECLINED:
+            continue
+        members_by_comp.setdefault(link.competence_id, []).append(_serialize_collaborator(link))
+
+    result: dict[int, list[dict]] = {}
+    for cid in competence_ids:
+        comp = comps.get(cid)
+        leader = None
+        if comp and comp.user_id and comp.user_id in owners:
+            owner = owners[comp.user_id]
+            leader = {
+                "id": None,
+                "user_id": owner.id,
+                "role": "leader",
+                "status": COLLABORATOR_ACCEPTED,
+                "invited_at": comp.created_at.isoformat() if comp.created_at else None,
+                "responded_at": None,
+                "user": _serialize_user(owner),
+                "invited_by": None,
+            }
+        members = members_by_comp.get(cid, [])
+        result[cid] = [leader, *members] if leader else members
+    return result
 
 
 def _collaboration_role(session, user, comp: Competence) -> str | None:
@@ -4275,6 +4325,7 @@ def serialize_competence(
     collaboration_role: str | None = None,
     can_invite: bool = False,
     can_edit: bool = False,
+    summary: bool = False,
 ) -> dict:
     raw = comp.raw_data or {}
     formation_profile = raw.get("formation_profile") or {}
@@ -4292,25 +4343,11 @@ def serialize_competence(
         "prof_standard_id": comp.prof_standard_id,
         "qualification_id": comp.qualification_id,
         "competence_kind": formation_profile.get("competence_kind", "professional"),
-        "formation_profile": formation_profile,
-        "universal_skills": formation_profile.get("universal_skills") or [],
         "education_level": raw.get("education_level", ""),
         "education_kind": raw.get("education_kind", ""),
-        "education_training_profession_id": raw.get("education_training_profession_id"),
-        "education_training_profession": raw.get("education_training_profession", ""),
-        "fgos_id": raw.get("fgos_id"),
-        "fgos_code": raw.get("fgos_code", ""),
-        "fgos_name": raw.get("fgos_name", ""),
-        "fgos_category": raw.get("fgos_category", ""),
         "developer": comp.developer,
         "validator": comp.validator,
-        "validation_notes": comp.validation_notes,
-        "expertise": raw.get("expertise") or {},
-        "international_mapping": raw.get("international_mapping") or {},
-        "harmoni_brics": raw.get("harmoni_brics") or {},
         "user_id": comp.user_id,
-        "td_zu_mapping": raw.get("td_zu_mapping") or {},
-        "assessment_tools_v2": raw.get("assessment_tools_v2") or {},
         "wizard_step": raw.get("wizard_step") or None,
         "development_due": raw.get("development_due") or None,
         "progress": compute_progress(comp),
@@ -4324,6 +4361,29 @@ def serialize_competence(
         "industry": raw.get("industry", ""),
         "professional_area_code": _competence_area_code(comp),
         "hours": raw.get("hours", ""),
+        "created_at": comp.created_at.isoformat() if comp.created_at else None,
+        "updated_at": comp.updated_at.isoformat() if comp.updated_at else None,
+        "is_active": comp.is_active,
+    }
+    if summary:
+        # Списки карточек: без ФОС, дескрипторов и прочих тяжёлых JSON
+        return payload
+
+    payload.update({
+        "formation_profile": formation_profile,
+        "universal_skills": formation_profile.get("universal_skills") or [],
+        "education_training_profession_id": raw.get("education_training_profession_id"),
+        "education_training_profession": raw.get("education_training_profession", ""),
+        "fgos_id": raw.get("fgos_id"),
+        "fgos_code": raw.get("fgos_code", ""),
+        "fgos_name": raw.get("fgos_name", ""),
+        "fgos_category": raw.get("fgos_category", ""),
+        "validation_notes": comp.validation_notes,
+        "expertise": raw.get("expertise") or {},
+        "international_mapping": raw.get("international_mapping") or {},
+        "harmoni_brics": raw.get("harmoni_brics") or {},
+        "td_zu_mapping": raw.get("td_zu_mapping") or {},
+        "assessment_tools_v2": raw.get("assessment_tools_v2") or {},
         "labor_functions": comp.labor_functions,
         "structure": comp.structure,
         "descriptors": normalize_descriptors(comp.descriptors),
@@ -4331,10 +4391,7 @@ def serialize_competence(
         "ed_technologies": comp.ed_technologies,
         "assessment_tools": comp.assessment_tools,
         "resources": comp.resources,
-        "created_at": comp.created_at.isoformat() if comp.created_at else None,
-        "updated_at": comp.updated_at.isoformat() if comp.updated_at else None,
-        "is_active": comp.is_active,
-    }
+    })
     if include_matrix:
         payload["matrix_context"] = get_matrix_context(comp.qualification_level)
     return payload
@@ -4367,8 +4424,11 @@ def _serialize_competence_for_user(
     user,
     include_matrix: bool = False,
     reviewers: list | None = None,
+    collaborators: list | None = None,
+    collaboration_role: str | None = None,
+    summary: bool = False,
 ) -> dict:
-    role = _collaboration_role(session, user, comp)
+    role = collaboration_role if collaboration_role is not None else _collaboration_role(session, user, comp)
     admin = user_role(user) == "admin"
     moderator_only = user_role(user) == "moderator"
     intl_only = user_role(user) == "intl_methodologist"
@@ -4388,14 +4448,20 @@ def _serialize_competence_for_user(
             and status in (CompetenceStatus.DRAFT, CompetenceStatus.APPROVED)
         )
     )
+    collab_payload = (
+        collaborators
+        if collaborators is not None
+        else _collaborators_payload(session, comp)
+    )
     payload = serialize_competence(
         comp,
         include_matrix=include_matrix,
         reviewers=reviewers,
-        collaborators=_collaborators_payload(session, comp),
+        collaborators=collab_payload,
         collaboration_role=role,
         can_invite=can_invite,
         can_edit=can_edit,
+        summary=summary,
     )
     payload["can_view_activity"] = admin or role == "leader"
     payload["can_harmonize"] = intl
@@ -4410,11 +4476,12 @@ async def list_public_competences(
     q: Optional[str] = None,
     industry: Optional[str] = None,
     status: Optional[str] = None,
+    limit: Optional[int] = None,
 ):
-    """Публичный реестр: утверждённые и компетенции на экспертизе."""
+    """Публичный реестр: утверждённые и компетенции на экспертизе (краткий payload)."""
     session = SessionLocal()
     try:
-        query = session.query(Competence).options(joinedload(Competence.prof_standard)).filter(
+        query = session.query(Competence).filter(
             Competence.is_active == 1,
             Competence.status.in_([CompetenceStatus.APPROVED, CompetenceStatus.REVIEW]),
         )
@@ -4423,18 +4490,37 @@ async def list_public_competences(
                 query = query.filter(Competence.status == CompetenceStatus(status))
             except ValueError:
                 pass
-        competences = query.order_by(Competence.updated_at.desc()).all()
-        result = [serialize_competence(c) for c in competences]
-        if industry:
-            result = [c for c in result if c.get("industry") == industry]
         if q:
-            q_lower = q.lower()
-            result = [
-                c for c in result
-                if q_lower in (c.get("name") or "").lower()
-                or q_lower in str(c.get("id", ""))
-            ]
-        return result
+            q_stripped = q.strip()
+            if q_stripped.isdigit():
+                query = query.filter(
+                    or_(
+                        Competence.id == int(q_stripped),
+                        Competence.name.ilike(f"%{q_stripped}%"),
+                        Competence.public_code.ilike(f"%{q_stripped}%"),
+                    )
+                )
+            else:
+                query = query.filter(
+                    or_(
+                        Competence.name.ilike(f"%{q_stripped}%"),
+                        Competence.public_code.ilike(f"%{q_stripped}%"),
+                    )
+                )
+        ordered = query.order_by(Competence.updated_at.desc())
+        # industry лежит в JSON raw_data — фильтр в Python; иначе limit в SQL
+        if industry:
+            competences = ordered.all()
+            result = [serialize_competence(c, summary=True) for c in competences]
+            result = [c for c in result if c.get("industry") == industry]
+            if limit is not None and limit > 0:
+                result = result[:limit]
+            return result
+
+        if limit is not None and limit > 0:
+            ordered = ordered.limit(limit)
+        competences = ordered.all()
+        return [serialize_competence(c, summary=True) for c in competences]
     finally:
         session.close()
 
@@ -4443,23 +4529,22 @@ async def list_public_competences(
 async def get_public_competence_stats():
     session = SessionLocal()
     try:
-        active_q = session.query(Competence).filter(
-            Competence.is_active == 1,
-            Competence.status == CompetenceStatus.APPROVED,
+        rows = (
+            session.query(Competence.is_active, Competence.status, func.count(Competence.id))
+            .group_by(Competence.is_active, Competence.status)
+            .all()
         )
-        review_q = session.query(Competence).filter(
-            Competence.is_active == 1,
-            Competence.status == CompetenceStatus.REVIEW,
-        )
-        draft_q = session.query(Competence).filter(
-            Competence.is_active == 1,
-            Competence.status == CompetenceStatus.DRAFT,
-        )
-        archived_q = session.query(Competence).filter(Competence.is_active == 0)
-        active = active_q.count()
-        review = review_q.count()
-        draft = draft_q.count()
-        archived = archived_q.count()
+        active = review = draft = archived = 0
+        for is_active, status, n in rows:
+            if not is_active:
+                archived += int(n or 0)
+                continue
+            if status == CompetenceStatus.APPROVED:
+                active += int(n or 0)
+            elif status == CompetenceStatus.REVIEW:
+                review += int(n or 0)
+            elif status == CompetenceStatus.DRAFT:
+                draft += int(n or 0)
         return {
             "total": active + review,
             "active": active,
@@ -4707,6 +4792,20 @@ async def create_competence(data: CompetenceCreate, current_user: User = Depends
     finally:
         session.close()
 
+def _list_competence_roles(user, competences: list[Competence], collab_ids: list[int]) -> dict[int, str | None]:
+    collab_set = set(collab_ids or [])
+    uid = getattr(user, "id", None)
+    roles: dict[int, str | None] = {}
+    for c in competences:
+        if c.user_id and c.user_id == uid:
+            roles[c.id] = "leader"
+        elif c.id in collab_set:
+            roles[c.id] = "member"
+        else:
+            roles[c.id] = None
+    return roles
+
+
 @app.get("/competences")
 async def list_competences(mine: bool = False, current_user: User = Depends(get_current_user)):
     session = SessionLocal()
@@ -4734,13 +4833,19 @@ async def list_competences(mine: bool = False, current_user: User = Depends(get_
                 filters.append(Competence.id.in_(assigned_ids))
             query = query.filter(or_(*filters))
         competences = query.order_by(Competence.updated_at.desc()).all()
-        reviewers = _reviewers_map(session, [c.id for c in competences if c.id])
+        ids = [c.id for c in competences if c.id]
+        reviewers = _reviewers_map(session, ids)
+        collabs = _collaborators_map(session, ids, {c.id: c for c in competences})
+        roles = _list_competence_roles(current_user, competences, collab_ids)
         return [
             _serialize_competence_for_user(
                 session,
                 c,
                 current_user,
                 reviewers=reviewers.get(c.id, []),
+                collaborators=collabs.get(c.id, []),
+                collaboration_role=roles.get(c.id),
+                summary=True,
             )
             for c in competences
         ]
@@ -4761,13 +4866,20 @@ async def list_competences_in_development(current_user: User = Depends(get_curre
             .order_by(Competence.updated_at.desc())
             .all()
         )
-        reviewers = _reviewers_map(session, [c.id for c in competences if c.id])
+        ids = [c.id for c in competences if c.id]
+        reviewers = _reviewers_map(session, ids)
+        collabs = _collaborators_map(session, ids, {c.id: c for c in competences})
+        collab_ids = _accepted_collaborator_ids(session, current_user.id)
+        roles = _list_competence_roles(current_user, competences, collab_ids)
         return [
             _serialize_competence_for_user(
                 session,
                 c,
                 current_user,
                 reviewers=reviewers.get(c.id, []),
+                collaborators=collabs.get(c.id, []),
+                collaboration_role=roles.get(c.id),
+                summary=True,
             )
             for c in competences
         ]
@@ -4780,8 +4892,8 @@ async def get_competence_stats(current_user: User = Depends(get_current_user)):
     session = SessionLocal()
     try:
         query = session.query(Competence).filter(Competence.is_active == 1)
+        collab_ids = _accepted_collaborator_ids(session, current_user.id)
         if not is_staff_role(current_user):
-            collab_ids = _accepted_collaborator_ids(session, current_user.id)
             own_or_group = [Competence.user_id == current_user.id]
             if collab_ids:
                 own_or_group.append(Competence.id.in_(collab_ids))
@@ -4794,15 +4906,28 @@ async def get_competence_stats(current_user: User = Depends(get_current_user)):
             if assigned_ids:
                 filters.append(Competence.id.in_(assigned_ids))
             query = query.filter(or_(*filters))
-        total = query.count()
-        active = query.filter(Competence.status == CompetenceStatus.APPROVED).count()
-        review = query.filter(Competence.status == CompetenceStatus.REVIEW).count()
-        draft = query.filter(Competence.status == CompetenceStatus.DRAFT).count()
+
+        rows = (
+            query.with_entities(Competence.status, func.count(Competence.id))
+            .group_by(Competence.status)
+            .all()
+        )
+        active = review = draft = 0
+        for status, n in rows:
+            count = int(n or 0)
+            if status == CompetenceStatus.APPROVED:
+                active = count
+            elif status == CompetenceStatus.REVIEW:
+                review = count
+            elif status == CompetenceStatus.DRAFT:
+                draft = count
+        total = active + review + draft
+
         archived = session.query(Competence).filter(Competence.is_active == 0)
         if not is_staff_role(current_user):
             archived = archived.filter(or_(
                 Competence.user_id == current_user.id,
-                Competence.id.in_(_accepted_collaborator_ids(session, current_user.id) or [-1]),
+                Competence.id.in_(collab_ids or [-1]),
             ))
         archived_count = archived.count()
         return {

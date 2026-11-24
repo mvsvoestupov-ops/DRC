@@ -1,0 +1,9 @@
+FOUND: ['1126-01 Шохину А.Н от АО НК Борисова М.П. по ЦРК.pdf']
+USING: 1126-01 Шохину А.Н от АО НК Борисова М.П. по ЦРК.pdf
+---TEXT---
+C:\Users\Mihail\AppData\Local\Programs\Python\Python313\Lib\site-packages\fitz\__init__.py:17: FutureWarning: The `fitz` API is deprecated and will be removed in future. Use `import pymupdf` instead.
+  warnings.warn(
+ENGINE: fitz
+ENGINE: pypdf
+ERROR: Could not extract text
+pdfminer: No module named 'pdfminer'
